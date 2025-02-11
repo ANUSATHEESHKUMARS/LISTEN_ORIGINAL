@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP</title>
+    <link rel="stylesheet" href="/css/auth.css">
+</head>
+<style>
+    /* Add these styles to your existing CSS */
+.otp-inputs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.otp-input {
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    font-size: 24px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+}
+
+.timer-container {
+    text-align: center;
+    margin: 15px 0;
+    color: #666;
+}
+
+.resend-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.resend-btn {
+    background: none;
+    border: none;
+    color: #4CAF50;
+    cursor: pointer;
+}
+
+.resend-btn:disabled {
+    color: #999;
+    cursor: not-allowed;
+}
+</style>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h2>Verify Your Email</h2>
+            <% if (error) { %>
+                <div class="alert alert-danger"><%= error %></div>
+            <% } %>
+            <p class="text-center">
+                We've sent an OTP to your email: <%= email %>
+            </p>
+            <form id="otpForm" action="/verify-otp" method="POST">
+                <div class="otp-inputs">
+                    <input type="text" name="otp1" class="otp-input" maxlength="1" required>
+                    <input type="text" name="otp2" class="otp-input" maxlength="1" required>
+                    <input type="text" name="otp3" class="otp-input" maxlength="1" required>
+                    <input type="text" name="otp4" class="otp-input" maxlength="1" required>
+                </div>
+                <div class="timer-container">
+                    Time remaining: <span id="timer">02:00</span>
+                </div>
+                <button type="submit" class="submit-btn">Verify OTP</button>
+            </form>
+            <div class="resend-container">
+                <button id="resendBtn" class="resend-btn" disabled>
+                    Resend OTP
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="/js/otp.js"></script>
+</body>
+</html>
