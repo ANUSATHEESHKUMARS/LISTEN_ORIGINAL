@@ -5,7 +5,9 @@ import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 
 
-
+export const userHome = (req,res) =>{
+    res.render('userPage/home',{error:null})
+}
 // Render signup page
 export const renderSignup = (req, res) => {
     res.render('userPage/signup', { error: null });

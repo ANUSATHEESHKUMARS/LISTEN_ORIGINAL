@@ -6,7 +6,7 @@ async function createAdminUser() {
     try {
         await connectDB();
         
-        const adminExists = await Admin.findOne({ email: 'admin@example.com' });
+        const adminExists = await Admin.findOne({ email: 'admin@listen.com' });
         
         if (adminExists) {
             console.log('Admin user already exists');
@@ -16,7 +16,7 @@ async function createAdminUser() {
         const hashedPassword = await bcrypt.hash('admin123', 10);
         
         const admin = new Admin({
-            email: 'admin@example.com',
+            email: 'admin@listen.com',
             password: hashedPassword,
             name: 'Admin User'
         });

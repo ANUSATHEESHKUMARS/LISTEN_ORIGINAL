@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 const adminSchema = new mongoose.Schema({
     email: {
@@ -14,11 +15,38 @@ const adminSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
+    role: {
+        type: String,
+        default: 'admin'
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
+}, {
+    timestamps: true  // This replaces createdAt and adds updatedAt
 });
+
+// Add this method to create default admin
+adminSchema.statics.createDefaultAdmin = async function() {
+    try {
+        const adminExists = await this.findOne({ email: 'admin@listen.com' });
+        
+        if (!adminExists) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            await this.create({
+                name: 'Super Admin',
+                email: 'admin@listen.com',
+                password: hashedPassword,
+                role: 'admin',
+                isActive: true
+            });
+            console.log('Default admin created successfully');
+        }
+    } catch (error) {
+        console.error('Error creating default admin:', error);
+    }
+};
 
 const Admin = mongoose.model('Admin', adminSchema);
 

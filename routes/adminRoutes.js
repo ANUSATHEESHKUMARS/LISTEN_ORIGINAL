@@ -1,12 +1,36 @@
-import express from 'express'
-import { adminLogin,  Login, renderDashboard, }from '../controller/adminController.js'
 
 
-const adminRoutes = express.Router()
-adminRoutes.get('/login',Login)
-adminRoutes.post('/login',adminLogin)
+import express from 'express';
+import { adminAuth } from '../middleware/authMiddleware.js';
+import {
+    Login,
+    adminLogin,
+    adminLogout,
+    renderDashboard,
+    getCustomers,
+    blockUser,
+    unblockUser,
+    searchCustomers,
+    getCustomerDetails,
+    updateCustomerStatus,
+    exportCustomersData
+} from '../controller/adminController.js';
 
-// adminRoutes.get("/dashbord",(req,res)=>{return res.render('admin/dashbord')})
-adminRoutes.get('/dashboard',renderDashboard)
+export const adminRoutes = express.Router();
 
-export default adminRoutes
+// Public routes
+adminRoutes.get('/login', Login);
+adminRoutes.post('/login', adminLogin);
+
+// Protected routes
+adminRoutes.use(adminAuth);
+
+adminRoutes.get('/logout', adminLogout);
+adminRoutes.get('/dashboard', renderDashboard);
+adminRoutes.get('/customers', getCustomers);
+adminRoutes.patch('/block-user/:userId', blockUser);
+adminRoutes.patch('/unblock-user/:userId', unblockUser);
+adminRoutes.get('/search-customers', searchCustomers);
+adminRoutes.get('/customer/:userId', getCustomerDetails);
+adminRoutes.patch('/customer/:userId/status', updateCustomerStatus);
+adminRoutes.get('/export-customers', exportCustomersData);
