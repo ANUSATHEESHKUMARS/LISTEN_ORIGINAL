@@ -2,9 +2,11 @@ import express from "express"
 
 import path from 'path'
 import {userRoutes} from './routes/userRoutes.js'
+import adminRoutes from './routes/adminRoutes.js'
 import connectDB from "./models/db.js"
 import dotenv from "dotenv";
 import session from "express-session";
+import { adminLogin } from "./controller/adminController.js";
 
 
 dotenv.config()
@@ -17,6 +19,7 @@ connectDB()
 
 
 app.use('/user', userRoutes);
+app.use('/admin',adminRoutes)
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
