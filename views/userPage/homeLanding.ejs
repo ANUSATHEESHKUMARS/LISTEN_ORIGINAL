@@ -294,7 +294,7 @@ button:hover {
             <span>Category</span>
             <span>Brand</span>
             <span>About</span>
-             <button 
+            <!-- < <button 
             onclick="handleNavigation('/user/login')" 
             class="login-btn" 
             data-path="/user/login">
@@ -305,7 +305,7 @@ button:hover {
             class="signup-btn" 
             data-path="/user/signup">
             Sign Up
-        </button>
+        </button> -->
         </div>
     </nav>
 
@@ -348,87 +348,5 @@ button:hover {
             </div>
         </div>
     </footer>
-
-    <script>
-
-
-function handleNavigation(path) {
-    console.log('Navigating to:', path); // Debug log
-    window.location.href = path;
-}
-        // Sample product data
-        const products = [
-            {
-                id: 1,
-                name: "Premium Wireless Headphones",
-                price: 299.99,
-                rating: 4.5,
-                image: "/api/placeholder/200/200"
-            },
-            {
-                id: 2,
-                name: "Sport Wireless Earbuds",
-                price: 149.99,
-                rating: 4.3,
-                image: "/api/placeholder/200/200"
-            },
-            {
-                id: 3,
-                name: "Professional Studio Headphones",
-                price: 399.99,
-                rating: 4.8,
-                image: "/api/placeholder/200/200"
-            }
-        ];
-
-        // Cart functionality
-        let cartCount = 0;
-        const cartCountElement = document.querySelector('.cart-count');
-
-        function updateCart() {
-            cartCountElement.textContent = cartCount;
-        }
-
-        // Render products
-        function renderProducts() {
-            const bestSellersContainer = document.getElementById('bestSellers');
-            
-            products.forEach(product => {
-                const productElement = document.createElement('div');
-                productElement.className = 'product-card';
-                productElement.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}">
-                    <h3>${product.name}</h3>
-                    <p>$${product.price}</p>
-                    <p>Rating: ${product.rating}/5</p>
-                    <button onclick="addToCart(${product.id})">Add to Cart</button>
-                `;
-                bestSellersContainer.appendChild(productElement);
-            });
-        }
-
-        function addToCart(productId) {
-            cartCount++;
-            updateCart();
-            alert('Product added to cart!');
-        }
-
-        // Search functionality
-        const searchInput = document.querySelector('.search-bar input');
-        const searchButton = document.querySelector('.search-bar button');
-
-        searchButton.addEventListener('click', () => {
-            const searchTerm = searchInput.value.toLowerCase();
-            const filteredProducts = products.filter(product => 
-                product.name.toLowerCase().includes(searchTerm)
-            );
-            // Clear and re-render products based on search
-            document.getElementById('bestSellers').innerHTML = '';
-            renderProducts(filteredProducts);
-        });
-
-        // Initialize page
-        renderProducts();
-    </script>
 </body>
-</html> 
+</html>

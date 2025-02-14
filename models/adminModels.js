@@ -24,10 +24,10 @@ const adminSchema = new mongoose.Schema({
         default: true
     }
 }, {
-    timestamps: true  // This replaces createdAt and adds updatedAt
+    timestamps: true
 });
 
-// Add this method to create default admin
+// Create default admin method
 adminSchema.statics.createDefaultAdmin = async function() {
     try {
         const adminExists = await this.findOne({ email: 'admin@listen.com' });

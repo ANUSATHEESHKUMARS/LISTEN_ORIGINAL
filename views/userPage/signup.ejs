@@ -5,7 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" href="/css/auth.css">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.otp-inputs {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.otp-input {
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1.2rem;
+}
+
+.verify-btn {
+    width: 100%;
+    padding: 12px;
+    background: #4F46E5;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.resend-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.error-message {
+    color: #dc2626;
+    margin: 10px 0;
+    font-size: 0.875rem;
+}
+
+.hidden {
+    display: none !important; 
+}
+    </style>
 </head>
     <div class="container">
         <div class="form-container">
@@ -63,225 +131,203 @@
             </div>
         </div>
     </div>
-    
-    <!-- OTP Modal -->
-    <div
-      id="otpModal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center"
-    >
-      <div class="bg-white p-8 rounded-lg shadow-xl w-96">
-        <h3 class="text-xl font-semibold mb-4">Enter OTP</h3>
-        <p class="text-sm text-gray-600 mb-4">
-          Please enter the OTP sent to your email
-        </p>
+<!-- Add this right after your form container div -->
+<div id="otpModal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Enter OTP</h3>
+        <p>Please enter the OTP sent to your email</p>
 
-        <!-- OTP Error Message -->
-        <p id="otpError" class="text-[#9B1C1C] text-xs mt-1 mb-3 hidden"></p>
+        <div id="otpError" class="error-message hidden"></div>
 
-        <div class="flex gap-2 mb-4">
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
+        <div class="otp-inputs">
+            <input type="text" maxlength="1" class="otp-input" />
+            <input type="text" maxlength="1" class="otp-input" />
+            <input type="text" maxlength="1" class="otp-input" />
+            <input type="text" maxlength="1" class="otp-input" />
+            <input type="text" maxlength="1" class="otp-input" />
+            <input type="text" maxlength="1" class="otp-input" />
         </div>
 
-        <button
-          id="verifyOtp"
-          class="w-full py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800"
-        >
-          Verify OTP
-        </button>
+        <button id="verifyOtp" class="verify-btn">Verify OTP</button>
 
-        <div class="text-center mt-4">
-          <button id="resendOtp" class="text-blue-600 hover:underline">
-            Resend OTP
-          </button>
-          <div id="resendTimer" class="text-sm text-gray-600 mt-1 hidden"></div>
-          <p id="resendMessage" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
+        <div class="resend-container">
+            <button id="resendOtp" class="resend-btn">Resend OTP</button>
+            <div id="resendTimer" class="timer hidden"></div>
+            <div id="resendMessage" class="message hidden"></div>
         </div>
 
-        <!-- OTP Verification Loading Spinner -->
-        <div id="otp-loading-spinner" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div class="bg-white p-5 rounded-lg flex flex-col items-center">
-            <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-3"></div>
-            <p class="text-gray-700">Verifying OTP...</p>
-          </div>
+        <div id="otp-loading-spinner" class="spinner hidden">
+            <div class="spinner-content">
+                <div class="spinner-circle"></div>
+                <p>Verifying OTP...</p>
+            </div>
         </div>
-      </div>
     </div>
-
+</div>
     <script src="/js/auth.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', function() {
-        const signupForm = document.getElementById('signupForm');
-        const otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
-        let timeLeft = 120; // 2 minutes
-        let timerId = null;
-    
-        // Handle signup form submission
-        signupForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            try {
-                const formData = {
-                    name: document.getElementById('name').value,
-                    email: document.getElementById('email').value,
-                    mobile: document.getElementById('mobile').value,
-                    password: document.getElementById('password').value
-                };
-    
-                const response = await fetch('/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
-    
-                const data = await response.json();
-    
-                if (data.success) {
-                    // Show OTP modal
-                    otpModal.show();
-                    startTimer();
-                } else {
-                    showError('errorMessage', data.message);
-                }
-            } catch (error) {
-                showError('errorMessage', 'An error occurred. Please try again.');
-            }
+    <script> 
+        //  -->
+      // Handle signup form submission
+signupForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    if (!validateForm()) {
+        return;
+    }
+
+    try {
+        const formData = {
+            name: document.getElementById('name').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            mobile: document.getElementById('mobile').value.trim(),
+            password: document.getElementById('password').value
+        };
+
+        console.log('Sending form data:', formData); // Debug log
+
+        const response = await fetch('/user/signup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
         });
-    
-        // Handle OTP input
-        const otpInputs = document.querySelectorAll('.otp-input');
-        otpInputs.forEach((input, index) => {
-            input.addEventListener('keyup', (e) => {
-                if (e.key >= 0 && e.key <= 9) {
-                    if (index < otpInputs.length - 1) {
-                        otpInputs[index + 1].focus();
-                    }
-                } else if (e.key === 'Backspace') {
-                    if (index > 0) {
-                        otpInputs[index - 1].focus();
-                    }
+
+        const data = await response.json();
+        console.log('Response:', data); // Debug log
+
+        if (data.success) {
+            // Show OTP modal
+            const otpModal = document.getElementById('otpModal');
+            otpModal.classList.remove('hidden');
+            otpModal.classList.add('flex');
+            
+            // Focus on first OTP input
+            const firstOtpInput = document.querySelector('.otp-input');
+            if (firstOtpInput) {
+                firstOtpInput.focus();
+            }
+
+            // Start the timer
+            startTimer();
+        } else {
+            showError('generalError', data.message || 'Signup failed');
+        }
+    } catch (error) {
+        console.error('Signup error:', error);
+        showError('generalError', 'An error occurred during signup');
+    }
+});
+
+// Update OTP input handling
+document.querySelectorAll('.otp-input').forEach((input, index, inputs) => {
+    input.addEventListener('keyup', (e) => {
+        // Allow only numbers
+        input.value = input.value.replace(/[^0-9]/g, '');
+
+        // Move to next input if value is entered
+        if (input.value && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+        }
+
+        // Move to previous input on backspace if empty
+        if (e.key === 'Backspace' && !input.value && index > 0) {
+            inputs[index - 1].focus();
+        }
+
+        // Check if all inputs are filled
+        const allFilled = Array.from(inputs).every(input => input.value.length === 1);
+        if (allFilled) {
+            document.getElementById('verifyOtp').focus();
+        }
+    });
+
+    // Handle paste event
+    input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').slice(0, 6);
+        if (/^\d+$/.test(pastedData)) {
+            [...pastedData].forEach((digit, i) => {
+                if (inputs[i]) {
+                    inputs[i].value = digit;
                 }
             });
-        });
-    
-        // Handle OTP verification
-        document.getElementById('verifyOtpBtn').addEventListener('click', async function() {
-            const otp = Array.from(otpInputs).map(input => input.value).join('');
-            
-            try {
-                const response = await fetch('/verify-otp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ otp })
-                });
-    
-                const data = await response.json();
-    
-                if (data.success) {
-                    window.location.href = '/login';
-                } else {
-                    showError('otpError', data.message);
-                }
-            } catch (error) {
-                showError('otpError', 'An error occurred. Please try again.');
-            }
-        });
-    
-        // Handle resend OTP
-        document.getElementById('resendOtp').addEventListener('click', async function() {
-            try {
-                const response = await fetch('/resend-otp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-    
-                const data = await response.json();
-    
-                if (data.success) {
-                    this.disabled = true;
-                    timeLeft = 120;
-                    startTimer();
-                    showSuccess('otpError', 'OTP resent successfully');
-                } else {
-                    showError('otpError', data.message);
-                }
-            } catch (error) {
-                showError('otpError', 'Failed to resend OTP');
-            }
-        });
-    
-        // Timer functions
-        function startTimer() {
-            if (timerId) clearInterval(timerId);
-            
-            const timerDisplay = document.getElementById('timer');
-            const resendBtn = document.getElementById('resendOtp');
-            
-            timerId = setInterval(() => {
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                
-                timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
-                if (timeLeft === 0) {
-                    clearInterval(timerId);
-                    resendBtn.disabled = false;
-                    return;
-                }
-                
-                timeLeft--;
-            }, 1000);
+            if (inputs[5]) inputs[5].focus();
         }
-    
-        // Utility functions
-        function showError(elementId, message) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.classList.remove('d-none');
-            element.classList.remove('alert-success');
-            element.classList.add('alert-danger');
+    });
+});
+
+// Verify OTP button handler
+document.getElementById('verifyOtp').addEventListener('click', async () => {
+    const otp = Array.from(document.querySelectorAll('.otp-input'))
+        .map(input => input.value)
+        .join('');
+
+    if (otp.length !== 6) {
+        showError('otpError', 'Please enter a valid 6-digit OTP');
+        return;
+    }
+
+    try {
+        const spinner = document.getElementById('otp-loading-spinner');
+        spinner.classList.remove('hidden');
+
+        const response = await fetch('/user/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ otp })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.location.href = data.redirectUrl || '/home';
+        } else {
+            showError('otpError', data.message || 'Invalid OTP');
         }
+    } catch (error) {
+        console.error('OTP verification error:', error);
+        showError('otpError', 'An error occurred during verification');
+    } finally {
+        document.getElementById('otp-loading-spinner').classList.add('hidden');
+    }
+});
+
+// Timer function
+function startTimer() {
+    let timeLeft = 120; // 2 minutes
+    const timerDisplay = document.getElementById('resendTimer');
+    const resendButton = document.getElementById('resendOtp');
     
-        function showSuccess(elementId, message) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.classList.remove('d-none');
-            element.classList.remove('alert-danger');
-            element.classList.add('alert-success');
+    resendButton.disabled = true;
+    timerDisplay.classList.remove('hidden');
+    
+    const timer = setInterval(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        
+        timerDisplay.textContent = `Resend OTP in ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            timerDisplay.classList.add('hidden');
+            resendButton.disabled = false;
         }
-    });</script>
+        
+        timeLeft--;
+    }, 1000);
+}
+
+// Error display function
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = message;
+        element.classList.remove('hidden');
+    }
+}
+    </script>
 </html>
 

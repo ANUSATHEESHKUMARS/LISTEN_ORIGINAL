@@ -17,15 +17,18 @@ export const renderSignup = (req, res) => {
 export const signUp = async (req, res) => {
     try {
         const { name, email, mobile, password } = req.body;
+        console.log(req.body);
+        
 
-        // Check if user already exists
+        // Check if user exists
         const existingUser = await User.findOne({ 
             $or: [{ email }, { mobile }] 
         });
 
         if (existingUser) {
-            return res.render('signup', { 
-                error: 'Email or mobile already registered' 
+            return res.status(400).json({
+                success: false,
+                message: 'Email or mobile already registered'
             });
         }
 
@@ -33,39 +36,45 @@ export const signUp = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Create new user
+        // Generate OTP
+        const otp = generateOTP();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Create new user with pending verification
         const user = new User({
             name,
             email,
             mobile,
-            password: hashedPassword
+            password: hashedPassword,
+            isVerified: false,
+            otp: {
+                code: otp,
+                expiry: otpExpiry
+            }
         });
 
         await user.save();
 
-        // Generate JWT token
-        const token = jwt.sign(
-            { id: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: '1d' }
-        );
+        // Send OTP
+        await sendOTP(email, otp);
 
-        // Set cookie
-        res.cookie('token', token, {
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000 // 1 day
+        // Store email in session
+        req.session.tempEmail = email;
+
+        res.status(200).json({
+            success: true,
+            message: 'OTP sent successfully'
         });
-
-        res.redirect('/dashboard');
 
     } catch (error) {
-        res.render('signup', { 
-            error: 'Something went wrong. Please try again.' 
+        console.error('Signup error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'An error occurred during signup'
         });
     }
-};
+};  
 
-// Handle login
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -73,7 +82,7 @@ export const login = async (req, res) => {
         // Find user
         const user = await User.findOne({ email });
         if (!user) {
-            return res.render('login', { 
+            return res.render('userPage/login', { 
                 error: 'Invalid email or password' 
             });
         }
@@ -81,10 +90,17 @@ export const login = async (req, res) => {
         // Check password
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
-            return res.render('login', { 
+            return res.render('userPage/login', { 
                 error: 'Invalid email or password' 
             });
         }
+
+        // Set session data
+        req.session.user = {
+            id: user._id,
+            name: user.name,
+            email: user.email
+        };
 
         // Generate JWT token
         const token = jwt.sign(
@@ -99,21 +115,71 @@ export const login = async (req, res) => {
             maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
 
-        res.redirect('/dashboard');
+        // Redirect to home landing
+        res.redirect('/userPage/homeLanding');
 
     } catch (error) {
-        res.render('login', { 
+        console.error('Login error:', error);
+        res.render('userPage/login', { 
             error: 'Something went wrong. Please try again.' 
         });
     }
 };
-
 // Handle logout
 export const logout = (req, res) => {
     res.clearCookie('token');
     res.redirect('/login');
 };
 
+
+export const isAuthenticated = (req, res, next) => {
+    try {
+        // Check for token in cookies
+        const token = req.cookies.token;
+        
+        if (!token) {
+            return res.redirect('/user/login');
+        }
+
+        // Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Add user data to request
+        req.user = decoded;
+        next();
+    } catch (error) {
+        console.error('Auth error:', error);
+        res.redirect('/user/login');
+    }
+};
+export const getHomeLanding = async (req,res)=>{
+    try{
+        const user = await User.findById(req.user.id).select('-password')
+        if(!user){
+            return res.redirect('userPage/login')
+        }
+        const recendProduct = await Product.find().limit(4);
+        res.render('userPage/homeLanding',{
+            user : {
+                name : user.name,
+                email:user.email,
+
+
+            },
+            Products : recendProduct,
+            error : null
+        })
+
+    }catch(error){
+        console.error('Home landing error:', error);
+        res.render('userPage/homeLanding', {
+            user: req.user,
+            products: [],
+            error: 'Error loading page data'
+        });
+    }
+
+}
 
 export const getLoginPage = (req, res) => {
     res.render('userPage/login');
@@ -282,31 +348,39 @@ export const signup = async (req, res) => {
 };
 
 // Verify OTP controller
+// Update the verifyOTP function
 export const verifyOTP = async (req, res) => {
     try {
-        const email = req.session.userEmail;
-        const submittedOTP = Object.values(req.body).join('');
+        const email = req.session.tempEmail;
+        const { otp } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Session expired. Please signup again.'
+            });
+        }
 
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.render('verifyOTP', {
-                email,
-                error: 'User not found'
+            return res.status(400).json({
+                success: false,
+                message: 'User not found'
             });
         }
 
         if (Date.now() > user.otp.expiry) {
-            return res.render('verifyOTP', {
-                email,
-                error: 'OTP has expired'
+            return res.status(400).json({
+                success: false,
+                message: 'OTP has expired'
             });
         }
 
-        if (user.otp.code !== submittedOTP) {
-            return res.render('verifyOTP', {
-                email,
-                error: 'Invalid OTP'
+        if (user.otp.code !== otp) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid OTP'
             });
         }
 
@@ -315,16 +389,36 @@ export const verifyOTP = async (req, res) => {
         user.otp = undefined;
         await user.save();
 
-        // Clear session
-        req.session.userEmail = undefined;
+        // Generate JWT token
+        const token = jwt.sign(
+            { id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        );
 
-        res.redirect('/login');
+        // Set cookie and session
+        res.cookie('token', token, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
+        req.session.user = {
+            id: user._id,
+            name: user.name,
+            email: user.email
+        };
+
+        res.status(200).json({
+            success: true,
+            message: 'Email verified successfully',
+            redirectUrl: '/user/home-landing'
+        });
 
     } catch (error) {
         console.error('OTP verification error:', error);
-        res.render('verifyOTP', {
-            email: req.session.userEmail,
-            error: 'An error occurred during verification'
+        res.status(500).json({
+            success: false,
+            message: 'An error occurred during verification'
         });
     }
 };

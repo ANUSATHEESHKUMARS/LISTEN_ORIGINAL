@@ -23,41 +23,7 @@ export const isAdmin = async (req, res, next) => {
         res.redirect('/admin/login');
     }
 };
-// export const adminLogin = async (req, res) => {
-//     try {
-//         const { email, password } = req.body;
 
-//         const admin = await Admin.findOne({ email });
-//         if (!admin) {
-//             return res.json({
-//                 success: false,
-//                 message: 'Invalid credentials'
-//             });
-//         }
-
-//         const isMatch = await bcrypt.compare(password, admin.password);
-//         if (!isMatch) {
-//             return res.json({
-//                 success: false,
-//                 message: 'Invalid credentials'
-//             });
-//         }
-
-//         // Set session
-//         req.session.adminId = admin._id;
-        
-//         res.json({
-//             success: true,
-//             message: 'Login successful'
-//         });
-//     } catch (error) {
-//         console.error('Admin login error:', error);
-//         res.json({
-//             success: false,
-//             message: 'An error occurred'
-//         });
-//     }
-// };
 export const adminLogin = asyncHandler(async (req, res) => {
     try {
         const { email, password } = req.body;
