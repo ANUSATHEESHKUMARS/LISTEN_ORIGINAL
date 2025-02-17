@@ -1,39 +1,55 @@
-
-
 import express from 'express';
-import { adminAuth } from '../middleware/authMiddleware.js';
-import {
-    Login,
-    adminLogin,
-    adminLogout,
-    renderDashboard,
-    getCustomers,
-    blockUser,
-    unblockUser,
-    searchCustomers,
-    getCustomerDetails,
-    updateCustomerStatus,
-    exportCustomersData,
-    isAdmin
-} from '../controller/adminController.js';
+import authController from '../controller/admin/authController.js';
+import adminMiddleware from '../middleware/adminMiddleware.js';
+import userController from '../controller/admin/userController.js';
+import dashboardController from '../controller/admin/dashboardController.js';
+import categoryController from '../controller/admin/categoryController.js';
+import productController from '../controller/admin/productController.js';
 
-export const adminRoutes = express.Router();
 
-// Public routes
-adminRoutes.get('/login', Login);
-adminRoutes.post('/login', adminLogin);
-adminRoutes.get('/logout',adminLogout)
+const router = express.Router();
 
-// Protected routes
-adminRoutes.use(adminAuth);
 
-adminRoutes.get('/logout', adminLogout);
-adminRoutes.get('/dashboard', isAdmin , renderDashboard);
-adminRoutes.get('/customers', getCustomers);
-adminRoutes.patch('/block-user/:userId', blockUser);
-adminRoutes.patch('/unblock-user/:userId', unblockUser);
-adminRoutes.get('/search-customers', searchCustomers);
-adminRoutes.get('/customer/:userId', getCustomerDetails);
-adminRoutes.patch('/customer/:userId/status', updateCustomerStatus);
-adminRoutes.get('/export-customers', exportCustomersData);
+router.get('/login', authController.getAdmin);
 
+router.post('/login', authController.postAdmin);
+
+router.get('/dashboard', adminMiddleware.checkSession, dashboardController.getDashboard);
+
+router.get('/dashboard/data', adminMiddleware.checkSession, dashboardController.getDashboardData);
+
+router.get('/logout', adminMiddleware.checkSession, authController.getLogout);
+
+// User listing Routes
+
+router.get('/userList', adminMiddleware.checkSession, userController.getUserList)
+
+router.post('/user/:id/toggle-block', adminMiddleware.checkSession, userController.getToggle);
+
+// Category Routes
+
+router.get('/category', adminMiddleware.checkSession, categoryController.getCategories);
+
+router.post('/category/add', adminMiddleware.checkSession, categoryController.addCategory);
+
+router.post('/category/edit', adminMiddleware.checkSession, categoryController.editCategory);
+
+router.get('/category/toggle', adminMiddleware.checkSession, categoryController.toggleCategory);
+
+// Product Routes
+
+
+router.get('/product', adminMiddleware.checkSession,productController.renderProductPage);
+
+router.post('/product/add', adminMiddleware.checkSession, productController.addProduct);
+
+router.get('/product/:id', adminMiddleware.checkSession, productController.getProductDetails);
+
+router.post('/product/edit/:id', adminMiddleware.checkSession, productController.updateProduct);
+
+router.post('/product/delete/:id', adminMiddleware.checkSession, productController.deleteProduct);
+
+router.post('/product/toggle-status/:id', adminMiddleware.checkSession, productController.toggleProductStatus);
+
+
+export default router;

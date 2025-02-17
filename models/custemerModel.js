@@ -12,7 +12,7 @@ const customerSchema = new mongoose.Schema({
     },
     mobile: {
         type: String,
-        required: true
+        required: false
     },
     address: {
         type: String,
