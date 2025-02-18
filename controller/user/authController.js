@@ -114,7 +114,6 @@ const postSignUp = async (req, res) => {
     }
 }
 
-
 const postOtp = async (req,res)=>{
     try {
         const {userOtp , email} = req.body;
@@ -153,7 +152,6 @@ const postOtp = async (req,res)=>{
         return res.status(500).json({ error: 'OTP verification failed' });
     }
 }
-
 
 const postResendOtp = async (req, res) => {
     try {

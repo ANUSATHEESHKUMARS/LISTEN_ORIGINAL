@@ -10,10 +10,10 @@ const customerSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    mobile: {
-        type: String,
-        required: false
-    },
+    // mobile: {
+    //     type: String,
+    //     required: false
+    // },
     address: {
         type: String,
         required: true
