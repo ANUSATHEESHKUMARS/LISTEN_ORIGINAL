@@ -2,9 +2,13 @@ import userSchema from '../../models/userModels.js';
 import bcrypt from 'bcrypt';
 import { generateOTP, sendOTPEmail } from '../../utils/sentOTP.js';
 import validatePassword from '../../utils/validatePassword.js ';
+import passport from 'passport';
+import dotenv from 'dotenv'; 
+
 
 const saltRounds = 10;
 
+dotenv.config()
 
 
 

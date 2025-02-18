@@ -13,6 +13,7 @@ import nocache from "nocache"
 // import './utils/googleAuth.js'
 import errorHandler from './middleware/errorMiddleware.js';
 import initializeCategories from "./utils/initCategories.js"
+import passport from './config/passport.js';
 
 
 
@@ -63,7 +64,8 @@ app.use(session({
     }
 }))
 
-
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(express.static(path.join(process.cwd(),'public')))
 
@@ -75,6 +77,7 @@ app.use('/',userRoutes)
 app.use("*",(req,res) =>{
     res.status(404).render('partials/error')
 })
+
 
 app.listen(process.env.PORT,()=>{
     console.log("Server running at port ")
