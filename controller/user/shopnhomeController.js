@@ -18,40 +18,18 @@ const getHome = async (req, res) => {
         })
         .sort({ createdAt: -1 })
         .limit(5);
-
+        
         // Filter out products where category wasn't populated (extra safety check)
         const filteredProducts = products.filter(product => product.categoriesId);
-
+        
         // Fetch all active offers
-        const offers = await Offer.find({
-            status: 'active',
-            startDate: { $lte: new Date() },
-            endDate: { $gte: new Date() }
-        });
-
-        // Process each product to include offer prices
-        const processedProducts = filteredProducts.map(product => {
-            const productOffer = offers.find(offer => 
-                offer.productIds && offer.productIds.some(id => id.equals(product._id))
-            );
-            
-            const categoryOffer = offers.find(offer => 
-                offer.categoryId && offer.categoryId.equals(product.categoriesId._id)
-            );
-
-            const finalPrice = calculateFinalPrice(product, categoryOffer, productOffer);
-            
-            return {
-                ...product.toObject(),
-                discountPrice: finalPrice,
-                originalPrice: product.price,
-                offerApplied: finalPrice < product.price,
-                offerPercentage: productOffer?.discount || categoryOffer?.discount || 0
-            };
-        });
-
+        
+        
+        
+        
+        console.log('products',filteredProducts);
         res.render('user/home', { 
-            products: processedProducts,
+            products: filteredProducts,
             title: 'Home'
         });
     } catch (error) {

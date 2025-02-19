@@ -11,11 +11,7 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true
-    },
-    gender: {
-        type: String,
-        required: true,
-        enum: ['male', 'female', 'unisex']
+   
     },
     categoriesId: {
         type: mongoose.Schema.Types.ObjectId,

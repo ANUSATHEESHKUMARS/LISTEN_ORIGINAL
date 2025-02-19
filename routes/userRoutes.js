@@ -37,6 +37,11 @@ route.post('/change-password', userMiddlewares.checkSession, authController.post
 
 route.get('/auth/google', authController.getGoogle);
 
+route.get('/auth/google/callback' , authController.getGoogleCallback)
+
+route.get('/shop', userController.getShop);
+
+
 route.get('/logout', userMiddlewares.checkSession, authController.getLogout);
 
 export default route;

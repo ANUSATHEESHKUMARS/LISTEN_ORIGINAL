@@ -152,7 +152,7 @@ const postOtp = async (req,res)=>{
         return res.status(500).json({ error: 'OTP verification failed' });
     }
 }
-
+      
 const postResendOtp = async (req, res) => {
     try {
         const { email } = req.body;
@@ -478,6 +478,7 @@ const getGoogle = (req, res) => {
 };
 
 const getGoogleCallback = (req, res) => {
+
     passport.authenticate("google", { failureRedirect: "/login" }, async (err, profile) => {
         try {
             if (err || !profile) {
