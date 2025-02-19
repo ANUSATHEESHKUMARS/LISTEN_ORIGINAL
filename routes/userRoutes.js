@@ -41,7 +41,8 @@ route.get('/auth/google/callback' , authController.getGoogleCallback)
 
 route.get('/shop', userController.getShop);
 
-
 route.get('/logout', userMiddlewares.checkSession, authController.getLogout);
+
+
 
 export default route;

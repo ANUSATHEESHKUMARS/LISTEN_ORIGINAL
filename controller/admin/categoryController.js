@@ -1,5 +1,7 @@
 import Category from '../../models/categoryModels.js';
 
+
+
 const categoryController = {
     // Get all categories
     getCategories: async (req, res) => {
