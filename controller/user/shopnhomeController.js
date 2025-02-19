@@ -1,7 +1,6 @@
 import Product from '../../models/productModel.js'
 import Category from '../../models/categoryModels.js';
 
-
 const getHome = async (req, res) => {
     try {
         // Get IDs of active categories
@@ -19,15 +18,10 @@ const getHome = async (req, res) => {
         .sort({ createdAt: -1 })
         .limit(5);
         
-        // Filter out products where category wasn't populated (extra safety check)
+        // Filter out products where category wasn't populated
         const filteredProducts = products.filter(product => product.categoriesId);
         
-        // Fetch all active offers
-        
-        
-        
-        
-        console.log('products',filteredProducts);
+        console.log('products', filteredProducts);
         res.render('user/home', { 
             products: filteredProducts,
             title: 'Home'
@@ -47,17 +41,15 @@ const getShop = async (req, res) => {
         const limit = 12;
         const skip = (page - 1) * limit;
 
-        // Build filter query - Add isActive check for both product and category
+        // Build filter query
         const filter = { 
             isActive: true,
-            // Add condition to check for active categories
             $expr: {
                 $and: [
                     { $eq: ["$isActive", true] },
                     {
                         $in: [
                             "$categoriesId",
-                            // Subquery to get IDs of active categories
                             await Category.find({ isActive: true }).distinct('_id')
                         ]
                     }
@@ -71,11 +63,6 @@ const getShop = async (req, res) => {
                 { productName: { $regex: req.query.search, $options: 'i' } },
                 { brand: { $regex: req.query.search, $options: 'i' } }
             ];
-        }
-
-        // Add gender filter
-        if (req.query.gender) {
-            filter.gender = req.query.gender;
         }
 
         // Add color filter
@@ -116,50 +103,29 @@ const getShop = async (req, res) => {
                 sortQuery = { createdAt: -1 };
         }
 
-        // Modify the product query to include category active check
+        // Fetch products
         const products = await Product.find(filter)
             .populate({
                 path: 'categoriesId',
-                match: { isActive: true } // Only populate active categories
+                match: { isActive: true }
             })
             .sort(sortQuery)
             .skip(skip)
             .limit(limit);
 
-        // Filter out products where category wasn't populated (inactive categories)
+        // Filter out products where category wasn't populated
         const filteredProducts = products.filter(product => product.categoriesId);
 
-        // Update total count for pagination based on filtered products
+        // Get total count for pagination
         const totalProducts = await Product.countDocuments(filter);
         const totalPages = Math.ceil(totalProducts / limit);
 
-        // Fetch active offers
-        const offers = await Offer.find({
-            status: 'active',
-            startDate: { $lte: new Date() },
-            endDate: { $gte: new Date() }
-        });
-
-        // Process products with offers
-        const processedProducts = filteredProducts.map(product => {
-            const productOffer = offers.find(offer => 
-                offer.productIds && offer.productIds.some(id => id.equals(product._id))
-            );
-            
-            const categoryOffer = offers.find(offer => 
-                offer.categoryId && offer.categoryId.equals(product.categoriesId._id)
-            );
-
-            const discountPrice = calculateFinalPrice(product, categoryOffer, productOffer);
-
-            return {
-                ...product.toObject(),
-                price: product.price,
-                discountPrice: discountPrice,
-                hasDiscount: discountPrice < product.price,
-                discountPercentage: Math.round((product.price - discountPrice) / product.price * 100)
-            };
-        });
+        // Process products
+        const processedProducts = filteredProducts.map(product => ({
+            ...product.toObject(),
+            price: product.price,
+            discountPrice: product.price // Set discount price same as regular price for now
+        }));
 
         if (req.xhr) {
             return res.json({
@@ -202,9 +168,7 @@ const getShop = async (req, res) => {
     }
 };
 
-
-export default
- {
+export default {
     getHome,
-    getShop, 
+    getShop,
 }

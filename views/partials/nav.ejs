@@ -1,25 +1,23 @@
-<div class="fixed z-50 top-0 w-full h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200">
+<div class="fixed z-50 top-0 w-full h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6 bg-gray-900 text-white backdrop-blur-sm border-b border-gray-700">
   <!-- Mobile Menu Button -->
   <div class="lg:hidden">
-    <button id="menu-toggle" class="p-1.5 sm:p-2 rounded-lg text-slate-700 hover:bg-gray-100/80 transition-colors">
+    <button id="menu-toggle" class="p-1.5 sm:p-2 rounded-lg text-white hover:bg-gray-100/80 transition-colors">
       <i class="fa-solid fa-bars text-xl sm:text-2xl"></i>
     </button>
   </div>
 
-  <!-- Left Side (Nav Links) -->
-  <nav class="hidden lg:flex items-center space-x-8">
-    <a href="/home" class="text-sm font-medium text-slate-700 hover:text-black transition-colors">Home</a>
-    <a href="/shop" class="text-sm font-medium text-slate-700 hover:text-black transition-colors">Shop</a>
-    <a href="#" class="text-sm font-medium text-slate-700 hover:text-black transition-colors">Contact</a>
-    <a href="#" class="text-sm font-medium text-slate-700 hover:text-black transition-colors">About</a>
+  <!-- Centered Navigation Links -->
+  <nav class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center space-x-8">
+    <a href="/home" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">Home</a>
+    <a href="/shop" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">Shop</a>
+    <a href="#" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">Contact</a>
+    <a href="#" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">About</a>
   </nav>
 
-  <!-- Center (Logo) -->
-  <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+  <!-- Left Side (Logo) -->
+  <div class="flex items-center">
     <img src="images/logo.png" alt="logo" class="h-8 sm:h-10"/> 
   </div>
-
-  
 </div>
 
 <!-- Mobile Menu Overlay -->
@@ -29,10 +27,10 @@
   <!-- Mobile Menu Panel -->
   <div class="fixed top-14 sm:top-16 left-0 w-full max-w-sm bg-white border-r border-gray-200 h-screen transform transition-transform duration-300 ease-in-out">
     <nav class="flex flex-col p-4 space-y-2">
-      <a href="/home" class="p-3 text-sm font-medium text-slate-700 hover:bg-gray-50 rounded-lg transition-colors">Home</a>
-      <a href="/shop" class="p-3 text-sm font-medium text-slate-700 hover:bg-gray-50 rounded-lg transition-colors">Shop</a>
-      <a href="#" class="p-3 text-sm font-medium text-slate-700 hover:bg-gray-50 rounded-lg transition-colors">Contact</a>
-      <a href="#" class="p-3 text-sm font-medium text-slate-700 hover:bg-gray-50 rounded-lg transition-colors">About</a>
+      <a href="/home" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">Home</a>
+      <a href="/shop" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">Shop</a>
+      <a href="#" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">Contact</a>
+      <a href="#" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">About</a>
     </nav>
   </div>
 </div>
