@@ -43,6 +43,6 @@ route.get('/shop', userController.getShop);
 
 route.get('/logout', userMiddlewares.checkSession, authController.getLogout);
 
-
+route.get('/about',authController.getabout)
 
 export default route;

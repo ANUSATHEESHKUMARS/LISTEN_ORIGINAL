@@ -10,7 +10,22 @@ const saltRounds = 10;
 
 dotenv.config()
 
+// controller/user/authController.js
+// controller/user/authController.js
 
+// controller/user/authController.js
+
+export const getabout = async (req, res) => {
+    try {
+        // Add some logging to debug
+        console.log('Rendering about page');
+        console.log('Views directory:', req.app.get('views'));
+        res.render('user/about');
+    } catch (error) {
+        console.error('Error rendering about page:', error);
+        res.status(500).send('Internal Server Error');
+    }
+};
 
 const getSignUp = (req, res) => {
     try {
@@ -554,6 +569,7 @@ export default {
     getGoogle,
     getGoogleCallback,
     getLogout,
+    getabout
   
 
 

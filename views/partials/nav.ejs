@@ -10,12 +10,22 @@
   <nav class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center space-x-8">
     <a href="/home" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">Home</a>
     <a href="/shop" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">Shop</a>
-    <a href="#" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">Contact</a>
-    <a href="#" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">About</a>
+    <a href="/contact" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">Contact</a>
+    <a href="about" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">About</a>
   </nav>
 
-  <!-- Left Side (Logo) -->
-  <div class="flex items-center">
+  <!-- Right Side (Logo and Auth Buttons) -->
+  <div class="flex items-center space-x-4 " id="loginButtons">
+    <!-- Auth Buttons -->
+    <div class="flex items-center space-x-2" id="loginButtons">
+      <a href="/user/login" class="text-sm font-medium text-white hover:text-gray-300 px-3 py-1.5 rounded-lg transition-colors">
+        Login
+      </a>
+      <a href="/user/signup" class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg transition-colors">
+        Sign Up
+      </a>
+    </div>
+    <!-- Logo -->
     <img src="images/logo.png" alt="logo" class="h-8 sm:h-10"/> 
   </div>
 </div>
@@ -29,8 +39,20 @@
     <nav class="flex flex-col p-4 space-y-2">
       <a href="/home" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">Home</a>
       <a href="/shop" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">Shop</a>
-      <a href="#" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">Contact</a>
-      <a href="#" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">About</a>
+      <a href="/signup" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">Contact</a>
+      <a href="/about" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">About</a>
+      
+      <!-- Auth Buttons in Mobile Menu -->
+      <div class="border-t border-gray-200 mt-2 pt-2" >
+        <a href="/user/login" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors flex items-center">
+          <i class="fa-solid fa-sign-in-alt mr-2"></i>
+          Login
+        </a>
+        <a href="/user/signup" class="p-3 mt-1 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center justify-center">
+          <i class="fa-solid fa-user-plus mr-2"></i>
+          Sign Up
+        </a>
+      </div>
     </nav>
   </div>
 </div>
@@ -39,7 +61,12 @@
   const menuToggle = document.getElementById("menu-toggle");
   const mobileMenu = document.getElementById("mobile-menu");
   const menuPanel = mobileMenu.querySelector('div');
+
+  const loginButtons = document.getElementById("loginButtons")
+
   let isMenuOpen = false;
+  let user = true;
+  //
 
   menuToggle.addEventListener("click", () => {
     isMenuOpen = !isMenuOpen;

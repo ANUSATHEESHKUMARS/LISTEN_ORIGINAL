@@ -1,0 +1,103 @@
+<!-- views/about.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>About Us - Listen</title>
+        <!-- Update CSS path -->
+        <link rel="stylesheet" href="/user/tailwindcss/output.css" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+            integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        />
+    </head>
+<body class="bg-gray-50">
+    <%- include("../partials/nav") %>
+
+    <!-- About Hero Section -->
+    <section class="pt-24 pb-12 bg-gray-900 text-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="text-4xl sm:text-5xl font-bold mb-6">About Listen</h1>
+                <p class="text-lg text-gray-300">Discover the perfect sound for every moment</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <!-- Our Story -->
+                <div class="mb-16">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
+                    <div class="prose prose-lg text-gray-600 max-w-none">
+                        <p class="mb-6">
+                            At Listen, we believe that great sound has the power to enhance every moment of your life. Our journey began with a simple mission: to provide high-quality audio products that deliver exceptional sound experiences to our customers.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Sound Quality Section -->
+                <div class="bg-white rounded-2xl p-8 shadow-sm mb-16">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                        Powerful Sound Drivers for Clear HD Sound
+                    </h2>
+                    <div class="prose prose-lg text-gray-600">
+                        <p class="mb-6">
+                            Immerse yourself in a range of Hammer headphones that are designed ergonomically, especially for you! Our selection of headphones comes with powerful sound drivers that are designed to deliver crystal-clear HD sound, providing an immersive listening experience across various genres of music, movies, and gaming.
+                        </p>
+                        <p class="mb-6">
+                            Our Headphones with powerful sound are often equipped with large audio drivers, typically around 40mm or larger. If you like to enjoy bass-heavy music genres like EDM or hip-hop, then our headphones with powerful drivers that deliver deep, punchy bass without overwhelming the rest of the audio spectrum, are a perfect pick.
+                        </p>
+                        <p>
+                            While emphasizing powerful bass, Hammer high-quality headphones maintain a balanced sound signature, ensuring that all frequencies are well-represented for a natural and immersive listening experience.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Features Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fas fa-headphones text-2xl text-emerald-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Premium Sound Quality</h3>
+                        <p class="text-gray-600">Experience music like never before with our high-fidelity audio technology.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fas fa-battery-full text-2xl text-emerald-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Long Battery Life</h3>
+                        <p class="text-gray-600">Enjoy uninterrupted music with our long-lasting battery performance.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fas fa-wifi text-2xl text-emerald-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Wireless Freedom</h3>
+                        <p class="text-gray-600">Move freely with our advanced Bluetooth connectivity.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
+                            <i class="fas fa-heart text-2xl text-emerald-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Comfort First</h3>
+                        <p class="text-gray-600">Designed for extended wear with premium comfort materials.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <%- include("../partials/footer") %>
+</body>
+</html>
