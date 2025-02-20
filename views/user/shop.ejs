@@ -58,11 +58,14 @@
                 <label for="sortFilter" class="block text-gray-700 font-medium mb-2">Sort By</label>
                 <select id="sortFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-2 focus:border-gray-900">
                   <option value="default">Default</option>
+                  <option value="newArrivals">New Arrivals</option>
                   <option value="priceLowToHigh">Price: Low to High</option>
                   <option value="priceHighToLow">Price: High to Low</option>
                   <option value="ratingHighToLow">Rating: High to Low</option>
-                  <option value="newArrivals">New Arrivals</option>
-                </select>
+                  <option value="nameAZ">Name: A to Z</option>
+                  <option value="nameZA">Name: Z to A</option>
+                  <option value="popularity">Most Popular</option>
+              </select>
               </div>
 
               <div>
@@ -182,20 +185,29 @@
           const nextPageBtn = document.getElementById('nextPage');
           const currentPageSpan = document.getElementById('currentPage');
           const totalPagesSpan = document.getElementById('totalPages');
-
+      
           // Store original products data
           let products = <%- JSON.stringify(products) %>;
           const originalProducts = [...products];
-
+      
+          // Function to show loading state
+          function showLoading() {
+              productGrid.innerHTML = `
+                  <div class="col-span-full flex justify-center py-8">
+                      <div class="loading-spinner"></div>
+                  </div>
+              `;
+          }
+      
           // Function to apply all filters
           async function applyFilters() {
               currentPage = 1; // Reset to first page when filters change
               await fetchProducts(currentPage);
           }
-
-          // Function to render products
+      
+          // Enhanced function to render products
           function renderProducts(productsToRender) {
-              if (productsToRender.length === 0) {
+              if (!productsToRender || productsToRender.length === 0) {
                   productGrid.innerHTML = `
                       <div class="col-span-full text-center py-8">
                           <p class="text-gray-500">No products found matching your criteria</p>
@@ -203,10 +215,11 @@
                   `;
                   return;
               }
-
-              productGrid.innerHTML = productsToRender.map(product => `
+      
+              productGrid.innerHTML = productsToRender.map((product, index) => `
                   <a href="/product/${product._id}" 
-                     class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative">
+                     class="product-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 relative"
+                     style="animation-delay: ${index * 0.1}s">
                       <div class="relative aspect-[4/5] overflow-hidden">
                           <img
                               src="${product.imageUrl[0]}"
@@ -214,7 +227,7 @@
                               class="w-full h-full object-cover hover:scale-105 transition-transform duration-300 ${product.stock === 0 ? 'opacity-60' : ''}"
                               loading="lazy"
                           >
-                          ${product.discountPrice < product.price ? `
+                          ${product.discountPrice && product.discountPrice < product.price ? `
                               <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-0.5 rounded text-xs font-medium">
                                   -${Math.round((product.price - product.discountPrice) / product.price * 100)}%
                               </div>
@@ -227,13 +240,13 @@
                               </div>
                           ` : ''}
                       </div>
-                      <div class="p-2">
+                      <div class="p-4">
                           <h2 class="text-gray-800 text-sm font-medium truncate">
                               ${product.productName}
                           </h2>
                           <div class="flex items-baseline gap-1 mt-1">
-                              <span class="text-base font-bold text-gray-900">₹${product.discountPrice}</span>
-                              ${product.discountPrice < product.price ? `
+                              <span class="text-base font-bold text-gray-900">₹${product.discountPrice || product.price}</span>
+                              ${product.discountPrice && product.discountPrice < product.price ? `
                                   <span class="text-xs text-gray-500 line-through">₹${product.price}</span>
                               ` : ''}
                           </div>
@@ -241,77 +254,32 @@
                   </a>
               `).join('');
           }
-
-          // Populate color filter options
-          function populateFilterOptions() {
-              // Get unique colors
-              const colors = [...new Set(originalProducts.map(p => p.color))].filter(Boolean).sort();
-              
-              // Clear existing options except the first one (All)
-              while (colorFilter.options.length > 1) {
-                  colorFilter.remove(1);
-              }
-
-              // Add color options
-              colors.forEach(color => {
-                  const option = new Option(
-                      color.charAt(0).toUpperCase() + color.slice(1).toLowerCase(), 
-                      color
-                  );
-                  colorFilter.add(option);
-              });
+      
+          // Function to update pagination UI
+          function updatePagination(paginationData) {
+              currentPage = paginationData.currentPage;
+              totalPages = paginationData.totalPages;
+              currentPageSpan.textContent = currentPage;
+              totalPagesSpan.textContent = totalPages;
+              prevPageBtn.disabled = !paginationData.hasPrevPage;
+              nextPageBtn.disabled = !paginationData.hasNextPage;
           }
-
-          // Event listeners
-          searchButton.addEventListener('click', applyFilters);
-          searchInput.addEventListener('keyup', (e) => {
-              if (e.key === 'Enter') applyFilters();
-          });
-          
-          // Add input event listeners for immediate filtering
-          [sortFilter, colorFilter, stockFilter].forEach(filter => {
-              filter.addEventListener('change', applyFilters);
-          });
-
-          // Add debounced event listeners for price inputs
-          let priceTimeout;
-          [minPriceFilter, maxPriceFilter].forEach(input => {
-              input.addEventListener('input', () => {
-                  clearTimeout(priceTimeout);
-                  priceTimeout = setTimeout(applyFilters, 500);
-              });
-          });
-
-          // Reset filters
-          resetButton.addEventListener('click', async () => {
-              searchInput.value = '';
-              sortFilter.value = 'default';
-              colorFilter.value = '';
-              minPriceFilter.value = '';
-              maxPriceFilter.value = '';
-              stockFilter.value = '';
-              await fetchProducts(1);
-          });
-
-          // Add pagination state
-          let currentPage = 1;
-          let totalPages = 1;
-
-          // Function to fetch products with pagination
+      
+          // Enhanced fetch products function
           async function fetchProducts(page = 1) {
               try {
-                  // Build query string with all current filters
+                  showLoading();
+      
                   const queryParams = new URLSearchParams({
                       page,
                       search: searchInput.value,
                       sort: sortFilter.value,
-                      gender: genderFilter.value,
                       color: colorFilter.value,
                       minPrice: minPriceFilter.value,
                       maxPrice: maxPriceFilter.value,
                       stock: stockFilter.value
                   });
-
+      
                   const response = await fetch(`/shop?${queryParams.toString()}`, {
                       headers: {
                           'X-Requested-With': 'XMLHttpRequest'
@@ -322,40 +290,94 @@
                   
                   const data = await response.json();
                   
-                  // Update pagination state
-                  currentPage = data.pagination.currentPage;
-                  totalPages = data.pagination.totalPages;
-                  
-                  // Update UI
-                  currentPageSpan.textContent = currentPage;
-                  totalPagesSpan.textContent = totalPages;
-                  prevPageBtn.disabled = !data.pagination.hasPrevPage;
-                  nextPageBtn.disabled = !data.pagination.hasNextPage;
-                  
-                  // Render products
+                  updatePagination(data.pagination);
                   renderProducts(data.products);
                   
-                  // Scroll to top of product grid smoothly
+                  // Update URL with current filters
+                  const url = new URL(window.location);
+                  queryParams.forEach((value, key) => {
+                      if (value) {
+                          url.searchParams.set(key, value);
+                      } else {
+                          url.searchParams.delete(key);
+                      }
+                  });
+                  window.history.pushState({}, '', url);
+      
+                  // Smooth scroll to top of product grid
                   productGrid.scrollIntoView({ behavior: 'smooth' });
+      
               } catch (error) {
                   console.error('Error fetching products:', error);
+                  productGrid.innerHTML = `
+                      <div class="col-span-full text-center py-8">
+                          <p class="text-red-500">Error loading products. Please try again.</p>
+                          <button onclick="fetchProducts(1)" class="mt-4 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700">
+                              Retry
+                          </button>
+                      </div>
+                  `;
               }
           }
-
-          // Add pagination event listeners
+      
+          // Populate color filter options
+          function populateFilterOptions() {
+              const colors = [...new Set(originalProducts.map(p => p.color))].filter(Boolean).sort();
+              
+              while (colorFilter.options.length > 1) {
+                  colorFilter.remove(1);
+              }
+      
+              colors.forEach(color => {
+                  const option = new Option(
+                      color.charAt(0).toUpperCase() + color.slice(1).toLowerCase(), 
+                      color
+                  );
+                  colorFilter.add(option);
+              });
+          }
+      
+          // Event listeners
+          searchButton.addEventListener('click', applyFilters);
+          searchInput.addEventListener('keyup', (e) => {
+              if (e.key === 'Enter') applyFilters();
+          });
+          
+          [sortFilter, colorFilter, stockFilter].forEach(filter => {
+              filter.addEventListener('change', applyFilters);
+          });
+      
+          let priceTimeout;
+          [minPriceFilter, maxPriceFilter].forEach(input => {
+              input.addEventListener('input', () => {
+                  clearTimeout(priceTimeout);
+                  priceTimeout = setTimeout(applyFilters, 500);
+              });
+          });
+      
+          resetButton.addEventListener('click', async () => {
+              searchInput.value = '';
+              sortFilter.value = 'default';
+              colorFilter.value = '';
+              minPriceFilter.value = '';
+              maxPriceFilter.value = '';
+              stockFilter.value = '';
+              await fetchProducts(1);
+          });
+      
           prevPageBtn.addEventListener('click', () => {
               if (currentPage > 1) {
                   fetchProducts(currentPage - 1);
               }
           });
-
+      
           nextPageBtn.addEventListener('click', () => {
               if (currentPage < totalPages) {
                   fetchProducts(currentPage + 1);
               }
           });
-
-          // Initialize pagination
+      
+          // Initialize
           const initialPagination = <%- JSON.stringify(pagination || { currentPage: 1, totalPages: 1 }) %>;
           currentPage = initialPagination.currentPage;
           totalPages = initialPagination.totalPages;
@@ -363,10 +385,18 @@
           totalPagesSpan.textContent = totalPages;
           prevPageBtn.disabled = !initialPagination.hasPrevPage;
           nextPageBtn.disabled = !initialPagination.hasNextPage;
-
-          // Initialize
+      
           populateFilterOptions();
+      
+          // Restore filter values from URL if they exist
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.has('search')) searchInput.value = urlParams.get('search');
+          if (urlParams.has('sort')) sortFilter.value = urlParams.get('sort');
+          if (urlParams.has('color')) colorFilter.value = urlParams.get('color');
+          if (urlParams.has('minPrice')) minPriceFilter.value = urlParams.get('minPrice');
+          if (urlParams.has('maxPrice')) maxPriceFilter.value = urlParams.get('maxPrice');
+          if (urlParams.has('stock')) stockFilter.value = urlParams.get('stock');
       });
-    </script>
+      </script>
   </body>
 </html>

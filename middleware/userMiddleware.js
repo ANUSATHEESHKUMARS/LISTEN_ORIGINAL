@@ -22,6 +22,8 @@ const checkSession = async (req, res, next) => {
             return res.redirect('/login?message=Your+account+has+been+blocked&alertType=error');
         }
 
+        // Attach user to response locals for views
+        res.locals.user = user;
         next();
 
     } catch (error) {
@@ -35,14 +37,35 @@ const isLogin = async (req, res, next) => {
         if (req.session.user) {
             return res.redirect('/home');
         }
+        // Clear user from response locals
+        res.locals.user = null;
         next();
     } catch (error) {
         console.error('Login Check Error:', error);
+        res.locals.user = null;
+        next();
+    }
+}
+
+// Add new middleware to attach user to all routes
+const attachUser = async (req, res, next) => {
+    try {
+        if (req.session.user) {
+            const user = await userModel.findById(req.session.user);
+            res.locals.user = user || null;
+        } else {
+            res.locals.user = null;
+        }
+        next();
+    } catch (error) {
+        console.error('Attach User Error:', error);
+        res.locals.user = null;
         next();
     }
 }
 
 export default { 
     isLogin, 
-    checkSession 
+    checkSession,
+    attachUser
 }

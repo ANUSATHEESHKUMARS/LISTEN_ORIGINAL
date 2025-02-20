@@ -20,12 +20,8 @@
   </head>
 
   <body class="bg-gray-300">
-    <!------------ Navbar ---------->
-    <%- include("../partials/nav") %>
-    <div class="mt-16"></div>
-
     <!-- Centered Login Card -->
-    <div class="mt-28 flex items-center justify-center my-16 px-4 sm:px-8">
+    <div class="min-h-screen flex items-center justify-center px-4 sm:px-8">
       <div
         class="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl border border-black/20"
       >
@@ -67,6 +63,7 @@
             <a href="/user/signup" class="hover:underline">Signup</a>
             <a href="/forgot-password" class="hover:underline">Forgot Password?</a>
           </div>
+
           <!-- Submit Button -->
           <button type="submit" class="w-full py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800">
             Login
@@ -90,10 +87,8 @@
       </div>
     </div>
 
-    <!------------- Footer ------------>
-    <%- include("../partials/footer") %>
-
     <script>
+    // Your existing JavaScript remains unchanged
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
         const passwordToggle = document.querySelector('.fa-eye');
@@ -105,18 +100,14 @@
         const showError = (element, message) => {
             element.textContent = message;
             element.classList.remove('hidden');
-            // Add red border to input
             element.previousElementSibling.classList.add('border-red-500');
         };
 
-        // Helper function to hide error
         const hideError = (element) => {
             element.classList.add('hidden');
-            // Remove red border from input
             element.previousElementSibling.classList.remove('border-red-500');
         };
 
-        // Clear errors when typing
         document.getElementById('email').addEventListener('input', () => {
             hideError(emailError);
         });
@@ -125,7 +116,6 @@
             hideError(passwordError);
         });
 
-        // Toggle password visibility
         passwordToggle.addEventListener('click', function() {
             const input = document.getElementById('password');
             if (input.type === 'password') {
@@ -139,7 +129,6 @@
             }
         });
 
-        // Form validation and submission
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -147,11 +136,9 @@
             const password = document.getElementById('password').value;
             let hasErrors = false;
 
-            // Clear previous errors
             hideError(emailError);
             hideError(passwordError);
 
-            // Validation
             if (!email) {
                 showError(emailError, 'Email is required');
                 hasErrors = true;
@@ -167,7 +154,6 @@
 
             if (hasErrors) return;
 
-            // Show loading spinner
             loadingSpinner.classList.remove('hidden');
 
             try {
@@ -181,19 +167,16 @@
 
                 const data = await response.json();
                 
-                // Hide loading spinner
                 loadingSpinner.classList.add('hidden');
 
                 if (data.success) {
                     window.location.href = data.redirectUrl || '/home';
                 } else {
-                    // Show error message in appropriate field
                     if (data.message.toLowerCase().includes('email')) {
                         showError(emailError, data.message);
                     } else if (data.message.toLowerCase().includes('password')) {
                         showError(passwordError, data.message);
                     } else {
-                        // If message doesn't specifically mention email or password
                         showError(emailError, data.message);
                     }
                 }

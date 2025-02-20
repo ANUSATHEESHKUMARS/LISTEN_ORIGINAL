@@ -33,7 +33,10 @@ const productSchema = new mongoose.Schema({
     price: {
         type: Number,
         required: true,
-        min: 0
+        min: 0,
+        default : function(){
+            return this.price;
+        }
     },
     stock: {
         type: Number,

@@ -45,4 +45,9 @@ route.get('/logout', userMiddlewares.checkSession, authController.getLogout);
 
 route.get('/about',authController.getabout)
 
+// Add this new route for product details
+
+// routes/productRoutes.js
+
+
 export default route;

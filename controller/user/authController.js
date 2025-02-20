@@ -548,9 +548,10 @@ const getGoogleCallback = (req, res) => {
 
 const getLogout = (req, res) => {
     req.session.destroy(() => {
-        res.redirect('/login');
-    })
+        res.redirect('/user/login');  // Change render to redirect
+    });
 }
+
 
 export default {
     getSignUp,

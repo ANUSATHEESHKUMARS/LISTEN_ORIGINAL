@@ -55,6 +55,22 @@
       .product-thumbnails::-webkit-scrollbar-thumb:hover {
         background: #555;
       }
+      .zoom-container {
+    position: relative;
+}
+
+.zoom-container a {
+    display: block;
+    cursor: pointer;
+}
+
+.zoom-container:hover:not(.zooming) {
+    cursor: pointer;
+}
+
+.zooming {
+    cursor: zoom-out;
+}
     </style>
   </head>
 
@@ -82,27 +98,36 @@
             <div class="space-y-4">
               <!-- Main Image with Zoom -->
               <div class="bg-gray-50 rounded-2xl p-4">
-                <div id="imageZoom" class="aspect-square" style="--url: url(<%= product.imageUrl[0] %>); --zoom-x: 0%; --zoom-y: 0%; --display: none;">
-                  <img 
-                    id="main-product-image"
-                    src="<%= product.imageUrl[0] %>"
-                    alt="<%= product.productName %>"
-                    class="w-full h-full object-cover rounded-xl"
-                  />
-                </div>
-              </div>
+                <a href="/product/details/<%= product._id %>" class="block">
+                    <div id="imageZoom" class="aspect-square" style="--url: url(<%= product.imageUrl[0] %>); --zoom-x: 0%; --zoom-y: 0%; --display: none;">
+                        <img 
+                            id="main-product-image"
+                            src="<%= product.imageUrl[0] %>"
+                            alt="<%= product.productName %>"
+                            class="w-full h-full object-cover rounded-xl"
+                        />
+                    </div>
+                </a>
+             </div>
               
               <!-- Thumbnails -->
               <div class="product-thumbnails flex space-x-4 overflow-x-auto py-2">
                 <% product.imageUrl.forEach((image, index) => { %>
-                  <img 
-                    src="<%= image %>" 
-                    alt="<%= product.productName %> view <%= index + 1 %>"
-                    class="w-20 h-20 rounded-xl cursor-pointer object-cover border-2 border-transparent hover:border-gray-900 transition-all"
-                    onclick="updateMainImage('<%= image %>')"
-                  />
+                    <div class="relative">
+                        <img 
+                            src="<%= image %>" 
+                            alt="<%= product.productName %> view <%= index + 1 %>"
+                            class="w-20 h-20 rounded-xl cursor-pointer object-cover border-2 border-transparent hover:border-gray-900 transition-all"
+                            onclick="updateMainImage('<%= image %>')"
+                        />
+                        <a 
+                            href="/product/details/<%= product._id %>" 
+                            class="absolute inset-0 z-10 opacity-0"
+                            aria-label="View product details"
+                        ></a>
+                    </div>
                 <% }) %>
-              </div>
+            </div>
             </div>
 
             <!-- Product Info Section -->

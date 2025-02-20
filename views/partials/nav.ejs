@@ -15,19 +15,30 @@
   </nav>
 
   <!-- Right Side (Logo and Auth Buttons) -->
-  <div class="flex items-center space-x-4 " id="loginButtons">
-    <!-- Auth Buttons -->
-    <div class="flex items-center space-x-2" id="loginButtons">
-      <a href="/user/login" class="text-sm font-medium text-white hover:text-gray-300 px-3 py-1.5 rounded-lg transition-colors">
-        Login
-      </a>
-      <a href="/user/signup" class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg transition-colors">
-        Sign Up
-      </a>
+  <div class="flex items-center justify-between w-full">
+    <!-- Logo on the left -->
+    <div class="flex items-center">
+        <img src="images/logo.png" alt="logo" class="h-8 sm:h-10"/>
     </div>
-    <!-- Logo -->
-    <img src="images/logo.png" alt="logo" class="h-8 sm:h-10"/> 
-  </div>
+
+    <!-- Auth Buttons on the right -->
+    <div class="flex items-center space-x-4" id="loginButtons">
+        <div class="flex items-center space-x-2" id="authButtons">
+            <a href="/user/login" class="text-sm font-medium text-white hover:text-gray-300 px-3 py-1.5 rounded-lg transition-colors">
+                Login
+            </a>
+            <a href="/user/signup" class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg transition-colors">
+                Sign Up
+            </a>
+        </div>
+        <!-- User Profile Button (Hidden by default) -->
+        <div class="hidden items-center space-x-2" id="userProfile">
+            <button class="text-sm font-medium text-white hover:text-gray-300 px-3 py-1.5 rounded-lg transition-colors">
+                <i class="fa-solid fa-user mr-2"></i>Profile
+            </button>
+        </div>
+    </div>
+</div>
 </div>
 
 <!-- Mobile Menu Overlay -->
@@ -43,7 +54,7 @@
       <a href="/about" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">About</a>
       
       <!-- Auth Buttons in Mobile Menu -->
-      <div class="border-t border-gray-200 mt-2 pt-2" >
+      <div class="border-t border-gray-200 mt-2 pt-2" id="mobileAuthButtons">
         <a href="/user/login" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors flex items-center">
           <i class="fa-solid fa-sign-in-alt mr-2"></i>
           Login
@@ -51,6 +62,13 @@
         <a href="/user/signup" class="p-3 mt-1 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors flex items-center justify-center">
           <i class="fa-solid fa-user-plus mr-2"></i>
           Sign Up
+        </a>
+      </div>
+      <!-- Mobile User Profile (Hidden by default) -->
+      <div class="hidden border-t border-gray-200 mt-2 pt-2" id="mobileUserProfile">
+        <a href="/user/profile" class="p-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg transition-colors flex items-center">
+          <i class="fa-solid fa-user mr-2"></i>
+          Profile
         </a>
       </div>
     </nav>
@@ -61,12 +79,37 @@
   const menuToggle = document.getElementById("menu-toggle");
   const mobileMenu = document.getElementById("mobile-menu");
   const menuPanel = mobileMenu.querySelector('div');
-
-  const loginButtons = document.getElementById("loginButtons")
+  
+  // Get auth-related elements
+  const authButtons = document.getElementById("authButtons");
+  const userProfile = document.getElementById("userProfile");
+  const mobileAuthButtons = document.getElementById("mobileAuthButtons");
+  const mobileUserProfile = document.getElementById("mobileUserProfile");
 
   let isMenuOpen = false;
-  let user = true;
-  //
+  
+  // Check if user is authenticated (you'll need to set this based on your auth logic)
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+  // Function to update UI based on auth status
+  function updateAuthUI() {
+    if (isAuthenticated) {
+      // Hide auth buttons and show profile
+      authButtons.classList.add('hidden');
+      userProfile.classList.remove('hidden');
+      mobileAuthButtons.classList.add('hidden');
+      mobileUserProfile.classList.remove('hidden');
+    } else {
+      // Show auth buttons and hide profile
+      authButtons.classList.remove('hidden');
+      userProfile.classList.add('hidden');
+      mobileAuthButtons.classList.remove('hidden');
+      mobileUserProfile.classList.add('hidden');
+    }
+  }
+
+  // Call updateAuthUI when page loads
+  updateAuthUI();
 
   menuToggle.addEventListener("click", () => {
     isMenuOpen = !isMenuOpen;
@@ -95,4 +138,15 @@
       menuIcon.classList.add('fa-bars');
     }
   });
+
+  // Example login/logout functions (adjust these based on your auth system)
+  function login() {
+    localStorage.setItem('isAuthenticated', 'true');
+    updateAuthUI();
+  }
+
+  function logout() {
+    localStorage.setItem('isAuthenticated', 'false');
+    updateAuthUI();
+  }
 </script>

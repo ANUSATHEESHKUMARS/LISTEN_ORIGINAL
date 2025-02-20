@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"> cvvvvvvv
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,22 +12,12 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-
-    
   </head>
 
   <body class="bg-gray-300">
-    <!------------ Navbar ---------->
-    <%- include("../partials/nav") %>
-    <div class="mt-16"></div>
-
     <!-- Centered Signup Card -->
-    <div
-      class="mt-28 flex items-center justify-center my-16 px-4 sm:px-6 lg:px-8"
-    >
-      <div
-        class="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl border border-black/20"
-      >
+    <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div class="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl border border-black/20">
         <h2 class="text-2xl font-semibold text-center mb-6">Signup</h2>
 
         <!-- Signup Form -->
@@ -49,10 +39,7 @@
               minlength="3"
               maxlength="50"
             />
-            <p
-              id="firstNameError"
-              class="text-[#9B1C1C] text-xs mt-1 hidden"
-            ></p>
+            <p id="firstNameError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
           </div>
 
           <!-- Last Name Input -->
@@ -66,10 +53,7 @@
               minlength="1"
               maxlength="50"
             />
-            <p
-              id="lastNameError"
-              class="text-[#9B1C1C] text-xs mt-1 hidden"
-            ></p>
+            <p id="lastNameError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
           </div>
 
           <!-- Email Input -->
@@ -98,10 +82,7 @@
             <button type="button" class="absolute right-3 top-3 text-gray-600">
               <i class="fa-regular fa-eye"></i>
             </button>
-            <p
-              id="passwordError"
-              class="text-[#9B1C1C] text-xs mt-1 hidden"
-            ></p>
+            <p id="passwordError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
           </div>
 
           <!-- Confirm Password Input -->
@@ -118,15 +99,14 @@
             <button type="button" class="absolute right-3 top-3 text-gray-600">
               <i class="fa-regular fa-eye"></i>
             </button>
-            <p
-              id="confirmPasswordError"
-              class="text-[#9B1C1C] text-xs mt-1 hidden"
-            ></p>
+            <p id="confirmPasswordError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
           </div>
+
           <!-- Login Links -->
           <div class="flex justify-between text-sm text-gray-500">
-            <a href="/user/login" class="hover:underline"> Login</a>
+            <a href="/user/login" class="hover:underline">Login</a>
           </div>
+
           <!-- Submit Button -->
           <button
             type="submit"
@@ -137,27 +117,19 @@
         </form>
 
         <!-- General Error Message -->
-        <p
-          id="generalError"
-          class="text-[#9B1C1C] text-xs mt-2 text-center"
-        ></p>
+        <p id="generalError" class="text-[#9B1C1C] text-xs mt-2 text-center"></p>
 
         <!-- Google Sign in -->
         <div id="google-auth-div">
-          <div
-            class="flex justify-center text-center mt-6 text-gray-500 text-sm"
-          >
+          <div class="flex justify-center text-center mt-6 text-gray-500 text-sm">
             Or continue with Google
           </div>
-          <a
-            class="flex justify-center mt-6"
-            href="/auth/google?trigger=signup"
-          >
+          <a class="flex justify-center mt-6" href="/auth/google?trigger=signup">
             <i class="fa-brands fa-google fa-lg" style="color: #b12020"></i>
           </a>
         </div>
 
-        <!-- Add this right after your form -->
+        <!-- Loading Spinner -->
         <div id="loading-spinner" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div class="bg-white p-5 rounded-lg flex flex-col items-center">
             <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-3"></div>
@@ -168,10 +140,7 @@
     </div>
 
     <!-- OTP Modal -->
-    <div
-      id="otpModal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center"
-    >
+    <div id="otpModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
       <div class="bg-white p-8 rounded-lg shadow-xl w-96">
         <h3 class="text-xl font-semibold mb-4">Enter OTP</h3>
         <p class="text-sm text-gray-600 mb-4">
@@ -182,42 +151,15 @@
         <p id="otpError" class="text-[#9B1C1C] text-xs mt-1 mb-3 hidden"></p>
 
         <div class="flex gap-2 mb-4">
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
-          <input
-            type="text"
-            maxlength="1"
-            class="otp-input w-12 h-12 text-center border-2 rounded-lg"
-          />
+          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
         </div>
 
-        <button
-          id="verifyOtp"
-          class="w-full py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800"
-        >
+        <button id="verifyOtp" class="w-full py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800">
           Verify OTP
         </button>
 
@@ -238,9 +180,6 @@
         </div>
       </div>
     </div>
-
-    <!------------- Footer ------------>
-    <%- include("../partials/footer") %>
 
     <script src="/javascript/user/signup.js" defer></script>
   </body>

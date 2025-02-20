@@ -2,6 +2,7 @@ import express from "express"
 import path from 'path'
 import userRoutes from './routes/userRoutes.js'
 import adminRoutes from './routes/adminRoutes.js'
+import productRoutes from './routes/productRoutes.js'
 import connectDB from "./models/db.js"
 import dotenv from "dotenv";
 import session from "express-session";
@@ -73,7 +74,9 @@ app.use(express.static(path.join(process.cwd(),'public')))
 
 app.use('/user', userRoutes)
 app.use('/admin',adminRoutes)
+app.use('/',productRoutes)
 app.use('/',userRoutes)
+
 app.use("*",(req,res) =>{
     res.status(404).render('partials/error')
 })

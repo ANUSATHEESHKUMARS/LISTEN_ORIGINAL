@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Update the CSS path to include /user/ -->
-    <link rel="stylesheet" href="/user/tailwindcss/output.css" />
-    <title>User Signup</title>
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-    />
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Update the CSS path to include /user/ -->
+  <link rel="stylesheet" href="/user/tailwindcss/output.css" />
+  <title>User Signup</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-  <body class="bg-gray-50"> 
-    <%- include("../partials/nav") %>
+
+<body class="bg-gray-50">
+  <%- include("../partials/nav") %>
 
     <!-- Hero Section -->
     <section class="relative mt-14 sm:mt-16">
@@ -32,10 +30,12 @@
               Find your perfect sound companion with our diverse range of earphones
             </p>
             <div class="flex gap-3">
-              <a href="/shop" class="bg-white text-gray-900 px-6 py-2.5 rounded-lg hover:bg-gray-100 transition-colors text-sm flex-1 text-center">
+              <a href="/shop"
+                class="bg-white text-gray-900 px-6 py-2.5 rounded-lg hover:bg-gray-100 transition-colors text-sm flex-1 text-center">
                 Shop Now
               </a>
-              <a href="#featured" class="border border-white text-white px-6 py-2.5 rounded-lg hover:bg-white/10 transition-colors text-sm flex-1 text-center">
+              <a href="#featured"
+                class="border border-white text-white px-6 py-2.5 rounded-lg hover:bg-white/10 transition-colors text-sm flex-1 text-center">
                 View Featured
               </a>
             </div>
@@ -60,25 +60,22 @@
 
       <!-- Desktop Hero (hidden on small screens) -->
       <div class="hidden sm:block h-[90vh] relative overflow-hidden">
-        <img 
-          src="/images/banner-min.jpg" 
-          alt="Listen" 
-          class="w-full h-full object-cover object-center" 
-        />
+        <img src="/images/banner-min.jpg" alt="Listen" class="w-full h-full object-cover object-center" />
         <div class="absolute inset-0 bg-gradient-to-l from-black/70 via-black/50 to-transparent">
           <div class="container mx-auto px-4 h-full flex items-center sm:justify-end">
             <div class="max-w-2xl mx-4 sm:mx-0">
               <span class="text-gray-300 text-sm tracking-wider mb-4 block">WELCOME TO LISTEN</span>
               <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
-Feel the music              </h1>
+                Feel the music </h1>
               <p class="text-gray-200 text-lg mb-8 max-w-lg">
-              like never before
+                like never before
               </p>
               <div class="flex gap-4">
                 <a href="/shop" class="bg-white text-gray-900 px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors">
                   Shop Now
                 </a>
-                <a href="#featured" class="border border-white text-white px-8 py-3 rounded-lg hover:bg-white/10 transition-colors">
+                <a href="#featured"
+                  class="border border-white text-white px-8 py-3 rounded-lg hover:bg-white/10 transition-colors">
                   View Featured
                 </a>
               </div>
@@ -88,113 +85,132 @@ Feel the music              </h1>
       </div>
 
 
-    <!-- Featured Products -->
-    <section id="featured" class="py-16 bg-gray-50">
-      <div class="container mx-auto px-4">
-        <!-- Section Header -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 sm:mb-12">
-          <div class="mb-4 sm:mb-0">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="w-8 h-[2px] bg-gray-900"></span>
-              <span class="text-gray-500 text-sm tracking-wider uppercase">Featured</span>
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900">Latest Arrivals</h2>
-          </div>
-          <a href="/shop" class="group inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-            View Collection 
-            <span class="ml-2 transform transition-transform duration-300 group-hover:translate-x-1">→</span>
-          </a>
-        </div>
-
-        <!-- Products Grid -->
-        <div class="flex overflow-x-auto gap-4 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 sm:gap-6 pb-4 sm:pb-0">
-          <% products.forEach(product => { %>
-          <a href="/product/<%= product._id %>" class="group min-w-[240px] sm:min-w-0">
-            <div class="bg-white rounded-2xl overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300">
-              <!-- Product Image -->
-              <div class="relative aspect-square overflow-hidden bg-gray-100">
-                <img
-                  src="<%= product.imageUrl[0] %>"
-                  alt="<%= product.productName %>"
-                  class="w-full h-full object-cover transform transition-all duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <% if (product.discountPrice < product.price) { %>
-                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-gray-900 px-3 py-1 rounded-full text-xs font-medium">
-                  -<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%
-                </div>
-                <% } %>
-                <!-- Quick View Button -->
-                <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                  <span class="text-white text-sm font-medium">Quick View</span>
-                </div>
+      <!-- Featured Products -->
+      <section id="featured" class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+          <!-- Section Header -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 sm:mb-12">
+            <div class="mb-4 sm:mb-0">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="w-8 h-[2px] bg-gray-900"></span>
+                <span class="text-gray-500 text-sm tracking-wider uppercase">Featured</span>
               </div>
+              <h2 class="text-3xl sm:text-4xl font-bold text-gray-900">Latest Arrivals</h2>
+            </div>
+            <a href="/shop" class="group inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+              View Collection
+              <span class="ml-2 transform transition-transform duration-300 group-hover:translate-x-1">→</span>
+            </a>
+          </div>
 
-              <!-- Product Info -->
-              <div class="p-5">
-                <!-- Brand & Rating -->
-                <div class="flex justify-between items-center mb-2">
-                  <div class="text-sm text-gray-500 font-medium"><%= product.brand %></div>
-                  <div class="flex items-center gap-1">
-                    <i class="fas fa-star text-yellow-400 text-xs"></i>
-                    <span class="text-sm text-gray-500"><%= product.rating %></span>
+
+          <!-- Products Grid -->
+          <div
+            class="flex overflow-x-auto gap-4 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 sm:gap-6 pb-4 sm:pb-0">
+            <% products.forEach(product=> { %>
+              <a href="/product/<%= product._id %>" class="group min-w-[240px] sm:min-w-0">
+                <div
+                  class="bg-gray-900 rounded-2xl overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300">
+                  <!-- Product Image -->
+                  <div class="relative aspect-square overflow-hidden bg-gray-800">
+                    <img src="<%= product.imageUrl[0] %>" alt="<%= product.productName %>"
+                      class="w-full h-full object-cover transform transition-all duration-500 group-hover:scale-105"
+                      loading="lazy" />
+                    <% if (product.discountPrice < product.price) { %>
+                      <div
+                        class="absolute top-3 right-3 bg-gray-800/90 backdrop-blur-sm text-gray-200 px-3 py-1 rounded-full text-xs font-medium">
+                        -<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%
+                      </div>
+                      <% } %>
+                        <!-- Quick View Button -->
+                        <div
+                          class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                          <span class="text-white text-sm font-medium">Quick View</span>
+                        </div>
+                  </div>
+
+                  <!-- Product Info -->
+                  <div class="p-5">
+                    <!-- Brand & Rating -->
+                    <div class="flex justify-between items-center mb-2">
+                      <div class="text-sm text-gray-300 font-medium">
+                        <%= product.brand %>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <i class="fas fa-star text-yellow-400 text-xs"></i>
+                        <span class="text-sm text-gray-300">
+                          <%= product.rating %>
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Product Name -->
+                    <h3 class="text-gray-200 font-medium mb-2 truncate group-hover:text-gray-300 transition-colors">
+                      <%= product.productName %>
+                    </h3>
+
+                    <!-- Price -->
+                    <div class="flex items-baseline gap-2">
+                      <span class="text-lg font-bold text-gray-200">₹<%= product.discountPrice %></span>
+                      <% if (product.discountPrice < product.price) { %>
+                        <span class="text-sm text-gray-400 line-through">₹<%= product.discountPrice %></span>
+                        <% } else {%>
+                          <span class="text-sm text-gray-400 line-through">₹<%= product.price %></span>
+                        <% } %>
+                    </div>
                   </div>
                 </div>
-                
-                <!-- Product Name -->
-                <h3 class="text-gray-900 font-medium mb-2 truncate group-hover:text-gray-700 transition-colors">
-                  <%= product.productName %>
+              </a>
+              <% }); %>
+          </div>
+        </div>
+
+
+      </section>
+      <section id="about" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+          <div class="max-w-4xl mx-auto">
+            <!-- Section Header -->
+            <div class="text-center mb-12">
+              <div class="flex items-center justify-center gap-2 mb-2">
+                <span class="w-8 h-[2px] bg-gray-900"></span>
+                <span class="text-gray-500 text-sm tracking-wider uppercase">About Our Products</span>
+                <span class="w-8 h-[2px] bg-gray-900"></span>
+              </div>
+              <h2 class="text-3xl sm:text-4xl font-bold text-gray-900">Powerful Sound Drivers Headphones</h2>
+            </div>
+
+            <!-- Content -->
+            <div class="prose prose-lg mx-auto text-gray-600">
+              <div class="bg-gray-50 rounded-2xl p-8 shadow-sm">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">
+                  Clear HD Sound Experience
                 </h3>
-                
-                <!-- Price -->
-                <div class="flex items-baseline gap-2">
-                  <span class="text-lg font-bold text-gray-900">₹<%= product.discountPrice %></span>
-                  <% if (product.discountPrice < product.price) { %>
-                  <span class="text-sm text-gray-400 line-through">₹<%= product.price %></span>
-                  <% } %>
-                </div>
+
+                <p class="mb-6">
+                  Immerse yourself in a range of Hammer headphones that are designed ergonomically, especially for you!
+                  Our selection of headphones comes with powerful sound drivers that are designed to deliver
+                  crystal-clear HD sound, providing an immersive listening experience across various genres of music,
+                  movies, and gaming. The combination of large drivers and high-quality materials in Hammer headphones
+                  results in exceptional audio quality with utmost clarity and accuracy, allowing you to hear every
+                  nuance in your music or audio content.
+                </p>
+
+                <p class="mb-6">
+                  Our Headphones with powerful sound are often equipped with large audio drivers, typically around 40mm
+                  or larger. If you like to enjoy bass-heavy music genres like EDM or hip-hop, then our headphones with
+                  powerful drivers that deliver deep, punchy bass without overwhelming the rest of the audio spectrum,
+                  are a perfect pick. While emphasizing powerful bass, Hammer high-quality headphones maintain a
+                  balanced sound signature, ensuring that all frequencies are well-represented for a natural and
+                  immersive listening experience.
+                </p>
               </div>
             </div>
-          </a>
-          <% }); %>
-        </div>
-      </div>
-
-      
-    </section>
-    <section id="about" class="py-16 bg-white">
-      <div class="container mx-auto px-4">
-        <div class="max-w-4xl mx-auto">
-          <!-- Section Header -->
-          <div class="text-center mb-12">
-            <div class="flex items-center justify-center gap-2 mb-2">
-              <span class="w-8 h-[2px] bg-gray-900"></span>
-              <span class="text-gray-500 text-sm tracking-wider uppercase">About Our Products</span>
-              <span class="w-8 h-[2px] bg-gray-900"></span>
-            </div>
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900">Powerful Sound Drivers Headphones</h2>
-          </div>
-    
-          <!-- Content -->
-          <div class="prose prose-lg mx-auto text-gray-600">
-            <div class="bg-gray-50 rounded-2xl p-8 shadow-sm">
-              <h3 class="text-2xl font-bold text-gray-900 mb-6">
-                Clear HD Sound Experience
-              </h3>
-              
-              <p class="mb-6">
-                Immerse yourself in a range of Hammer headphones that are designed ergonomically, especially for you! Our selection of headphones comes with powerful sound drivers that are designed to deliver crystal-clear HD sound, providing an immersive listening experience across various genres of music, movies, and gaming. The combination of large drivers and high-quality materials in Hammer headphones results in exceptional audio quality with utmost clarity and accuracy, allowing you to hear every nuance in your music or audio content.
-              </p>
-    
-              <p class="mb-6">
-                Our Headphones with powerful sound are often equipped with large audio drivers, typically around 40mm or larger. If you like to enjoy bass-heavy music genres like EDM or hip-hop, then our headphones with powerful drivers that deliver deep, punchy bass without overwhelming the rest of the audio spectrum, are a perfect pick. While emphasizing powerful bass, Hammer high-quality headphones maintain a balanced sound signature, ensuring that all frequencies are well-represented for a natural and immersive listening experience.
-              </p>
-            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <%- include("../partials/footer") %>
-  </body>
+      <%- include("../partials/footer") %>
+</body>
+
 </html>
