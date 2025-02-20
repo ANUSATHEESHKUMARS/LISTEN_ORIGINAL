@@ -14,30 +14,42 @@
     <a href="about" class="text-sm font-medium text-white hover:text-gray-300 transition-colors">About</a>
   </nav>
 
-  <!-- Right Side (Logo and Auth Buttons) -->
-  <div class="flex items-center justify-between w-full">
-    <!-- Logo on the left -->
-    <div class="flex items-center">
-        <img src="images/logo.png" alt="logo" class="h-8 sm:h-10"/>
-    </div>
+<!-- Right Side (Logo and Auth Buttons) -->
+<div class="flex items-center justify-between w-full">
+  <!-- Logo on the left with increased size -->
+  <div class="flex items-center">
+      <img 
+          src="/images/logo.png" 
+          alt="logo" 
+          class="h-12 sm:h-14 md:h-16 lg:h-20 w-auto object-contain transition-all duration-300"
+          style="max-height: 5rem;"
+      />
+  </div>
+  <!-- ... rest of your header content ... -->
+</div>
 
     <!-- Auth Buttons on the right -->
-    <div class="flex items-center space-x-4" id="loginButtons">
-        <div class="flex items-center space-x-2" id="authButtons">
-            <a href="/user/login" class="text-sm font-medium text-white hover:text-gray-300 px-3 py-1.5 rounded-lg transition-colors">
-                Login
-            </a>
-            <a href="/user/signup" class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg transition-colors">
-                Sign Up
-            </a>
-        </div>
-        <!-- User Profile Button (Hidden by default) -->
-        <div class="hidden items-center space-x-2" id="userProfile">
-            <button class="text-sm font-medium text-white hover:text-gray-300 px-3 py-1.5 rounded-lg transition-colors">
-                <i class="fa-solid fa-user mr-2"></i>Profile
-            </button>
-        </div>
-    </div>
+    <div class="flex items-center justify-end" id="loginButtons">
+      <!-- Auth Buttons in single line -->
+      <div class="flex items-center space-x-2" id="authButtons">
+          <a href="/user/login" 
+             class="text-xs font-medium text-white hover:text-gray-300 px-2.5 py-1 rounded-md transition-colors inline-flex items-center">
+              Login
+          </a>
+          
+          <a href="/user/signup" 
+             class="text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded-md transition-colors inline-flex items-center">
+              Sign Up
+          </a>
+      </div>
+      
+      <!-- User Profile Button (Hidden by default) -->
+      <div class="hidden items-center" id="userProfile">
+          <button class="text-xs font-medium text-white hover:text-gray-300 px-2.5 py-1 rounded-md transition-colors inline-flex items-center">
+              <i class="fa-solid fa-user mr-1.5"></i>Profile
+          </button>
+      </div>
+  </div>
 </div>
 </div>
 
@@ -76,6 +88,8 @@
 </div>
 
 <script>
+
+  
   const menuToggle = document.getElementById("menu-toggle");
   const mobileMenu = document.getElementById("mobile-menu");
   const menuPanel = mobileMenu.querySelector('div');

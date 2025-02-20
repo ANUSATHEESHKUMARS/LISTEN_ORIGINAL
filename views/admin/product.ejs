@@ -178,15 +178,7 @@
                 <p class="text-xs text-gray-500 mt-1">Only letters and spaces allowed</p>
               </div>
 
-              <div>
-                <label class="block text-gray-400 mb-1">Gender</label>
-                <select name="gender" id="gender" required
-                        class="w-full bg-zinc-800 border border-gray-700 rounded px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-200">
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="unisex">Unisex</option>
-                </select>
-              </div>
+             
 
               <div>
                 <label class="block text-gray-400 mb-1">Category</label>
@@ -509,7 +501,7 @@
                   const productId = document.getElementById('productId').value;
                   
                   // Validate required fields
-                  const requiredFields = ['productName', 'brand', 'gender', 'categoriesId', 'color', 'description', 'price', 'stock'];
+                  const requiredFields = ['productName', 'brand',  'categoriesId', 'color', 'description', 'price', 'stock'];
                   for (const field of requiredFields) {
                       const value = formData.get(field);
                       if (!value || value.trim() === '') {
@@ -623,7 +615,6 @@
                       document.getElementById('productId').value = product._id;
                       document.getElementById('productName').value = product.productName || '';
                       document.getElementById('brand').value = product.brand || '';
-                      document.getElementById('gender').value = product.gender || '';
                       document.getElementById('categoriesId').value = product.categoriesId._id || '';
                       document.getElementById('color').value = product.color || '';
                       document.getElementById('price').value = product.price || '';

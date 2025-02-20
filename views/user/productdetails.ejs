@@ -9,64 +9,48 @@
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
         <style>
-            .zoom-container {
+            .main-image-container {
                 position: relative;
-                overflow: hidden;
-                border-radius: 0.75rem;
+                width: 100%;
+                height: 500px;
                 background-color: #f9fafb;
+                border-radius: 0.75rem;
+                overflow: hidden;
             }
-    
-            .zoom-container img {
+
+            .main-image-container img {
                 width: 100%;
                 height: 100%;
-                object-fit: cover;
+                object-fit: contain;
                 transition: transform 0.3s ease;
             }
-    
-            .zoom-container:hover img {
-                transform: scale(1.5);
+
+            .main-image-container:hover img {
+                transform: scale(1.1);
             }
-    
-            .product-thumbnails {
+
+            /* For the thumbnail scrollbar */
+            .thumbnail-scroll {
                 scrollbar-width: thin;
                 scrollbar-color: #888 #f1f1f1;
             }
-    
-            .product-thumbnails::-webkit-scrollbar {
-                width: 6px;
+
+            .thumbnail-scroll::-webkit-scrollbar {
                 height: 6px;
             }
             
-            .product-thumbnails::-webkit-scrollbar-track {
+            .thumbnail-scroll::-webkit-scrollbar-track {
                 background: #f1f1f1;
                 border-radius: 10px;
             }
             
-            .product-thumbnails::-webkit-scrollbar-thumb {
+            .thumbnail-scroll::-webkit-scrollbar-thumb {
                 background: #888;
                 border-radius: 10px;
             }
-    
-            .product-thumbnails::-webkit-scrollbar-thumb:hover {
+
+            .thumbnail-scroll::-webkit-scrollbar-thumb:hover {
                 background: #555;
-            }
-    
-            .thumbnail-active {
-                border-color: #111827 !important;
-            }
-    
-            .zoom-container::after {
-                content: '';
-                position: absolute;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.03);
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                pointer-events: none;
-            }
-    
-            .zoom-container:hover::after {
-                opacity: 1;
             }
         </style>
     </head>
@@ -92,21 +76,22 @@
                     <!-- Left: Image Gallery -->
                     <div class="space-y-4">
                         <!-- Main Image -->
-                        <div class="zoom-container aspect-square rounded-xl overflow-hidden bg-gray-50">
+                        <div class="main-image-container">
                             <img 
                                 id="mainImage"
                                 src="<%= product.imageUrl[0] %>"
                                 alt="<%= product.productName %>"
-                                class="rounded-xl"
                             />
                         </div>
 
                         <!-- Thumbnails -->
-                        <div class="product-thumbnails grid grid-cols-5 gap-4">
+                        <div class="thumbnail-scroll flex space-x-4 overflow-x-auto py-2">
                             <% product.imageUrl.forEach((image, index) => { %>
                                 <button 
-                                    onclick="updateMainImage('<%= image %>')"
-                                    class="aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-gray-900 transition-all"
+                                    onclick="updateMainImage('<%= image %>', this)"
+                                    class="thumbnail-btn flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 
+                                           <%= index === 0 ? 'border-gray-900' : 'border-transparent' %> 
+                                           hover:border-gray-900 transition-all"
                                 >
                                     <img 
                                         src="<%= image %>"
@@ -128,16 +113,19 @@
                         <!-- Price -->
                         <div class="space-y-2">
                             <div class="flex items-baseline gap-3">
-                                <span class="text-4xl font-bold text-gray-900">₹<%= product.discountPrice %></span>
-                                <% if (product.discountPrice < product.originalPrice) { %>
-                                    <span class="text-xl text-gray-400 line-through">₹<%= product.originalPrice %></span>
+                                <span class="text-4xl font-bold text-gray-900">
+                                    ₹<%= Number(product.discountPrice || product.price).toLocaleString('en-IN') %>
+                                </span>
+                                <% if (product.discountPrice && product.originalPrice && product.discountPrice < product.originalPrice) { %>
+                                    <span class="text-xl text-gray-400 line-through">
+                                        ₹<%= Number(product.originalPrice).toLocaleString('en-IN') %>
+                                    </span>
                                     <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                                         <%= Math.round((product.originalPrice - product.discountPrice) / product.originalPrice * 100) %>% OFF
                                     </span>
                                 <% } %>
                             </div>
                         </div>
-
                         <!-- Stock Status -->
                         <div>
                             <% if (product.stock > 0) { %>
@@ -156,23 +144,41 @@
                         <!-- Product Details -->
                         <div class="border-t border-gray-200 pt-6">
                             <h3 class="text-lg font-semibold mb-4">Product Details</h3>
-                            <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div>
-                                    <dt class="text-sm text-gray-500">Brand</dt>
-                                    <dd class="text-sm font-medium text-gray-900"><%= product.brand %></dd>
-                                </div>
+                            <dl class="grid grid-cols-1 gap-4">
                                 <div>
                                     <dt class="text-sm text-gray-500">Category</dt>
-                                    <dd class="text-sm font-medium text-gray-900"><%= product.category %></dd>
+                                    <dd class="text-sm font-medium text-gray-900">
+                                        <% if (product.category) { %>
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                                <%= product.category %>
+                                            </span>
+                                        <% } else { %>
+                                            Not specified
+                                        <% } %>
+                                    </dd>
                                 </div>
                                 <div>
-                                    <dt class="text-sm text-gray-500">Color</dt>
-                                    <dd class="text-sm font-medium text-gray-900"><%= product.color %></dd>
+                                    <dt class="text-sm text-gray-500">Type</dt>
+                                    <dd class="text-sm font-medium text-gray-900">
+                                        <% if (product.type) { %>
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                                <%= product.type %>
+                                            </span>
+                                        <% } else { %>
+                                            Not specified
+                                        <% } %>
+                                    </dd>
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <dt class="text-sm text-gray-500">Description</dt>
+                                    <dd class="text-sm font-medium text-gray-900 mt-1"><%= product.description %></dd>
                                 </div>
                             </dl>
                         </div>
-
-                        <!-- Actions -->
+                        
+                        
+                        
+                        <!-- !-- Actions --> 
                         <div class="space-y-4 pt-6">
                             <% if (product.stock > 0) { %>
                                 <button 
@@ -207,8 +213,17 @@
     <%- include("../partials/footer") %>
 
     <script>
-        function updateMainImage(imageUrl) {
+        function updateMainImage(imageUrl, thumbnailBtn) {
+            // Update main image
             document.getElementById('mainImage').src = imageUrl;
+            
+            // Update active thumbnail
+            document.querySelectorAll('.thumbnail-btn').forEach(btn => {
+                btn.classList.remove('border-gray-900');
+                btn.classList.add('border-transparent');
+            });
+            thumbnailBtn.classList.remove('border-transparent');
+            thumbnailBtn.classList.add('border-gray-900');
         }
 
         async function addToCart(productId) {
