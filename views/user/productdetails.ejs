@@ -148,9 +148,9 @@
                                 <div>
                                     <dt class="text-sm text-gray-500">Category</dt>
                                     <dd class="text-sm font-medium text-gray-900">
-                                        <% if (product.category) { %>
+                                        <% if (product.categoriesId && product.categoriesId.name) { %>
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                                                <%= product.category %>
+                                                <%= product.categoriesId.name %>
                                             </span>
                                         <% } else { %>
                                             Not specified
