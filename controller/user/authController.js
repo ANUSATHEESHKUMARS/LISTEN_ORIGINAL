@@ -548,10 +548,10 @@ const getGoogleCallback = (req, res) => {
 
 const getLogout = (req, res) => {
     req.session.destroy(() => {
-        res.redirect('/user/login');  // Change render to redirect
+        res.redirect('/login');  // Change render to redirect
     });
 }
-
+// In your authController.js
 
 export default {
     getSignUp,

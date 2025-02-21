@@ -46,8 +46,13 @@ route.get('/logout', userMiddlewares.checkSession, authController.getLogout);
 route.get('/about',authController.getabout)
 
 // Add this new route for product details
-
-// routes/productRoutes.js
+route.get('/', (req, res) => {
+    res.render('your-template', {
+      user: req.session.user, // or however you store your user
+      cartCount: req.session.cartCount // if you're tracking cart items
+    });
+  });
+// // routes/productRoutes.js
 
 
 export default route;
