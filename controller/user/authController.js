@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import { generateOTP, sendOTPEmail } from '../../utils/sentOTP.js';
 import validatePassword from '../../utils/validatePassword.js ';
 import passport from 'passport';
-import dotenv from 'dotenv'; 
+import dotenv from 'dotenv';
 
 
 const saltRounds = 10;
@@ -27,6 +27,7 @@ export const getabout = async (req, res) => {
     }
 };
 
+
 const getSignUp = (req, res) => {
     try {
         res.render('user/signup');
@@ -41,7 +42,7 @@ const getSignUp = (req, res) => {
 const postSignUp = async (req, res) => {
     try {
         const { firstName, lastName, email, password } = req.body;
-        
+
         // Validate first name
         if (!firstName || !/^[a-zA-Z]{3,10}$/.test(firstName.trim())) {
             return res.status(400).json({
@@ -77,14 +78,14 @@ const postSignUp = async (req, res) => {
 
         // Check if user exists
         const existingUser = await userSchema.findOne({ email });
-        
+
         if (existingUser && !existingUser.isVerified) {
             await userSchema.deleteOne({ _id: existingUser._id });
         } else if (existingUser) {
-            const message = !existingUser.password 
+            const message = !existingUser.password
                 ? "This email is linked to a Google login. Please log in with Google."
                 : "Email already registered";
-                
+
             return res.status(400).json({
                 success: false,
                 message
@@ -115,8 +116,8 @@ const postSignUp = async (req, res) => {
         }, 180000);
 
         await sendOTPEmail(email, otp);
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: 'OTP sent successfully',
             email: email
         });
@@ -129,21 +130,21 @@ const postSignUp = async (req, res) => {
     }
 }
 
-const postOtp = async (req,res)=>{
+const postOtp = async (req, res) => {
     try {
-        const {userOtp , email} = req.body;
-        const user = await userSchema.findOne({email,otp:userOtp});
+        const { userOtp, email } = req.body;
+        const user = await userSchema.findOne({ email, otp: userOtp });
 
-        if(!user){
-        return res.status(400).json({success:false,message : 'Invalid OTP'})
+        if (!user) {
+            return res.status(400).json({ success: false, message: 'Invalid OTP' })
         }
-        if(Date.now() > user.otpExpiresAt){
-            if(user.otpAttempts >=3){
-                return res.status(400).json({error:'Too many attempts.Please signup again.'})
+        if (Date.now() > user.otpExpiresAt) {
+            if (user.otpAttempts >= 3) {
+                return res.status(400).json({ error: 'Too many attempts.Please signup again.' })
             }
-            return res.status(400).json({error:'Otp expired'})
+            return res.status(400).json({ error: 'Otp expired' })
         }
-       
+
 
         // If OTP matches, verify user
         if (user.otp === userOtp) {
@@ -153,8 +154,8 @@ const postOtp = async (req,res)=>{
             });
 
             req.session.user = user._id;
-            return res.json({ 
-                success: true, 
+            return res.json({
+                success: true,
                 message: 'OTP verified successfully',
                 redirectUrl: '/home'
             });
@@ -167,12 +168,12 @@ const postOtp = async (req,res)=>{
         return res.status(500).json({ error: 'OTP verification failed' });
     }
 }
-      
+
 const postResendOtp = async (req, res) => {
     try {
         const { email } = req.body;
         const user = await userSchema.findOne({ email, isVerified: false });
-        
+
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -217,9 +218,9 @@ const getLogin = (req, res) => {
         res.render('user/login')
     } catch (error) {
         console.error('Error rendering login page:', error);
-        res.status(500).render('error', { 
+        res.status(500).render('error', {
             message: 'Error loading login page',
-            error: error.message 
+            error: error.message
         });
     }
 }
@@ -227,7 +228,7 @@ const getLogin = (req, res) => {
 const postLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
-        
+
         // Server-side validation
         if (!email || !password) {
             return res.status(400).json({
@@ -256,7 +257,7 @@ const postLogin = async (req, res) => {
             });
         }
 
-        if(!user.password) {
+        if (!user.password) {
             return res.status(400).json({
                 success: false,
                 message: 'This email is linked to a Google login. Please log in with Google.'
@@ -313,9 +314,9 @@ const getForgotPassword = (req, res) => {
         res.render('user/forgotPassword');
     } catch (error) {
         console.error('Error rendering forgot password page:', error);
-        res.status(500).render('error', { 
+        res.status(500).render('error', {
             message: 'Error loading forgot password page',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -323,7 +324,7 @@ const getForgotPassword = (req, res) => {
 const sendForgotPasswordOTP = async (req, res) => {
     try {
         const { email } = req.body;
-        
+
         // Find user
         const user = await userSchema.findOne({ email, isVerified: true });
         if (!user) {
@@ -331,8 +332,8 @@ const sendForgotPasswordOTP = async (req, res) => {
         }
 
         if (!user.password) {
-            return res.status(400).json({ 
-                message: 'This email is linked to Google login. Please login with Google.' 
+            return res.status(400).json({
+                message: 'This email is linked to Google login. Please login with Google.'
             });
         }
 
@@ -345,7 +346,7 @@ const sendForgotPasswordOTP = async (req, res) => {
 
         // Send OTP email
         await sendOTPEmail(email, otp);
-        
+
         res.status(200).json({ message: 'OTP sent successfully' });
     } catch (error) {
         console.error('Send OTP error:', error);
@@ -356,8 +357,8 @@ const sendForgotPasswordOTP = async (req, res) => {
 const verifyForgotPasswordOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
-        
-        const user = await userSchema.findOne({ 
+
+        const user = await userSchema.findOne({
             email,
             otp,
             otpExpiresAt: { $gt: Date.now() }
@@ -391,7 +392,7 @@ const verifyForgotPasswordOTP = async (req, res) => {
 const resetPassword = async (req, res) => {
     try {
         const { email, newPassword } = req.body;
-        
+
         const user = await userSchema.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -405,7 +406,7 @@ const resetPassword = async (req, res) => {
 
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-        
+
         // Update password and remove OTP fields
         await userSchema.findByIdAndUpdate(user._id, {
             $set: { password: hashedPassword },
@@ -439,9 +440,9 @@ const getChangePassword = async (req, res) => {
 
     } catch (error) {
         console.error('Get change password error:', error);
-        res.status(500).render('error', { 
+        res.status(500).render('error', {
             message: 'Error loading change password page',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -470,7 +471,7 @@ const postChangePassword = async (req, res) => {
 
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-        
+
         // Update password
         await userSchema.findByIdAndUpdate(userId, {
             password: hashedPassword
@@ -486,7 +487,7 @@ const postChangePassword = async (req, res) => {
 const getGoogle = (req, res) => {
     // Store the trigger in session before redirecting to Google
     req.session.authTrigger = req.query.trigger;
-    
+
     passport.authenticate("google", {
         scope: ["email", "profile"],
     })(req, res);
@@ -505,7 +506,7 @@ const getGoogleCallback = (req, res) => {
             const names = profile.displayName.split(' ');
             const firstName = names[0];
             const lastName = names.slice(1).join(' ')
-            
+
             // If user exists, check if blocked before logging in
             if (existingUser) {
                 // Check if user is blocked
@@ -518,7 +519,7 @@ const getGoogleCallback = (req, res) => {
                     $set: { googleId: existingUser.googleId || profile.id },
                     $unset: { otpAttempts: 1 }
                 });
-                
+
                 req.session.user = existingUser._id;
                 return res.redirect("/home");
             }
@@ -535,7 +536,7 @@ const getGoogleCallback = (req, res) => {
             await userSchema.findByIdAndUpdate(newUser._id, {
                 $unset: { otpAttempts: 1 }
             });
-            
+
             req.session.user = newUser._id;
             return res.redirect("/home");
 
@@ -547,16 +548,23 @@ const getGoogleCallback = (req, res) => {
 };
 
 const getLogout = (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/login');  // Change render to redirect
+    req.session.destroy((err) => {
+        if (err) {
+            console.error("Error destroying session:", err);
+            return res.status(500).json({ message: "Logout failed" });
+        }
+
+        res.clearCookie('connect.sid'); 
+        res.redirect('/user/login');  
     });
-}
+};
+
 // In your authController.js
 
 export default {
     getSignUp,
     postSignUp,
-    postOtp ,
+    postOtp,
     postResendOtp,
     getLogin,
     postLogin,
@@ -571,7 +579,7 @@ export default {
     getGoogleCallback,
     getLogout,
     getabout
-  
+
 
 
 };
