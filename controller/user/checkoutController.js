@@ -1,7 +1,7 @@
-import cartSchema from '../../models/cartModel.js';
-import addressSchema from '../../models/addressModel.js';
+import cartSchema from '../../models/cartModels.js';
+import addressSchema from '../../models/addressModels.js';
 import productSchema from '../../models/productModel.js';
-import orderSchema from '../../models/orderModel.js';
+import orderSchema from '../../models/orderModels.js';
 
 const getCheckoutPage = async (req, res) => {
     try {

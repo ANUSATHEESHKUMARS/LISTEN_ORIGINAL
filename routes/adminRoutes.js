@@ -5,6 +5,7 @@ import userController from '../controller/admin/userController.js';
 import dashboardController from '../controller/admin/dashboardController.js';
 import categoryController from '../controller/admin/categoryController.js';
 import productController from '../controller/admin/productController.js';
+import orderController from '../controller/admin/orderController.js';
 
 
 const router = express.Router();
@@ -51,5 +52,9 @@ router.post('/product/delete/:id', adminMiddleware.checkSession, productControll
 
 router.post('/product/toggle-status/:id', adminMiddleware.checkSession, productController.toggleProductStatus);
 
+router.get("/orders",adminMiddleware.checkSession,orderController.getOrders)
 
+router.patch("/orders/:orderId/items/:productId/status",adminMiddleware.checkSession,orderController.updateItemStatus)
+
+router.post("/orders/:orderId/items/:productId/return",adminMiddleware.checkSession,orderController.handleReturnRequest)
 export default router;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Orders - Listen</title>
+    <title>My Orders - Onyx</title>
     <link rel="stylesheet" href="/tailwindcss/output.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -148,9 +148,10 @@
                                                     <div class="flex flex-col sm:flex-row gap-2">
                                                         <!-- Timeline Button -->
                                                         <button onclick="showTimelineModal('<%= order._id %>', '<%= item.product._id %>', '<%= item.product.productName %>', <%= JSON.stringify(item.order.statusHistory) %>)"
-                                                            class="px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
-                                                        View Timeline
-                                                    </button>
+                                                                class="px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+                                                            <i class="fas fa-history mr-1"></i>
+                                                            Timeline
+                                                        </button>
 
                                                         <!-- Cancel/Return Button (if applicable) -->
                                                         <% if (item.order.status === 'pending' || item.order.status === 'processing') { %>

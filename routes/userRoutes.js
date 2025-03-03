@@ -5,6 +5,8 @@ import userController from '../controller/user/shopnhomeController.js';
 import profileController from "../controller/user/profileController.js"
 import addressController from '../controller/user/addressController.js';
 import cartController from '../controller/user/cartController.js';
+import checkoutController from '../controller/user/checkoutController.js';
+import viewOrdersController from '../controller/user/viewOrdersController.js';
 
 const route = Router()
 
@@ -89,6 +91,17 @@ route.patch("/cart/update-quantity", userMiddlewares.checkSession, cartControlle
 
 route.delete("/cart/remove/:productId", userMiddlewares.checkSession, cartController.removeFromCart)
 
+
+route.get("/checkout", userMiddlewares.checkSession, checkoutController.getCheckoutPage)
+
+route.post("/checkout/place-order", userMiddlewares.checkSession, checkoutController.placeOrder)
+
+
+route.get("/orders", userMiddlewares.checkSession, viewOrdersController.getOrders)
+
+route.patch("/orders/:orderId/items/:productId/cancel", userMiddlewares.checkSession , viewOrdersController.cancelOrder)
+
+route.post("/orders/:orderId/items/:productId/return", userMiddlewares.checkSession, viewOrdersController.requestReturnItem)
 
 
 export default route;
