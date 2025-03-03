@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/user/tailwindcss/output.css" />
+    <title>Order Confirmation</title>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8 mt-28">
+        <h1 class="text-3xl font-bold mb-6">Order Confirmation</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Thank you for your order!</h2>
+            <p>Your order has been placed successfully.</p>
+            <p><strong>Order ID:</strong> <%= order._id %></p>
+            <p><strong>Total Amount:</strong> ₹<%= order.total %></p>
+            <h3 class="mt-4">Order Summary:</h3>
+            <ul>
+                <% order.items.forEach(item => { %>
+                    <li><%= item.product.productName %> - Quantity: <%= item.quantity %> - Price: ₹<%= item.price %></li>
+                <% }); %>
+            </ul>
+            <p><strong>Payment Method:</strong> <%= order.paymentMethod %></p>
+            <p><strong>Delivery Address:</strong> <%= order.addressId %></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -2,6 +2,8 @@
   class="fixed z-50 top-0 w-full h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6 bg-gray-900 text-white backdrop-blur-sm border-b border-gray-700">
   <!-- ... existing mobile menu button and navigation links ... -->
 
+
+
   <!-- Right Side (Logo and Auth/Icons) -->
   <div class="flex items-center justify-between w-full">
     <!-- Logo on the left -->
@@ -11,42 +13,72 @@
         style="max-height: 5rem;" />
     </div>
 
+    <div class="lg:hidden">
+      <button id="menu-toggle" class="p-1.5 sm:p-2 rounded-lg text-slate-700 hover:bg-gray-100/80 transition-colors">
+        <i class="fa-solid fa-bars text-xl sm:text-2xl"></i>
+      </button>
+    </div>
+
+    <!-- Left Side (Nav Links) -->
+    <nav class="hidden lg:flex items-center space-x-8">
+      <a href="/home" class="text-sm font-medium text-slate-700 hover:text-black transition-colors">Home</a>
+      <a href="/shop" class="text-sm font-medium text-slate-700 hover:text-black transition-colors">Shop</a>
+      <a href="#" class="text-sm font-medium text-slate-700 hover:text-black transition-colors">Contact</a>
+      <a href="/about" class="text-sm font-medium text-slate-700 hover:text-black transition-colors">About</a>
+    </nav>
+
     <!-- Auth Buttons or Icons based on session -->
     <div class="flex items-center justify-end" id="loginButtons">
-        <!-- Auth Buttons (shown when not authenticated) -->
-        <div class="flex items-center space-x-2" id="authButtons">
-          <a href="/user/login"
-            class="text-xs font-medium text-white hover:text-gray-300 px-2.5 py-1 rounded-md transition-colors inline-flex items-center">
-            <i class="fa-solid fa-sign-in-alt mr-1.5"></i>Login
-          </a>
+      <!-- Auth Buttons (shown when not authenticated) -->
+      <div class="flex items-center space-x-2" id="authButtons">
+        <a href="/user/login"
+          class="text-xs font-medium text-white hover:text-gray-300 px-2.5 py-1 rounded-md transition-colors inline-flex items-center">
+          <i class="fa-solid fa-sign-in-alt mr-1.5"></i>Login
+        </a>
 
-          <a href="/user/signup"
-            class="text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded-md transition-colors inline-flex items-center">
-            <i class="fa-solid fa-user-plus mr-1.5"></i>Sign Up
-          </a>
-        </div>
-          <!-- Icons (shown when authenticated) -->
-          <div class="flex items-center space-x-2 sm:space-x-6" id="userIcons">
-            <a href="/wishlist" class="p-1.5 sm:p-2 text-white hover:text-gray-300 transition-colors">
-              <i class="fa-regular fa-heart text-lg sm:text-xl"></i>
-            </a>
-            <a href="/profile" class="p-1.5 sm:p-2 text-white hover:text-gray-300 transition-colors">
-              <i class="fa-regular fa-user text-lg sm:text-xl"></i>
-            </a>
-            <a href="/cart" class="p-1.5 sm:p-2 text-white hover:text-gray-300 transition-colors relative">
-              <i class="fa-solid fa-cart-shopping text-lg sm:text-xl"></i>
-              <% if (locals.cartCount && cartCount> 0) { %>
-                <span
-                  class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                  <%= cartCount> 9 ? '9+' : cartCount %>
-                </span>
-                <% } %>
-            </a>
-            <button onclick="handleLogout()" class="p-1.5 sm:p-2 text-white hover:text-gray-300 transition-colors">
-              <i class="fa-solid fa-sign-out-alt text-lg sm:text-xl"></i>
-            </button>
-          </div>
+        <a href="/user/signup"
+          class="text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded-md transition-colors inline-flex items-center">
+          <i class="fa-solid fa-user-plus mr-1.5"></i>Sign Up
+        </a>
+      </div>
+      <!-- Icons (shown when authenticated) -->
+      <div class="flex items-center space-x-2 sm:space-x-6" id="userIcons">
+        <a href="/wishlist" class="p-1.5 sm:p-2 text-white hover:text-gray-300 transition-colors">
+          <i class="fa-regular fa-heart text-lg sm:text-xl"></i>
+        </a>
+        <a href="/profile" class="p-1.5 sm:p-2 text-white hover:text-gray-300 transition-colors">
+          <i class="fa-regular fa-user text-lg sm:text-xl"></i>
+        </a>
+        <a href="/cart" class="p-1.5 sm:p-2 text-white hover:text-gray-300 transition-colors relative">
+          <i class="fa-solid fa-cart-shopping text-lg sm:text-xl"></i>
+          <% if (locals.cartCount && cartCount> 0) { %>
+            <span
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+              <%= cartCount> 9 ? '9+' : cartCount %>
+            </span>
+            <% } %>
+        </a>
+        <button onclick="handleLogout()" class="p-1.5 sm:p-2 text-white hover:text-gray-300 transition-colors">
+          <i class="fa-solid fa-sign-out-alt text-lg sm:text-xl"></i>
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
+<div id="mobile-menu" class="fixed inset-0 bg-black/20 backdrop-blur-sm hidden lg:hidden z-40" aria-hidden="true">
+  <!-- Mobile Menu Panel -->
+  <div
+    class="fixed top-14 sm:top-16 left-0 w-full max-w-sm bg-white border-r border-gray-200 h-screen transform transition-transform duration-300 ease-in-out">
+    <nav class="flex flex-col p-4 space-y-2">
+      <a href="/home"
+        class="p-3 text-sm font-medium text-slate-700 hover:bg-gray-50 rounded-lg transition-colors">Home</a>
+      <a href="/shop"
+        class="p-3 text-sm font-medium text-slate-700 hover:bg-gray-50 rounded-lg transition-colors">Shop</a>
+      <a href="#"
+        class="p-3 text-sm font-medium text-slate-700 hover:bg-gray-50 rounded-lg transition-colors">Contact</a>
+      <a href="/about" class="p-3 text-sm font-medium text-slate-700 hover:bg-gray-50 rounded-lg transition-colors">About</a>
+    </nav>
   </div>
 </div>
 
@@ -132,7 +164,7 @@
 
   //   let userSession = getCookie("connect.sid");
   //   console.log("Sessionnnnnnnnn", userSession);
-    
+
 
   //   if (false) { //stopped herre
   //     document.getElementById("authButtons").style.display = "none";  // Hide login/signup
@@ -143,23 +175,23 @@
   //   }
   // });
 
-document.addEventListener("DOMContentLoaded", async function () {
+  document.addEventListener("DOMContentLoaded", async function () {
     try {
-        const response = await fetch('/check-session');
-        const data = await response.json();
-        console.log("Session Data:", data);
+      const response = await fetch('/check-session');
+      const data = await response.json();
+      console.log("Session Data:", data);
 
-        if (data.isLoggedIn) {
-            document.getElementById("authButtons").style.display = "none";  // Hide login/signup
-            document.getElementById("userIcons").style.display = "flex";    // Show user icons
-        } else {
-            document.getElementById("authButtons").style.display = "flex";  // Show login/signup
-            document.getElementById("userIcons").style.display = "none";    // Hide user icons
-        }
+      if (data.isLoggedIn) {
+        document.getElementById("authButtons").style.display = "none";  // Hide login/signup
+        document.getElementById("userIcons").style.display = "flex";    // Show user icons
+      } else {
+        document.getElementById("authButtons").style.display = "flex";  // Show login/signup
+        document.getElementById("userIcons").style.display = "none";    // Hide user icons
+      }
     } catch (error) {
-        console.error("Error checking session:", error);
+      console.error("Error checking session:", error);
     }
-});
+  });
 
 
 

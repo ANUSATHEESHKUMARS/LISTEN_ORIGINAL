@@ -1,5 +1,5 @@
 import express from 'express';
-import { getProductDetails } from '../controller/user/productViewController.js';  // Fix path and add .js
+import { getProductDetails } from '../controller/user/productViewController.js'; 
 
 const router = express.Router();
 
