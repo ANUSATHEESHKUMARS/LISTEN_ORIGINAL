@@ -15,6 +15,7 @@ import nocache from "nocache"
 import errorHandler from './middleware/errorMiddleware.js';
 import initializeCategories from "./utils/initCategories.js"
 import passport from './config/passport.js';
+import morgan from 'morgan'
 
 
 
@@ -49,6 +50,9 @@ app.use(errorHandler);
 app.use(cookieParser());
 app.use(nocache())
 
+
+
+app.use(morgan('combined'));
 
 app.set('views', './views');
 app.set('view engine','ejs')
