@@ -3,6 +3,8 @@ import authController from '../controller/user/authController.js'
 import userMiddlewares from '../middleware/userMiddleware.js'
 import userController from '../controller/user/shopnhomeController.js';
 import profileController from "../controller/user/profileController.js"
+import addressController from '../controller/user/addressController.js';
+import cartController from '../controller/user/cartController.js';
 
 const route = Router()
 
@@ -69,7 +71,23 @@ route.get('/profile', userMiddlewares.checkSession, profileController.getProfile
 route.post('/profile/update', userMiddlewares.checkSession, profileController.updateProfile);
 
 
+route.get('/address', userMiddlewares.checkSession, addressController.getAddress);
 
+route.post('/address/add', userMiddlewares.checkSession, addressController.addAddress);
+
+route.delete('/address/:id', userMiddlewares.checkSession, addressController.deleteAddress);
+
+route.put('/address/:id', userMiddlewares.checkSession, addressController.editAddress);
+
+
+//user cart
+route.get("/cart", userMiddlewares.checkSession, cartController.getCart)
+
+route.post("/cart/add", userMiddlewares.checkSession, cartController.addToCart)
+
+route.patch("/cart/update-quantity", userMiddlewares.checkSession, cartController.updateQuantity)
+
+route.delete("/cart/remove/:productId", userMiddlewares.checkSession, cartController.removeFromCart)
 
 
 
