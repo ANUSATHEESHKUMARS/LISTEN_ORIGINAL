@@ -1,83 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="tailwindcss/output.css" />
-    <title>User login</title>
+    <title>User Login</title>
     <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <meta
-      name="google-signin-client_id"
-      content="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-    />
+    <meta name="google-signin-client_id" content="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com" />
     <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
     />
-  </head>
+</head>
 
-  <body class="bg-gray-300">
+<body class="bg-black">
     <!-- Centered Login Card -->
-    <div class="min-h-screen flex items-center justify-center px-4 sm:px-8">
-      <div
-        class="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl border border-black/20"
-      >
-        <h2 class="text-2xl font-semibold text-center mb-6">Login</h2>
+    <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div class="w-full max-w-md p-8 bg-white shadow-lg rounded-lg border border-gray-300">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Login </h2>
 
-        <!-- Login Form -->
-        <form action="/login" method="post" class="space-y-4" novalidate>
-          <!-- Email Input -->
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              id="email"
-              class="w-full p-3 rounded-lg bg-gray-300 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <p id="emailError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
-          </div>
+            <!-- Login Form -->
+            <form action="/login" method="post" class="space-y-4" novalidate>
+                <!-- Email Input -->
+                <div>
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        id="email"
+                        class="w-full p-3 rounded-lg bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                    />
+                    <p id="emailError" class="text-red-600 text-xs mt-1 hidden"></p>
+                </div>
 
-          <!-- Password Input -->
-          <div class="relative">
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              id="password"
-              class="w-full p-3 rounded-lg bg-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <button type="button" class="absolute right-3 top-3 text-gray-600">
-              <i class="fa-regular fa-eye"></i>
-            </button>
-            <p id="passwordError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
-          </div>
-          
-          <!-- Sign up and Forgot Password Links -->
-          <div class="flex justify-between text-sm text-gray-500">
-            <a href="/user/signup" class="hover:underline">Signup</a>
-            <a href="/forgot-password" class="hover:underline">Forgot Password?</a>
-          </div>
+                <!-- Password Input -->
+                <div class="relative">
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        id="password"
+                        class="w-full p-3 rounded-lg bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                    />
+                    <button type="button" class="absolute right-3 top-3 text-gray-600">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                    <p id="passwordError" class="text-red-600 text-xs mt-1 hidden"></p>
+                </div>
 
-          <!-- Submit Button -->
-          <button type="submit" class="w-full py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800">
-            Login
-          </button>
-        </form>
+                <!-- Sign up and Forgot Password Links -->
+                <div class="flex justify-between text-sm text-gray-500">
+                    <a href="/user/signup" class="hover:underline">Create an Account</a>
+                    <a href="/forgot-password" class="hover:underline">Forgot Password?</a>
+                </div>
 
-        <!-- Google Sign in -->
-        <div class="flex justify-center text-center mt-6 text-gray-500 text-sm">
-          Or continue with Google
+                <!-- Submit Button -->
+                <button type="submit" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200">
+                    Login
+                </button>
+            </form>
+
+            <!-- Google Sign in -->
+            <div class="flex justify-center text-center mt-6 text-gray-500 text-sm">
+                Or continue with Google
+            </div>
+            <a class="flex justify-center mt-4" href="/auth/google?trigger=login">
+                <i class="fa-brands fa-google fa-lg text-red-600"></i>
+            </a>
         </div>
-        <a class="flex justify-center mt-6" href="/auth/google?trigger=login">
-          <i class="fa-brands fa-google fa-lg" style="color: #b12020"></i>
-        </a>
-
+    </div>
+</body>
+</html>
         <div id="loading-spinner" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div class="bg-white p-5 rounded-lg flex flex-col items-center">
                 <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-3"></div>

@@ -1,186 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="tailwindcss/output.css" />
     <title>User Signup</title>
     <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-      integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
     />
-  </head>
+</head>
 
-  <body class="bg-gray-300">
+<body class="bg-black">
     <!-- Centered Signup Card -->
     <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div class="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl border border-black/20">
-        <h2 class="text-2xl font-semibold text-center mb-6">Signup</h2>
+        <div class="w-full max-w-md p-8 bg-white shadow-lg rounded-lg border border-gray-300">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800">Create an Account</h2>
 
-        <!-- Signup Form -->
-        <form
-          action="/signup"
-          method="post"
-          id="signup-form"
-          class="space-y-4"
-          novalidate
-        >
-          <!-- First Name Input -->
-          <div>
-            <input
-              type="text"
-              name="firstName"
-              placeholder="First Name"
-              id="firstName"
-              class="w-full p-3 rounded-lg bg-gray-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              minlength="3"
-              maxlength="50"
-            />
-            <p id="firstNameError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
-          </div>
+            <!-- Signup Form -->
+            <form action="/signup" method="post" id="signup-form" class="space-y-4" novalidate>
+                <!-- First Name Input -->
+                <div>
+                    <input
+                        type="text"
+                        name="firstName"
+                        placeholder="First Name"
+                        id="firstName"
+                        class="w-full p-3 rounded-lg bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        minlength="3"
+                        maxlength="50"
+                        required
+                    />
+                    <p id="firstNameError" class="text-red-600 text-xs mt-1 hidden"></p>
+                </div>
 
-          <!-- Last Name Input -->
-          <div>
-            <input
-              type="text"
-              name="lastName"
-              placeholder="Last Name"
-              id="lastName"
-              class="w-full p-3 rounded-lg bg-gray-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              minlength="1"
-              maxlength="50"
-            />
-            <p id="lastNameError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
-          </div>
+                <!-- Last Name Input -->
+                <div>
+                    <input
+                        type="text"
+                        name="lastName"
+                        placeholder="Last Name"
+                        id="lastName"
+                        class="w-full p-3 rounded-lg bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        minlength="1"
+                        maxlength="50"
+                        required
+                    />
+                    <p id="lastNameError" class="text-red-600 text-xs mt-1 hidden"></p>
+                </div>
 
-          <!-- Email Input -->
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              id="email"
-              class="w-full p-3 rounded-lg bg-gray-300 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p id="emailError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
-          </div>
+                <!-- Email Input -->
+                <div>
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        id="email"
+                        class="w-full p-3 rounded-lg bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                    />
+                    <p id="emailError" class="text-red-600 text-xs mt-1 hidden"></p>
+                </div>
 
-          <!-- Password Input -->
-          <div class="relative">
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              id="password"
-              class="w-full p-3 rounded-lg bg-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              minlength="8"
-              maxlength="12"
-            />
-            <button type="button" class="absolute right-3 top-3 text-gray-600">
-              <i class="fa-regular fa-eye"></i>
-            </button>
-            <p id="passwordError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
-          </div>
+                <!-- Password Input -->
+                <div class="relative">
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        id="password"
+                        class="w-full p-3 rounded-lg bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        minlength="8"
+                        maxlength="12"
+                        required
+                    />
+                    <button type="button" class="absolute right-3 top-3 text-gray-600">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                    <p id="passwordError" class="text-red-600 text-xs mt-1 hidden"></p>
+                </div>
 
-          <!-- Confirm Password Input -->
-          <div class="relative">
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              id="confirmPassword"
-              class="w-full p-3 rounded-lg bg-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              minlength="8"
-              maxlength="12"
-            />
-            <button type="button" class="absolute right-3 top-3 text-gray-600">
-              <i class="fa-regular fa-eye"></i>
-            </button>
-            <p id="confirmPasswordError" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
-          </div>
+                <!-- Confirm Password Input -->
+                <div class="relative">
+                    <input
+                        type="password"
+                        name="confirmPassword"
+                        placeholder="Confirm Password"
+                        id="confirmPassword"
+                        class="w-full p-3 rounded-lg bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        minlength="8"
+                        maxlength="12"
+                        required
+                    />
+                    <button type="button" class="absolute right-3 top-3 text-gray-600">
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                    <p id="confirmPasswordError" class="text-red-600 text-xs mt-1 hidden"></p>
+                </div>
 
-          <!-- Login Links -->
-          <div class="flex justify-between text-sm text-gray-500">
-            <a href="/user/login" class="hover:underline">Login</a>
-          </div>
+                <!-- Login Links -->
+                <div class="flex justify-between text-sm text-gray-500">
+                    <a href="/user/login" class="hover:underline">Already have an account? Login</a>
+                </div>
 
-          <!-- Submit Button -->
-          <button
-            type="submit"
-            class="w-full py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800"
-          >
-            Sign Up
-          </button>
-        </form>
+                <!-- Submit Button -->
+                <button
+                    type="submit"
+                    class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200"
+                >
+                    Sign Up
+                </button>
+            </form>
 
-        <!-- General Error Message -->
-        <p id="generalError" class="text-[#9B1C1C] text-xs mt-2 text-center"></p>
+            <!-- General Error Message -->
+            <p id="generalError" class="text-red-600 text-xs mt-2 text-center"></p>
 
-        <!-- Google Sign in -->
-        <div id="google-auth-div">
-          <div class="flex justify-center text-center mt-6 text-gray-500 text-sm">
-            Or continue with Google
-          </div>
-          <a class="flex justify-center mt-6" href="/auth/google?trigger=signup">
-            <i class="fa-brands fa-google fa-lg" style="color: #b12020"></i>
-          </a>
+            <!-- Google Sign in -->
+            <div id="google-auth-div" class="mt-6">
+                <div class="flex justify-center text-center text-gray-500 text-sm">
+                    Or continue with Google
+                </div>
+                <a class="flex justify-center mt-4" href="/auth/google?trigger=signup">
+                    <i class="fa-brands fa-google fa-lg text-red-600"></i>
+                </a>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loading-spinner" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div class="bg-white p-5 rounded-lg flex flex-col items-center">
+                    <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-3"></div>
+                    <p class="text-gray-700">Sending OTP...</p>
+                </div>
+            </div>
         </div>
-
-        <!-- Loading Spinner -->
-        <div id="loading-spinner" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div class="bg-white p-5 rounded-lg flex flex-col items-center">
-            <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-3"></div>
-            <p class="text-gray-700">Sending OTP...</p>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- OTP Modal -->
     <div id="otpModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
-      <div class="bg-white p-8 rounded-lg shadow-xl w-96">
-        <h3 class="text-xl font-semibold mb-4">Enter OTP</h3>
-        <p class="text-sm text-gray-600 mb-4">
-          Please enter the OTP sent to your email
-        </p>
+        <div class="bg-white p-8 rounded-lg shadow-xl w-96">
+            <h3 class="text-xl font-semibold mb-4">Enter OTP</h3>
+            <p class="text-sm text-gray-600 mb-4">Please enter the OTP sent to your email</p>
 
-        <!-- OTP Error Message -->
-        <p id="otpError" class="text-[#9B1C1C] text-xs mt-1 mb-3 hidden"></p>
+            <!-- OTP Error Message -->
+            <p id="otpError" class="text-red-600 text-xs mt-1 mb-3 hidden"></p>
 
-        <div class="flex gap-2 mb-4">
-          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
-          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
-          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
-          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
-          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
-          <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+            <div class="flex gap-2 mb-4">
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+                <input type="text" maxlength="1" class="otp-input w-12 h-12 text-center border-2 rounded-lg" />
+            </div>
+
+            <button id="verifyOtp" class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-200">
+                Verify OTP
+            </button>
+
+            <div class="text-center mt-4">
+                <button id="resendOtp" class="text-blue-600 hover:underline">Resend OTP</button>
+                <div id="resendTimer" class="text-sm text-gray-600 mt-1 hidden"></div>
+                <p id="resendMessage" class="text-red-600 text-xs mt-1 hidden"></p>
+            </div>
+
+            <!-- OTP Verification Loading Spinner -->
+            <div id="otp-loading-spinner" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div class="bg-white p-5 rounded-lg flex flex-col items-center">
+                    <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-3"></div>
+                    <p class="text-gray-700">Verifying OTP...</p>
+                </div>
+            </div>
         </div>
-
-        <button id="verifyOtp" class="w-full py-3 bg-black text-white font-semibold rounded-lg hover:bg-gray-800">
-          Verify OTP
-        </button>
-
-        <div class="text-center mt-4">
-          <button id="resendOtp" class="text-blue-600 hover:underline">
-            Resend OTP
-          </button>
-          <div id="resendTimer" class="text-sm text-gray-600 mt-1 hidden"></div>
-          <p id="resendMessage" class="text-[#9B1C1C] text-xs mt-1 hidden"></p>
-        </div>
-
-        <!-- OTP Verification Loading Spinner -->
-        <div id="otp-loading-spinner" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div class="bg-white p-5 rounded-lg flex flex-col items-center">
-            <div class="w-10 h-10 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin mb-3"></div>
-            <p class="text-gray-700">Verifying OTP...</p>
-          </div>
-        </div>
-      </div>
     </div>
 
     <script src="/javascript/user/signup.js" defer></script>
-  </body>
+</body>
 </html>

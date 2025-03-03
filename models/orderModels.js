@@ -26,10 +26,7 @@ const orderSchema = new mongoose.Schema({
             type: Number,
             required: true
         },
-        // discountedPrice: {
-        //     type: Number,
-        //     default: 0
-        // },
+     
         subtotal: {
             type: Number,
             required: true
@@ -54,48 +51,13 @@ const orderSchema = new mongoose.Schema({
                 comment: String
             }]
         },
-        // return: {
-        //     isReturnRequested: {
-        //         type: Boolean,
-        //         default: false
-        //     },
-        //     reason: {
-        //         type: String,
-        //         default: null
-        //     },
-        //     requestDate: {
-        //         type: Date,
-        //         default: null
-        //     },
-        //     status: {
-        //         type: String,
-        //         enum: ['pending', 'approved', 'rejected'],
-        //         default: null
-        //     },
-        //     adminComment: {
-        //         type: String,
-        //         default: null
-        //     },
-        //     isReturnAccepted: {
-        //         type: Boolean,
-        //         default: false
-        //     }
-        // },
+       
     }],
     totalAmount: {
         type: Number,
         required: true
     },
-    // coupon: {
-    //     code: {
-    //         type: String,
-    //         default: null
-    //     },
-    //     discount: {
-    //         type: Number,
-    //         default: 0
-    //     }
-    // },
+ 
     shippingAddress: {
         fullName: String,
         mobileNumber: Number,
@@ -116,18 +78,7 @@ const orderSchema = new mongoose.Schema({
             enum: ['processing', 'completed', 'failed', 'refunded', 'cancelled', 'refund processing'],
             default: null
         },
-        // walletTransaction: {
-        //     transactionId: {
-        //         type: mongoose.Schema.Types.ObjectId,
-        //         ref: 'Wallet.transactions'
-        //     },
-        //     amount: Number
-        // },
-        // razorpayTransaction: {
-        //     razorpayOrderId: String,
-        //     razorpayPaymentId: String,
-        //     razorpaySignature: String
-        // }
+       
     },
     orderDate: {
         type: Date,
