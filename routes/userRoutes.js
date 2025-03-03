@@ -2,6 +2,7 @@ import {Router } from 'express'
 import authController from '../controller/user/authController.js'
 import userMiddlewares from '../middleware/userMiddleware.js'
 import userController from '../controller/user/shopnhomeController.js';
+import profileController from "../controller/user/profileController.js"
 
 const route = Router()
 
@@ -31,17 +32,17 @@ route.get('/login', userMiddlewares.isLogin, authController.getLogin);
 
 route.post('/login', authController.postLogin);
 
-// route.get('/forgot-password', userMiddlewares.isLogin, authController.getForgotPassword);
+route.get('/forgot-password', userMiddlewares.isLogin, authController.getForgotPassword);
 
-// route.post('/forgot-password/send-otp', authController.sendForgotPasswordOTP);
+route.post('/forgot-password/send-otp', authController.sendForgotPasswordOTP);
 
-// route.post('/forgot-password/verify-otp', authController.verifyForgotPasswordOTP);
+route.post('/forgot-password/verify-otp', authController.verifyForgotPasswordOTP);
 
-// route.post('/forgot-password/reset-password', authController.resetPassword);
+route.post('/forgot-password/reset-password', authController.resetPassword);
 
-// route.get('/change-password', userMiddlewares.checkSession, authController.getChangePassword);
+route.get('/change-password', userMiddlewares.checkSession, authController.getChangePassword);
 
-// route.post('/change-password', userMiddlewares.checkSession, authController.postChangePassword);
+route.post('/change-password', userMiddlewares.checkSession, authController.postChangePassword);
 
 route.get('/auth/google', authController.getGoogle);
 
@@ -61,6 +62,15 @@ route.get('/', (req, res) => {
     });
   });
 // // routes/productRoutes.js
+
+
+route.get('/profile', userMiddlewares.checkSession, profileController.getProfile);
+
+route.post('/profile/update', userMiddlewares.checkSession, profileController.updateProfile);
+
+
+
+
 
 
 export default route;
