@@ -32,12 +32,6 @@ const initializeAdmin = async () => {
 };
 initializeAdmin().catch(console.error);
 
-// Add this before your routes
-// app.use((req, res, next) => {
-//     console.log('Request URL:', req.url);
-//     console.log('Request Method:', req.method);
-//     next();
-// });
 
 
 initializeCategories()
@@ -52,7 +46,7 @@ app.use(nocache())
 
 
 
-app.use(morgan('combined'));
+app.use(morgan('dev'));
 
 app.set('views', './views');
 app.set('view engine','ejs')

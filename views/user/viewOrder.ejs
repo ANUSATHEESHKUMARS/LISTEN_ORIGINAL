@@ -450,8 +450,8 @@
     body: JSON.stringify({ reason })
 });
 
-                    const data = await response.json();
-                    hideAlert();
+                  const data = await response.json();
+                    hideAlert(); 
 
                     if (response.ok) {
                         updateOrderUI(orderId, 'cancelled', reason);
@@ -502,6 +502,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ reason })
                     });
+                   
 
                     const data = await response.json();
                     hideAlert();
@@ -574,7 +575,7 @@
                         amount: data.order.amount,
                         currency: data.order.currency,
                         order_id: data.order.id,
-                        name: "Onyx Fashion Store",
+                        name: "Listen Headphones",
                         description: "Order Payment Retry",
                         handler: async function (response) {
                             try {
@@ -889,6 +890,8 @@
                 hideTimelineModal();
             }
         });
-    </script>
+   
+   
+   </script>
 </body>
 </html> 

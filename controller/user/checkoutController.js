@@ -15,7 +15,7 @@ const getCheckoutPage = async (req, res) => {
             .populate({
                 path: 'items.productId',
                 model: 'Product',
-                select: 'productName size price'
+                select: 'productName  price'
             });
 
         if (!cart || !cart.items || cart.items.length === 0) {
@@ -98,7 +98,7 @@ const placeOrder = async (req, res) => {
             .populate({
                 path: 'items.productId',
                 model: 'Product',
-                select: 'productName size price'
+                select: 'productName  price'
             });
 
         if (!cart || cart.items.length === 0) {
@@ -123,7 +123,7 @@ const placeOrder = async (req, res) => {
             product: item.productId._id,
             quantity: item.quantity,
             price: item.price,
-            size: item.size,
+            // size: item.size,
             subtotal: item.quantity * item.price,
             order: {
                 status: paymentMethod === 'cod' ? 'processing' : 'pending',

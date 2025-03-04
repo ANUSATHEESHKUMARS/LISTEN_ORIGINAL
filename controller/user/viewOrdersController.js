@@ -98,34 +98,33 @@ const cancelOrder = async (req, res) => {
             });
         }
 
-        // Get the size from the cart/order history
-        const orderSize = item.size;
+        // ... existing code ...
+        // const orderSize = item.size; // Removed size variable
+        // const sizeIndex = product.size.findIndex(s => s.size === orderSize); // Removed size index lookup
 
-        // Find the specific size in the product's size array
-        const sizeIndex = product.size.findIndex(s => s.size === orderSize);
-
-        if (sizeIndex === -1) {
-            return res.status(404).json({
-                success: false,
-                message: 'Size not found in product'
-            });
-        }
+        // if (sizeIndex === -1) { // Removed size check
+        //     return res.status(404).json({
+        //         success: false,
+        //         message: 'Size not found in product'
+        //     });
+        // }
 
         // Calculate new stock for the specific size
-        const currentStock = product.size[sizeIndex].stock;
+        // const currentStock = product.size[sizeIndex].stock; // Removed stock calculation for size
         const quantityToAdd = Number(item.quantity);
-        const newStock = currentStock + quantityToAdd;
+        const newStock = product.stock + quantityToAdd; // Assuming product has a stock field
 
         // Update the stock for the specific size
-        product.size[sizeIndex].stock = newStock;
+        // product.size[sizeIndex].stock = newStock; // Removed size stock update
+        product.stock = newStock; // Update the overall product stock
         await product.save();
 
-        //update item status
+        // Update item status
         item.order.status = 'cancelled';
         item.order.statusHistory.push({
             status: 'cancelled',
             date: new Date(),
-            comment: `Item cancelled by user:${reason}`
+            comment: `Item cancelled by user: ${reason}`
         });
 
         await order.save();
