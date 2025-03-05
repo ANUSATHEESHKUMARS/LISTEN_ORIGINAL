@@ -216,6 +216,20 @@
     <script>
         
     // Image zoom functionality
+document.addEventListener("DOMContentLoaded", function () {
+    const zoomContainer = document.getElementById("zoomContainer");
+    const mainImage = document.getElementById("mainImage");
+
+    zoomContainer.addEventListener("click", function () {
+        if (zoomContainer.classList.contains("zoomed")) {
+            zoomContainer.classList.remove("zoomed");
+            mainImage.style.transform = "scale(1)";
+        } else {
+            zoomContainer.classList.add("zoomed");
+            mainImage.style.transform = "scale(2)";
+        }
+    });
+});
 
 // Update main image
 function updateMainImage(imageUrl) {

@@ -7,6 +7,7 @@ import addressController from '../controller/user/addressController.js';
 import cartController from '../controller/user/cartController.js';
 import checkoutController from '../controller/user/checkoutController.js';
 import viewOrdersController from '../controller/user/viewOrdersController.js';
+import wishlistController from '../controller/user/wishlistController.js'
 
 const route = Router()
 
@@ -102,6 +103,15 @@ route.get("/orders", userMiddlewares.checkSession, viewOrdersController.getOrder
 route.patch("/orders/:orderId/items/:productId/cancel", userMiddlewares.checkSession , viewOrdersController.cancelOrder)
 
 route.post("/orders/:orderId/items/:productId/return", userMiddlewares.checkSession, viewOrdersController.requestReturnItem)
+
+
+route.get('/wishlist', userMiddlewares.checkSession, wishlistController.getWishlist);
+
+route.post('/wishlist/add', userMiddlewares.checkSession, wishlistController.addToWishlist);
+
+route.delete('/wishlist/remove/:productId', userMiddlewares.checkSession, wishlistController.removeFromWishlist);
+
+route.get('/wishlist/check/:productId', userMiddlewares.checkSession, wishlistController.checkWishlistStatus);
 
 
 export default route;
