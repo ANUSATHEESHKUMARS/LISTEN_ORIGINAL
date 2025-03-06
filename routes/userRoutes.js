@@ -104,6 +104,8 @@ route.patch("/orders/:orderId/items/:productId/cancel", userMiddlewares.checkSes
 
 route.post("/orders/:orderId/items/:productId/return", userMiddlewares.checkSession, viewOrdersController.requestReturnItem)
 
+// route.post('/orders/:orderId/items/:productId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrderItem);
+
 
 route.get('/wishlist', userMiddlewares.checkSession, wishlistController.getWishlist);
 

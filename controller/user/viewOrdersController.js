@@ -59,6 +59,7 @@ const cancelOrder = async (req, res) => {
         const { reason } = req.body;
         const userId = req.session.user;
 
+        // Find the order for the user
         const order = await orderSchema.findOne({ _id: orderId, userId })
             .populate('items.product');
 
@@ -69,6 +70,7 @@ const cancelOrder = async (req, res) => {
             });
         }
 
+        // Find the item in the order
         const itemIndex = order.items.findIndex(item =>
             item.product._id.toString() === productId
         );
@@ -82,6 +84,7 @@ const cancelOrder = async (req, res) => {
 
         const item = order.items[itemIndex];
 
+        // Check if the item can be cancelled
         if (!['pending', 'processing'].includes(item.order.status)) {
             return res.status(400).json({
                 success: false,
@@ -98,25 +101,9 @@ const cancelOrder = async (req, res) => {
             });
         }
 
-        // ... existing code ...
-        // const orderSize = item.size; // Removed size variable
-        // const sizeIndex = product.size.findIndex(s => s.size === orderSize); // Removed size index lookup
-
-        // if (sizeIndex === -1) { // Removed size check
-        //     return res.status(404).json({
-        //         success: false,
-        //         message: 'Size not found in product'
-        //     });
-        // }
-
-        // Calculate new stock for the specific size
-        // const currentStock = product.size[sizeIndex].stock; // Removed stock calculation for size
+        // Update stock
         const quantityToAdd = Number(item.quantity);
-        const newStock = product.stock + quantityToAdd; // Assuming product has a stock field
-
-        // Update the stock for the specific size
-        // product.size[sizeIndex].stock = newStock; // Removed size stock update
-        product.stock = newStock; // Update the overall product stock
+        product.stock += quantityToAdd; 
         await product.save();
 
         // Update item status
@@ -142,7 +129,6 @@ const cancelOrder = async (req, res) => {
         });
     }
 };
-
 const requestReturnItem = async (req, res, next) => {
     try {
         console.log("requested ITem Route");
@@ -254,6 +240,8 @@ const requestReturnItem = async (req, res, next) => {
         next(error);
     }
 };
+
+
 
 
 export default {
