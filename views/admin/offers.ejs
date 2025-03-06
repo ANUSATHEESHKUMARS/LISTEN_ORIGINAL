@@ -157,6 +157,7 @@
                     <!-- Modal Body -->
                     <div class="p-4 space-y-4">
                         <form id="offerForm" onsubmit="handleOfferSubmit(event)" class="space-y-4">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                             <input type="hidden" id="offerId" value="">
                             
                             <!-- Offer Name -->

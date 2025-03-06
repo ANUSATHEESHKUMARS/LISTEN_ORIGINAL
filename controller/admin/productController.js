@@ -114,7 +114,6 @@
                 const {
                     productName,
                     brand,
-                    gender,
                     categoriesId,
                     color,
                     description,
@@ -152,7 +151,6 @@
                 const newProduct = new Product({
                     productName: validatedName,
                     brand: validatedBrand,
-                    gender,
                     categoriesId,
                     color: color.trim(),
                     description: description.trim(),
@@ -197,7 +195,6 @@
                 _id: product._id.toString(),
                 productName: product.productName,
                 brand: product.brand,
-                gender: product.gender,
                 categoriesId: {
                     _id: product.categoriesId._id.toString(),
                     name: product.categoriesId.name
@@ -237,7 +234,6 @@
                 const {
                     productName,
                     brand,
-                    gender,
                     categoriesId,
                     color,
                     description,
@@ -300,7 +296,6 @@
                 const updatedProduct = {
                     productName: validatedName,
                     brand: validatedBrand,
-                    gender,
                     categoriesId,
                     color: color.trim(),
                     description: description.trim(),

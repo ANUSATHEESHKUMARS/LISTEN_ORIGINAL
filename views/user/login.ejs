@@ -24,6 +24,7 @@
 
             <!-- Login Form -->
             <form action="/login" method="post" class="space-y-4" novalidate>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <!-- Email Input -->
                 <div>
                     <input
@@ -86,6 +87,12 @@
     </div>
 
     <script>
+        const getCsrfToken = () => {
+  return document.cookie
+    .split("; ")
+    .find(row => row.startsWith("XSRF-TOKEN="))
+    ?.split("=")[1];
+};
     // Your existing JavaScript remains unchanged
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.querySelector('form');
@@ -159,6 +166,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        "X-CSRF-Token": getCsrfToken()
                     },
                     body: JSON.stringify({ email, password })
                 });

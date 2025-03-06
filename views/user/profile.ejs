@@ -35,6 +35,7 @@
 
         <!-- Form Content -->
         <form id="profileForm" class="space-y-8">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- First Name -->
             <div class="space-y-2">
@@ -161,6 +162,14 @@
     </div>
 
     <script>
+
+const getCsrfToken = () => {
+    return document.cookie
+        .split("; ")
+        .find(row => row.startsWith("XSRF-TOKEN="))
+        ?.split("=")[1];
+};
+
       // Keep track of original values
       const originalValues = {
         firstName: document.getElementById("firstName").value,
@@ -271,6 +280,7 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'X-CSRF-Token': getCsrfToken()
             },
             body: JSON.stringify({
               firstName: capitalizedFirstName,

@@ -214,6 +214,14 @@
     <%- include("../partials/footer") %>
 
     <script>
+
+const getCsrfToken = () => {
+    return document.cookie
+        .split("; ")
+        .find(row => row.startsWith("XSRF-TOKEN="))
+        ?.split("=")[1];
+};
+
         
     // Image zoom functionality
 document.addEventListener("DOMContentLoaded", function () {
@@ -254,7 +262,10 @@ function updateMainImage(imageUrl) {
             try {
                 const response = await fetch('/cart/add', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json' ,
+                    'X-CSRF-Token': getCsrfToken()
+
+                    },
                     body: JSON.stringify({ productId, quantity: 1 })
                 });
 

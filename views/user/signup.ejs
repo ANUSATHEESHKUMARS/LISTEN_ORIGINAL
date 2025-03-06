@@ -22,6 +22,7 @@
 
             <!-- Signup Form -->
             <form action="/signup" method="post" id="signup-form" class="space-y-4" novalidate>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <!-- First Name Input -->
                 <div>
                     <input

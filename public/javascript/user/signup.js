@@ -1,3 +1,11 @@
+
+const getCsrfToken = () => {
+    return document.cookie
+      .split("; ")
+      .find(row => row.startsWith("XSRF-TOKEN="))
+      ?.split("=")[1];
+  };
+
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('signup-form');
     const passwordToggles = document.querySelectorAll('.fa-eye');
@@ -164,6 +172,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    "X-CSRF-Token": getCsrfToken()
                 },
                 body: JSON.stringify({
                     firstName,

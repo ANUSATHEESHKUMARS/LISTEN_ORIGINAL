@@ -150,6 +150,7 @@
         <div class="bg-zinc-900 rounded-lg w-[90%] md:w-[800px] max-h-[90vh] overflow-y-auto p-6">
           <h2 id="modalTitle" class="text-xl font-bold text-gray-100 mb-4">Add New Product</h2>
           <form id="productForm" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <input type="hidden" id="productId" name="productId">
             
             <div id="formErrorMessage" class="hidden bg-red-500 text-white p-3 rounded mb-4"></div>

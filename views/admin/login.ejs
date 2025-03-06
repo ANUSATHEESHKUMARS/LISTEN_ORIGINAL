@@ -27,6 +27,7 @@
 
         <div class="bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-800 p-8">
             <form id="adminLoginForm" action="/admin/login" method="POST" class="space-y-6" novalidate>
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <!-- Email Input -->
                 <div class="space-y-2">
                     <label for="email" class="block text-sm font-medium text-zinc-400">Email Address</label>
@@ -92,6 +93,14 @@
     </footer>
 
     <script>
+
+const getCsrfToken = () => {
+    return document.cookie
+        .split("; ")
+        .find(row => row.startsWith("XSRF-TOKEN="))
+        ?.split("=")[1];
+};
+
       document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('adminLoginForm');
         const emailInput = document.getElementById('email');
@@ -197,6 +206,7 @@
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                "X-CSRF-Token": getCsrfToken() 
               },
               body: JSON.stringify({
                 email: email,

@@ -77,6 +77,7 @@
       <div class="bg-zinc-900 p-6 rounded-lg w-full max-w-md">
         <h2 class="text-xl font-bold text-gray-200 mb-4">Add Category</h2>
         <form id="addCategoryForm" action="/admin/category/add" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <input
             type="text"
             name="categoryName"
@@ -117,6 +118,7 @@
       <div class="bg-gray-800 p-6 rounded-lg w-96">
         <h2 class="text-xl font-bold text-gray-200 mb-4">Edit Category</h2>
         <form id="editCategoryForm" action="/admin/category/edit" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <input type="hidden" name="categoryId" id="editCategoryId" />
           <input
             type="text"

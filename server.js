@@ -15,6 +15,7 @@ import initializeCategories from "./utils/initCategories.js";
 import passport from "./config/passport.js";
 import morgan from "morgan";
 import helmet from "helmet";
+import csurf from "csurf";
 
 dotenv.config();
 
@@ -58,7 +59,7 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      secure: false,
+      sameSite : "strict",
       maxAge: 30 * 24 * 60 * 60 * 1000,
     },
   })
@@ -66,6 +67,26 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+const csrfProtection = csurf({
+    cookie: {
+      httpOnly: true, // CSRF cookie should not be accessible via JS
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    },
+  });
+app.use(csrfProtection);
+
+app.use((req, res, next) => {
+    res.cookie("XSRF-TOKEN", req.csrfToken(), {
+      httpOnly: false, 
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+    res.locals.csrfToken = req.csrfToken(); // Make available to EJS
+    next();
+  });
+
 
 app.use(express.static(path.join(process.cwd(), "public")));
 

@@ -6,7 +6,7 @@
     <title>Listen- My Addresses</title>
     <link rel="stylesheet" href="../user/tailwindcss/output.css" />
     <link
-    
+
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
       integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
@@ -124,6 +124,7 @@
 
           <!-- Form Content -->
           <form id="addressForm" class="space-y-5">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <input type="hidden" id="addressId" name="addressId" />
 
             <!-- Full Name -->
@@ -493,6 +494,14 @@
     <%- include("../partials/footer") %>
 
     <script>
+
+const getCsrfToken = () => {
+    return document.cookie
+        .split("; ")
+        .find(row => row.startsWith("XSRF-TOKEN="))
+        ?.split("=")[1];
+};
+
       // Modal functions
       function openAddAddressModal() {
         document.getElementById("modalTitle").textContent = "Add New Address";
@@ -684,6 +693,8 @@
               headers: {
                 "Content-Type": "application/json",
                 "X-Requested-With": "XMLHttpRequest",
+
+
               },
               body: JSON.stringify(Object.fromEntries(formData)),
             });
@@ -698,6 +709,7 @@
               const addressResponse = await fetch("/address", {
                 headers: {
                   "X-Requested-With": "XMLHttpRequest",
+                  'X-CSRF-Token': getCsrfToken()
                 },
               });
 
