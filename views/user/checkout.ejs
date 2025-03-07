@@ -172,34 +172,31 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
       <!-- Coupon Section -->
       <div class="mb-6">
         <button
-          onclick="openCouponModal()"
-          class="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+            onclick="openCouponModal()"
+            class="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
         >
-          <i class="fas fa-ticket-alt"></i>
-          Apply Coupon
+            <i class="fas fa-ticket-alt"></i>
+            Apply Coupon
         </button>
         <div
-          id="appliedCouponInfo"
-          class="hidden mt-3 p-3 bg-green-50 rounded-lg"
+            id="appliedCouponInfo"
+            class="hidden mt-3 p-3 bg-green-50 rounded-lg"
         >
-          <div class="flex justify-between items-center">
-            <div>
-              <p
-                class="text-green-800 font-medium"
-                id="appliedCouponCode"
-              ></p>
-              <p class="text-green-600 text-sm" id="discountInfo"></p>
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-green-800 font-medium" id="appliedCouponCode"></p>
+                    <p class="text-green-600 text-sm" id="discountInfo"></p>
+                </div>
+                <button
+                    onclick="removeCoupon()"
+                    class="text-red-500 hover:text-red-600"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <button
-              onclick="removeCoupon()"
-              class="text-red-500 hover:text-red-600"
-            >
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
         </div>
-      </div>
-
+    </div>
+    
       <!-- Price Breakdown -->
       <div class="space-y-3">
         <div class="flex justify-between">
@@ -367,6 +364,74 @@ class="fixed inset-0 flex items-center justify-center z-50 hidden"
       let currentDiscount = 0;
       const cartTotal = <%= total %>;
 
+
+      async function applyCoupon(couponCode) {
+        try {
+            const response = await fetch('/checkout/apply-coupon', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ couponCode })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                // Update UI elements
+                const discountRow = document.getElementById('discountRow');
+                const discountAmount = document.getElementById('discountAmount');
+                const finalTotal = document.getElementById('finalTotal');
+                const appliedCouponInfo = document.getElementById('appliedCouponInfo');
+                const appliedCouponCode = document.getElementById('appliedCouponCode');
+                const discountInfo = document.getElementById('discountInfo');
+
+                discountRow.classList.remove('hidden');
+                discountAmount.textContent = data.discount.toFixed(2);
+                finalTotal.textContent = (cartTotal - data.discount).toFixed(2);
+
+                appliedCouponInfo.classList.remove('hidden');
+                appliedCouponCode.textContent = couponCode;
+                discountInfo.textContent = `₹${data.discount.toFixed(2)} discount applied`;
+
+                // Close coupon modal
+                closeCouponModal();
+            } else {
+                await showAlert('error', data.message);
+            }
+        } catch (error) {
+            console.error('Error applying coupon:', error);
+            await showAlert('error', 'Failed to apply coupon');
+        }
+    }
+
+    async function removeCoupon() {
+        try {
+            const response = await fetch('/checkout/remove-coupon', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                // Reset UI elements
+                const discountRow = document.getElementById('discountRow');
+                const discountAmount = document.getElementById('discountAmount');
+                const finalTotal = document.getElementById('finalTotal');
+                const appliedCouponInfo = document.getElementById('appliedCouponInfo');
+
+                discountRow.classList.add('hidden');
+                discountAmount.textContent = '0.00';
+                finalTotal.textContent = cartTotal.toFixed(2);
+                appliedCouponInfo.classList.add('hidden');
+
+                await showAlert('success', 'Coupon removed successfully');
+            } else {
+                await showAlert('error', data.message);
+            }
+        } catch (error) {
+            console.error('Error removing coupon:', error);
+            await showAlert('error', 'Failed to remove coupon');
+        }
+    }
       function openCouponModal() {
           fetchCoupons();
           document.getElementById('couponModal').classList.remove('hidden');

@@ -116,4 +116,10 @@ route.delete('/wishlist/remove/:productId', userMiddlewares.checkSession, wishli
 route.get('/wishlist/check/:productId', userMiddlewares.checkSession, wishlistController.checkWishlistStatus);
 
 
+route.post('/checkout/apply-coupon', userMiddlewares.checkSession, checkoutController.applyCoupon);
+
+route.post('/checkout/remove-coupon', userMiddlewares.checkSession, checkoutController.removeCoupon);
+
+
+
 export default route;
