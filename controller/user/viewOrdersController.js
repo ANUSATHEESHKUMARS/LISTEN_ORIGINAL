@@ -4,52 +4,63 @@ import productSchema from "../../models/productModel.js";
 
 const getOrders = async (req, res) => {
     try {
-            const user = await userSchema.findById(req.session.user)
-            const userId= req.session.user
-            const page=parseInt(req.query.page) || 1;
-            const limit=5;
+        const user = await userSchema.findById(req.session.user)
+        const userId = req.session.user
+        const page = parseInt(req.query.page) || 1;
+        const limit = 5;
 
-            const totalOrders = await orderSchema.countDocuments({userId})
-            const totalPages = Math.ceil(totalOrders/limit);
+        const totalOrders = await orderSchema.countDocuments({ userId })
+        const totalPages = Math.ceil(totalOrders / limit);
 
-            const orders = await orderSchema.find({userId})
-            .sort({createdAt:-1})
-            .skip((page-1)*limit)
+        const orders = await orderSchema.find({ userId })
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
             .limit(limit)
             .populate('items.product')
 
-         // Process orders to handle null products
-         const processedOrders = orders.map(order => {
+        // Process orders to handle null products and shipping address
+        const processedOrders = orders.map(order => {
             const orderObj = order.toObject();
+            
+            // Handle items with null products
             orderObj.items = orderObj.items.map(item => ({
                 ...item,
                 product: item.product || {
                     productName: 'Product Unavailable',
-                    imageUrl: ['/images/placeholder.jpg'], // Provide a default image path
+                    imageUrl: ['/images/placeholder.jpg'],
                     price: item.price || 0
                 }
             }));
+
+            // Ensure shipping address has all required fields
+            orderObj.shippingAddress = {
+                fullName: orderObj.shippingAddress?.fullName || 'Name not available',
+                mobileNumber: orderObj.shippingAddress?.mobileNumber || 'Not available',
+                addressLine1: orderObj.shippingAddress?.addressLine1 || '',
+                addressLine2: orderObj.shippingAddress?.addressLine2 || '',
+                city: orderObj.shippingAddress?.city || '',
+                state: orderObj.shippingAddress?.state || '',
+                pincode: orderObj.shippingAddress?.pincode || ''
+            };
+
             return orderObj;
         });
-            
-        res.render("user/viewOrder",{
-          orders:processedOrders,
-          currentPage:page,
-          totalPages,
-          hasNextPage:page<totalPages,
-          hasPreviousPage:page>1,
-          user
+
+        res.render("user/viewOrder", {
+            orders: processedOrders,
+            currentPage: page,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1,
+            user
         });
-
-
 
     } catch (error) {
-
         console.error('Get orders error', error);
-        res.status(500).json({
-            message: 'Error fetching orders'
+        res.status(500).render('error', {
+            message: 'Error fetching orders',
+            user: req.session.user
         });
-
     }
 }
 
@@ -59,6 +70,7 @@ const cancelOrder = async (req, res) => {
         const { reason } = req.body;
         const userId = req.session.user;
 
+        // Find the order for the user
         const order = await orderSchema.findOne({ _id: orderId, userId })
             .populate('items.product');
 
@@ -69,6 +81,7 @@ const cancelOrder = async (req, res) => {
             });
         }
 
+        // Find the item in the order
         const itemIndex = order.items.findIndex(item =>
             item.product._id.toString() === productId
         );
@@ -82,6 +95,7 @@ const cancelOrder = async (req, res) => {
 
         const item = order.items[itemIndex];
 
+        // Check if the item can be cancelled
         if (!['pending', 'processing'].includes(item.order.status)) {
             return res.status(400).json({
                 success: false,
@@ -98,25 +112,9 @@ const cancelOrder = async (req, res) => {
             });
         }
 
-        // ... existing code ...
-        // const orderSize = item.size; // Removed size variable
-        // const sizeIndex = product.size.findIndex(s => s.size === orderSize); // Removed size index lookup
-
-        // if (sizeIndex === -1) { // Removed size check
-        //     return res.status(404).json({
-        //         success: false,
-        //         message: 'Size not found in product'
-        //     });
-        // }
-
-        // Calculate new stock for the specific size
-        // const currentStock = product.size[sizeIndex].stock; // Removed stock calculation for size
+        // Update stock
         const quantityToAdd = Number(item.quantity);
-        const newStock = product.stock + quantityToAdd; // Assuming product has a stock field
-
-        // Update the stock for the specific size
-        // product.size[sizeIndex].stock = newStock; // Removed size stock update
-        product.stock = newStock; // Update the overall product stock
+        product.stock += quantityToAdd; 
         await product.save();
 
         // Update item status
@@ -142,7 +140,6 @@ const cancelOrder = async (req, res) => {
         });
     }
 };
-
 const requestReturnItem = async (req, res, next) => {
     try {
         console.log("requested ITem Route");
@@ -254,6 +251,8 @@ const requestReturnItem = async (req, res, next) => {
         next(error);
     }
 };
+
+
 
 
 export default {

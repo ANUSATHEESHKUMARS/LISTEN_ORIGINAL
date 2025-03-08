@@ -100,9 +100,11 @@ route.post("/checkout/place-order", userMiddlewares.checkSession, checkoutContro
 
 route.get("/orders", userMiddlewares.checkSession, viewOrdersController.getOrders)
 
-route.patch("/orders/:orderId/items/:productId/cancel", userMiddlewares.checkSession , viewOrdersController.cancelOrder)
+route.post("/orders/:orderId/items/:productId/cancel", userMiddlewares.checkSession, viewOrdersController.cancelOrder)
 
 route.post("/orders/:orderId/items/:productId/return", userMiddlewares.checkSession, viewOrdersController.requestReturnItem)
+
+// route.post('/orders/:orderId/items/:productId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrderItem);
 
 
 route.get('/wishlist', userMiddlewares.checkSession, wishlistController.getWishlist);
@@ -112,6 +114,10 @@ route.post('/wishlist/add', userMiddlewares.checkSession, wishlistController.add
 route.delete('/wishlist/remove/:productId', userMiddlewares.checkSession, wishlistController.removeFromWishlist);
 
 route.get('/wishlist/check/:productId', userMiddlewares.checkSession, wishlistController.checkWishlistStatus);
+
+route.post('/checkout/create-razorpay-order', userMiddlewares.checkSession, checkoutController.createRazorpayOrder);
+
+route.post('/checkout/verify-payment', userMiddlewares.checkSession, checkoutController.verifyPayment);
 
 
 export default route;
