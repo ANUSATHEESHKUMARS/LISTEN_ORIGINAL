@@ -12,16 +12,16 @@
         /* Your existing styles */
     </style>
 </head>
-<body class="bg-gray-200">
+<body class="bg-gray-500">
     <%- include("../partials/nav") %>
 
     <main class="min-h-screen pt-20 pb-12">
         <!-- Breadcrumb -->
         <nav class="max-w-7xl mx-auto px-4 py-4">
             <ol class="flex items-center space-x-2 text-sm">
-                <li><a href="/" class="text-gray-500 hover:text-gray-900">Home</a></li>
+                <li><a href="/" class="text-gray-900 hover:text-gray-900">Home</a></li>
                 <li><span class="text-gray-400">/</span></li>
-                <li><a href="/shop" class="text-gray-500 hover:text-gray-900">Shop</a></li>
+                <li><a href="/shop" class="text-gray-900 hover:text-gray-900">Shop</a></li>
                 <li><span class="text-gray-400">/</span></li>
                 <li class="text-gray-900 font-medium"><%= product.productName %></li>
             </ol>
@@ -39,6 +39,7 @@
                                 id="mainImage"
                                 src="<%= product.imageUrl[0] %>"
                                 alt="<%= product.productName %>"
+                                class="w-full h-auto transition-transform duration-200"
                             />
                         </div>
 
@@ -166,52 +167,100 @@
         </div>
 
         <!-- Related Products Section -->
-   <!-- Related Products Section -->
-<div class="related-products mt-12">
-    <h2 class="text-2xl font-bold text-gray-900">Related Products</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-        <% relatedProducts.forEach((relatedProduct) => { %>
-            <div class="bg-white rounded-lg shadow-md p-4">
-                <img 
-                    src="<%= relatedProduct.imageUrl[0] %>" 
-                    alt="<%= relatedProduct.productName %>" 
-                    class="w-full h-40 object-cover rounded-md"
-                />
-                <h3 class="text-lg font-semibold mt-2"><%= relatedProduct.productName %></h3>
-                <p class="text-gray-500">₹<%= Number(relatedProduct.price).toLocaleString('en-IN') %></p>
-                <a 
-                    href="/product/<%= relatedProduct._id %>" <!-- Link to the product details page -->
-                    class="mt-2 w-full py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors text-center block"
-                >
-                    View Product
-                </a>
+        <section class="max-w-7xl mx-auto px-4 mt-16 mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-8">Related Products</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <% if (relatedProducts && relatedProducts.length > 0) { %>
+                    <% relatedProducts.forEach(function(product) { %>
+                        <div class="group relative">
+                            <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl">
+                                <!-- Image Container -->
+                                <a href="/product/<%= product._id %>" class="block">
+                                    <div class="aspect-w-1 aspect-h-1 w-full overflow-hidden">
+                                        <img 
+                                            src="<%= product.imageUrl[0] %>" 
+                                            alt="<%= product.productName %>"
+                                            class="h-64 w-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                    </div>
+                                </a>
+                                
+                                <!-- Product Info -->
+                                <div class="p-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
+                                        <%= product.productName %>
+                                    </h3>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-xl font-bold text-gray-900">
+                                            ₹<%= Number(product.price).toLocaleString('en-IN') %>
+                                        </p>
+                                        
+                                        <a 
+                                            href="/product/<%= product._id %>"
+                                            class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                                        >
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <p class="col-span-full text-center text-gray-500">No related products found</p>
+                <% } %>
             </div>
-        <% }) %>
-    </div>
-</div>
+        </section>
+    </main>
+
     <%- include("../partials/footer") %>
 
     <script>
-        const imageZoom = document.getElementById('imageZoom');
+        // Image zoom functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.main-image-container');
+            const mainImage = document.getElementById('mainImage');
+            
+            if (!container || !mainImage) return;
 
-        imageZoom.addEventListener('mousemove', (event) => {
-            imageZoom.style.setProperty('--display', 'block');
-            const pointer = {
-                x: (event.offsetX * 100) / imageZoom.offsetWidth,
-                y: (event.offsetY * 100) / imageZoom.offsetHeight,
-            };
-            imageZoom.style.setProperty('--zoom-x', pointer.x + '%');
-            imageZoom.style.setProperty('--zoom-y', pointer.y + '%');
+            let isZoomed = false;
+            const zoomLevel = 2;
+
+            container.addEventListener('mousemove', function(e) {
+                if (!isZoomed) return;
+
+                const rect = container.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / container.offsetWidth * 100;
+                const y = (e.clientY - rect.top) / container.offsetHeight * 100;
+
+                mainImage.style.transformOrigin = `${x}% ${y}%`;
+            });
+
+            container.addEventListener('mouseenter', function() {
+                isZoomed = true;
+                mainImage.style.transform = `scale(${zoomLevel})`;
+            });
+
+            container.addEventListener('mouseleave', function() {
+                isZoomed = false;
+                mainImage.style.transform = 'scale(1)';
+            });
         });
 
-        imageZoom.addEventListener('mouseout', () => {
-            imageZoom.style.setProperty('--display', 'none');
-        });
+        // Function to update main image
+        function updateMainImage(imageUrl, thumbnailElement) {
+            const mainImage = document.getElementById('mainImage');
+            if (!mainImage) return;
 
-        // Update main image
-        function updateMainImage(imageUrl) {
-            document.getElementById('mainImage').src = imageUrl; // Ensure this ID matches your main image
-            imageZoom.style.setProperty('--url', `url(${imageUrl})`); // Corrected string template
+            mainImage.src = imageUrl;
+
+            // Update active thumbnail
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.classList.remove('border-2', 'border-black');
+            });
+            thumbnailElement.classList.add('border-2', 'border-black');
         }
 
         async function addToCart(productId) {
@@ -266,5 +315,36 @@
             // Implement wishlist functionality here
         }
     </script>
+
+    <style>
+        .main-image-container {
+            position: relative;
+            overflow: hidden;
+            cursor: zoom-in;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        #mainImage {
+            width: 100%;
+            height: auto;
+            transition: transform 0.3s ease-out;
+        }
+
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .thumbnail {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+    </style>
 </body>
 </html>

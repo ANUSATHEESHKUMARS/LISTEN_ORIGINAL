@@ -6,8 +6,7 @@ import dashboardController from '../controller/admin/dashboardController.js';
 import categoryController from '../controller/admin/categoryController.js';
 import productController from '../controller/admin/productController.js';
 import orderController from '../controller/admin/orderController.js';
-import couponController from '../controller/user/couponController.js';
-
+import offerController from '../controller/admin/offerController.js'
 
 const router = express.Router();
 
@@ -59,6 +58,16 @@ router.patch("/orders/:orderId/items/:productId/status",adminMiddleware.checkSes
 
 router.post("/orders/:orderId/items/:productId/return",adminMiddleware.checkSession,orderController.handleReturnRequest)
 
+
+router.get('/offers', adminMiddleware.checkSession, offerController.getOffers);
+
+router.post('/offers', adminMiddleware.checkSession, offerController.createOffer);
+
+router.get('/offers/:offerId', adminMiddleware.checkSession, offerController.getOffer);
+
+router.put('/offers/:offerId', adminMiddleware.checkSession, offerController.updateOffer);
+
+router.delete('/offers/:offerId', adminMiddleware.checkSession, offerController.deleteOffer);
 
 
 export default router;
