@@ -271,6 +271,12 @@
                     body: JSON.stringify({ productId, quantity: 1 })
                 });
 
+                // Check if response is redirecting to login page
+                if (response.status === 401 || response.redirected) {
+                    window.location.href = '/user/login';
+                    return;
+                }
+
                 const data = await response.json();
 
                 if (response.ok) {
@@ -290,29 +296,95 @@
                     throw new Error(data.message);
                 }
             } catch (error) {
+                // If error is due to authentication, redirect to login
+                if (error.message.includes('<!DOCTYPE')) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: error.message || 'Failed to add to cart'
+                    text: 'Please login to add items to cart'
                 });
             }
         }
 
         async function buyNow(productId) {
             try {
-                await addToCart(productId);
-                window.location.href = '/checkout';
+                const response = await fetch('/cart/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId, quantity: 1 })
+                });
+
+                // Check if response is redirecting to login page
+                if (response.status === 401 || response.redirected) {
+                    window.location.href = '/user/login';
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    window.location.href = '/checkout';
+                } else {
+                    throw new Error(data.message);
+                }
             } catch (error) {
+                // If error is due to authentication, redirect to login
+                if (error.message.includes('<!DOCTYPE')) {
+                    window.location.href = '/login';
+                    return;
+                }
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: error.message || 'Failed to process purchase'
+                    text: 'Please login to continue with purchase'
                 });
             }
         }
 
         async function toggleWishlist(productId) {
-            // Implement wishlist functionality here
+            try {
+                const response = await fetch('/wishlist/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId })
+                });
+
+                // Check if response is redirecting to login page
+                if (response.status === 401 || response.redirected) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const wishlistBtn = document.querySelector(`[onclick="toggleWishlist('${productId}')"]`);
+                    if (wishlistBtn) {
+                        wishlistBtn.innerHTML = data.added ? 
+                            '<i class="fas fa-heart text-red-500"></i> Remove from Wishlist' :
+                            '<i class="far fa-heart"></i> Add to Wishlist';
+                    }
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                // If error is due to authentication, redirect to login
+                if (error.message.includes('<!DOCTYPE')) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Please login to manage wishlist'
+                });
+            }
         }
     </script>
 
