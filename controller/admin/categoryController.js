@@ -1,6 +1,5 @@
 import Category from '../../models/categoryModels.js';
-
-
+import Offer from '../../models/offerModel.js';
 
 const categoryController = {
     // Get all categories
@@ -128,6 +127,69 @@ const categoryController = {
             res.status(500).json({
                 success: false,
                 message: 'Error updating category status'
+            });
+        }
+    },
+
+    // Get category offers
+    getCategoryOffers: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const offers = await Offer.find({ 
+                categoryId: id,
+                status: 'active'
+            });
+
+            res.json({
+                success: true,
+                offers
+            });
+        } catch (error) {
+            console.error('Error fetching category offers:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error fetching offers'
+            });
+        }
+    },
+
+    // Add category offer
+    addCategoryOffer: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { name, discount, startDate, endDate } = req.body;
+
+            // Validate input
+            if (!name || !discount || !startDate || !endDate) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'All fields are required'
+                });
+            }
+
+            // Create new offer
+            const offer = new Offer({
+                name,
+                type: 'category',
+                categoryId: id,
+                discount,
+                startDate,
+                endDate,
+                status: 'active'
+            });
+
+            await offer.save();
+
+            res.json({
+                success: true,
+                message: 'Offer added successfully',
+                offer
+            });
+        } catch (error) {
+            console.error('Error adding category offer:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Error adding offer'
             });
         }
     }

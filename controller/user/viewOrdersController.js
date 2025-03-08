@@ -4,8 +4,8 @@ import productSchema from "../../models/productModel.js";
 
 const getOrders = async (req, res) => {
     try {
-        const user = await userSchema.findById(req.session.user)
-        const userId = req.session.user
+        const user = await userSchema.findById(req.session.user);
+        const userId = req.session.user;
         const page = parseInt(req.query.page) || 1;
         const limit = 5;
 
@@ -16,15 +16,23 @@ const getOrders = async (req, res) => {
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit)
-            .populate('items.product')
+            .populate('items.product');
 
-        // Process orders to handle null products and shipping address
+        // Process orders to handle null products and returns
         const processedOrders = orders.map(order => {
             const orderObj = order.toObject();
             
-            // Handle items with null products
+            // Ensure each item has a return property
             orderObj.items = orderObj.items.map(item => ({
                 ...item,
+                return: item.return || {
+                    isReturnRequested: false,
+                    reason: null,
+                    requestDate: null,
+                    status: null,
+                    adminComment: null,
+                    isReturnAccepted: false
+                },
                 product: item.product || {
                     productName: 'Product Unavailable',
                     imageUrl: ['/images/placeholder.jpg'],
@@ -56,7 +64,7 @@ const getOrders = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Get orders error', error);
+        console.error('Get orders error:', error);
         res.status(500).render('error', {
             message: 'Error fetching orders',
             user: req.session.user

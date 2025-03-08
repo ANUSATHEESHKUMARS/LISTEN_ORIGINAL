@@ -16,7 +16,7 @@
           /* ... your styles ... */
       </style>
   </head>
-    <body class="bg-gray-800 text-white min-h-screen">
+    <body class="bg-gray-500 text-white min-h-screen">
       <%- include("../partials/sidebar") %>
 
       <div class="lg:ml-64 transition-all" id="main-content">
@@ -24,15 +24,15 @@
           <button id="toggleSidebar" class="text-white lg:hidden">
             
           </button>
-          <h1 class="text-2xl font-semibold text-gray-200">Product Management</h1>
+          <h1 class="text-2xl font-semibold text-gray-900">Product Management</h1>
         </header>
 
         <main class="p-4 lg:p-8">
           <div class="overflow-x-auto">
-            <div class="min-w-full bg-zinc-800 rounded-lg shadow-md">
+            <div class="min-w-full bg-gray-500 rounded-lg shadow-md">
               <!-- Table Header with Add Product Button -->
               <div class="p-4 md:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 class="text-xl md:text-2xl font-semibold text-gray-200">Products</h2>
+                <h2 class="text-xl md:text-2xl font-semibold text-gray-900">Products</h2>
                 <button id="addProductBtn" 
                         class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors w-full sm:w-auto justify-center">
                   <i class="fas fa-plus"></i>
@@ -42,8 +42,8 @@
 
               <!-- Table Container -->
               <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-zinc-700">
-                  <thead class="bg-zinc-900">
+                <table class="min-w-full divide-y divide-gray-300">
+                  <thead class="bg-gray-700">
                     <tr>
                       <th class="px-4 py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider">Image</th>
                       <th class="px-4 py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider">Product</th>
@@ -55,7 +55,7 @@
                       <th class="px-4 py-3 text-right text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-zinc-700">
+                  <tbody class="divide-y divide-zinc-700">  
                     <% products.forEach(product => { %>
                       <tr class="hover:bg-zinc-700/50 transition-colors">
                         <td class="px-4 py-3 whitespace-nowrap">

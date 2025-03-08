@@ -163,11 +163,23 @@
                                                             <% } %>
                                                         <% } %>
 
-                                                        <% if (item.order.status === 'delivered' && !item.return.isReturnRequested) { %>
-                                                            <button onclick="requestReturnForItem('<%= order._id %>', '<%= item.product._id %>', '<%= item.product.productName %>')"
-                                                                    class="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors">
-                                                                Return
-                                                            </button>
+                                                        <% if (item.order.status === 'delivered') { %>
+                                                            <% 
+                                                            // Check if return exists and its status
+                                                            const canReturn = !item.return || !item.return.isReturnRequested;
+                                                            const returnRequested = item.return && item.return.isReturnRequested;
+                                                            %>
+                                                            
+                                                            <% if (canReturn) { %>
+                                                                <button onclick="requestReturnForItem('<%= order._id %>', '<%= item.product._id %>', '<%= item.product.productName %>')"
+                                                                        class="px-3 py-1 text-sm bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors">
+                                                                    Return
+                                                                </button>
+                                                            <% } else if (returnRequested) { %>
+                                                                <span class="px-3 py-1 text-sm bg-gray-600 text-white rounded">
+                                                                    Return Requested
+                                                                </span>
+                                                            <% } %>
                                                         <% } %>
                                                     </div>
                                                 </div>
@@ -695,66 +707,56 @@
         }
 
         async function requestReturnForItem(orderId, productId, productName) {
-            const reasons = {
-                'Product damaged': 'Product damaged',
-                'Wrong product received': 'Wrong product received',
-                'Product not as described': 'Product not as described',
-                'Size/fit issue': 'Size/fit issue',
-                'Quality not as expected': 'Quality not as expected',
-                'Other': 'Other'
-            };
+            try {
+                const { value: reason } = await Swal.fire({
+                    title: `Return ${productName}`,
+                    input: 'select',
+                    inputOptions: {
+                        'Damaged Product': 'Damaged Product',
+                        'Wrong Item Received': 'Wrong Item Received',
+                        'Size/Fit Issue': 'Size/Fit Issue',
+                        'Quality Issue': 'Quality Issue',
+                        'Other': 'Other'
+                    },
+                    inputPlaceholder: 'Select return reason',
+                    showCancelButton: true,
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'Please select a reason';
+                        }
+                    }
+                });
 
-            // Show confirm dialog with select input
-            const select = document.createElement('select');
-            select.className = 'mt-4 w-full rounded border-gray-300';
-            select.innerHTML = `
-                <option value="">Select a reason</option>
-                ${Object.entries(reasons).map(([key, value]) => 
-                    `<option value="${key}">${value}</option>`
-                ).join('')}
-            `;
-
-            const confirmMessage = document.getElementById('confirmMessage');
-            confirmMessage.textContent = 'Please select a reason for return';
-            confirmMessage.appendChild(select);
-
-            showAlert('confirm', '', `Return ${productName}`);
-
-            document.getElementById('confirmAction').onclick = async () => {
-                const reason = select.value;
-                if (!reason) {
-                    showAlert('error', 'Please select a reason');
-                    return;
-                }
-
-                try {
-                    hideAlert();
-                    showAlert('loading');
-
+                if (reason) {
                     const response = await fetch(`/orders/${orderId}/items/${productId}/return`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify({ reason })
                     });
 
                     const data = await response.json();
-                    hideAlert();
 
-                    if (response.ok) {
-                        showAlert('success', data.message || 'Return request submitted successfully');
-                        // Add reload after success alert is closed
-                        document.querySelector('#successAlert button').onclick = () => {
-                            hideAlert();
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: 'Return request submitted successfully'
+                        }).then(() => {
                             window.location.reload();
-                        };
+                        });
                     } else {
-                        throw new Error(data.message || 'Failed to submit return request');
+                        throw new Error(data.message);
                     }
-                } catch (error) {
-                    hideAlert();
-                    showAlert('error', error.message || 'Failed to request return');
                 }
-            };
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: error.message || 'Failed to submit return request'
+                });
+            }
         }
 
         async function cancelOrderItem(orderId, productId, productName) {

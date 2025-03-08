@@ -20,6 +20,10 @@ const categorySchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    currentOffer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Offer'
     }
 });
 

@@ -15,9 +15,9 @@
     <!-- </header> -->
     <div class="p-4 mt-7">
         <!-- Orders Table -->
-        <div class="bg-gray-800 text-white min-h-screen">
+        <div class="bg-gray-500 text-white min-h-screen">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-600">
+                <table class="min-w-full divide-y divide-gray-300">
                     <thead class="bg-zinc-800">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">Order Details</th>
@@ -47,10 +47,14 @@
                                             <%= order.userId.firstName %> <%= order.userId.lastName %>
                                         </div>
                                         <div class="text-xs text-gray-400"><%= order.userId.email %></div>
-                                        <button onclick="showAddressDetails('<%= JSON.stringify(order.shippingAddress).replace(/'/g, '\\\'') %>')"
-                                                class="text-xs text-blue-400 hover:text-blue-300 mt-1">
-                                            View Address
-                                        </button>
+                                        <% if (order.shippingAddress) { %>
+                                            <button onclick="showAddressDetails('<%= JSON.stringify(order.shippingAddress).replace(/'/g, '\\\'') %>')"
+                                                    class="text-xs text-blue-400 hover:text-blue-300 mt-1">
+                                                View Address
+                                            </button>
+                                        <% } else { %>
+                                            <span class="text-xs text-gray-400">No address available</span>
+                                        <% } %>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="space-y-2">

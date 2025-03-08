@@ -7,9 +7,9 @@ const offerController = {
     getOffers: async (req, res) => {
         try {
             const offers = await Offer.find()
-                .populate('productIds')
                 .populate('categoryId')
-                .sort('-createdAt');
+                .populate('productIds')
+                .sort({ createdAt: -1 });
 
             const products = await Product.find({ isActive: true });
             const categories = await Category.find({ isActive: true });
@@ -17,14 +17,20 @@ const offerController = {
             res.render('admin/offers', {
                 offers,
                 products,
-                categories
+                categories,
+                admin: req.session.admin
             });
         } catch (error) {
             console.error('Get offers error:', error);
-            res.status(500).json({ message: 'Error loading offers' });
+            res.status(500).render('error', {
+                message: 'Error fetching offers',
+                error: error.message,
+                admin: req.session.admin
+            });
         }
     },
 
+    
     // Create new offer
     createOffer: async (req, res) => {
         try {

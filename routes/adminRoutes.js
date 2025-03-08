@@ -7,6 +7,7 @@ import categoryController from '../controller/admin/categoryController.js';
 import productController from '../controller/admin/productController.js';
 import orderController from '../controller/admin/orderController.js';
 import offerController from '../controller/admin/offerController.js'
+import couponController from '../controller/admin/couponController.js'
 
 const router = express.Router();
 
@@ -68,6 +69,20 @@ router.get('/offers/:offerId', adminMiddleware.checkSession, offerController.get
 router.put('/offers/:offerId', adminMiddleware.checkSession, offerController.updateOffer);
 
 router.delete('/offers/:offerId', adminMiddleware.checkSession, offerController.deleteOffer);
+
+
+router.get('/coupon', adminMiddleware.checkSession, couponController.getCoupons);
+
+router.post('/coupons/add', adminMiddleware.checkSession, couponController.addCoupon);
+
+router.get('/coupons/:id', adminMiddleware.checkSession, couponController.getCouponDetails);
+
+router.post('/coupons/edit/:id', adminMiddleware.checkSession, couponController.updateCoupon);
+
+router.post('/coupons/delete/:id', adminMiddleware.checkSession, couponController.deleteCoupon);
+
+router.post('/coupons/toggle-status/:id', adminMiddleware.checkSession, couponController.toggleCouponStatus);
+
 
 
 export default router;

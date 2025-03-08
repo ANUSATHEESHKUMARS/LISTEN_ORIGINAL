@@ -39,9 +39,22 @@ const getOrders = async (req, res) => {
             .skip(skip)
             .limit(limit);
 
-        // Process orders to handle null products
+        // Process orders to handle null products and ensure shipping address exists
         const processedOrders = orders.map(order => {
             const orderObj = order.toObject();
+            
+            // Ensure shipping address exists with default values
+            orderObj.shippingAddress = orderObj.shippingAddress || {
+                fullName: 'N/A',
+                mobileNumber: 'N/A',
+                addressLine1: 'N/A',
+                addressLine2: '',
+                city: 'N/A',
+                state: 'N/A',
+                pincode: 'N/A'
+            };
+
+            // Process items
             orderObj.items = orderObj.items.map(item => ({
                 ...item,
                 product: item.product || {
