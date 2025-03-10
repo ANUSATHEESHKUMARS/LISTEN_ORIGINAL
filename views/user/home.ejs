@@ -108,34 +108,114 @@
 </div>
 
 
-    <!-- Categories Section -->
-    <section class="bg-gray-200">
+    <!-- Categories Section - Compact -->
+    <section class="bg-gray-100 py-8">
         <div class="container mx-auto px-4">
-            <div class="text-center mb-6"> 
-                <h2 class="text-3xl font-bold text-gray-900 mb-4">Shop by Category</h2>
-                <p class="text-gray-900">Find the perfect headphones for every style</p>
+            <!-- Section Header -->
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Shop by Category</h2>
+                <p class="text-gray-600">Find your perfect headphones</p>
             </div>
-            <div class="flex overflow-x-auto gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-2 sm:gap-6 pb-4 sm:pb-0">
-                <!-- Wireless Headphones -->
-                <a href="/shop?type=wireless" class="group relative h-64 min-w-[280px] sm:min-w-0 rounded-2xl overflow-hidden">
-                    <img src="/images/this si pagae.jpg.png" alt="Wireless Headphones" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    <div class="absolute inset-0 bg-black/40 flex items-end p-6">
-                        <div>
-                            <h3 class="text-white text-xl font-semibold mb-2">Wireless Headphones</h3>
-                            <span class="text-gray-200 text-sm">Explore →</span>
+
+            <!-- Category Cards - Compact -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                <!-- Wireless Headphones Card -->
+                <a href="/shop?type=wireless" 
+                   class="group relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                    <div class="h-48">
+                        <img src="/images/this si pagae.jpg.png" 
+                             alt="Wireless Headphones" 
+                             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent">
+                        <div class="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 class="text-xl font-semibold text-white mb-1">Wireless Headphones</h3>
+                            <span class="text-gray-200 text-sm flex items-center">
+                                Shop Now 
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </span>
                         </div>
                     </div>
                 </a>
-                <!-- Wired Headphones -->
-                <a href="/shop?type=wired" class="group relative h-64 min-w-[280px] sm:min-w-0 rounded-2xl overflow-hidden">
-                    <img src="/images/IMAGE.JPG.png" alt="Wired Headphones" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    <div class="absolute inset-0 bg-black/40 flex items-end p-6">
-                        <div>
-                            <h3 class="text-white text-xl font-semibold mb-2">Wired Headphones</h3>
-                            <span class="text-gray-200 text-sm">Explore →</span>
+
+                <!-- Wired Headphones Card -->
+                <a href="/shop?type=wired" 
+                   class="group relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                    <div class="h-48">
+                        <img src="/images/IMAGE.JPG.png" 
+                             alt="Wired Headphones" 
+                             class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent">
+                        <div class="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 class="text-xl font-semibold text-white mb-1">Wired Headphones</h3>
+                            <span class="text-gray-200 text-sm flex items-center">
+                                Shop Now 
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </span>
                         </div>
                     </div>
                 </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lifestyle/Showcase Section -->
+    <section class="bg-white py-16">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <!-- Text Content -->
+                <div class="order-2 md:order-1">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Experience Pure Sound</h2>
+                    <p class="text-gray-600 mb-6">
+                        Immerse yourself in crystal-clear audio with our premium collection of headphones. 
+                        Whether you're a music enthusiast, gamer, or professional, find your perfect match.
+                    </p>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-700">High-Quality Sound</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-700">Comfortable Design</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-700">Long Battery Life</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Grid -->
+                <div class="order-1 md:order-2 grid grid-cols-2 gap-4">
+                    <div class="space-y-4">
+                        <div class="rounded-lg overflow-hidden shadow-lg">
+                            <img src="/images/firstpic.jpg" alt="Headphone Model" class="w-full h-48 object-cover" />
+                        </div>
+                        <div class="rounded-lg overflow-hidden shadow-lg">
+                            <img src="/images/laptop.jpg" alt="Lifestyle Shot" class="w-full h-64 object-cover" />
+                        </div>
+                    </div>
+                    <div class="mt-8 space-y-4">
+                        <div class="rounded-lg overflow-hidden shadow-lg">
+                            <img src="/images/girl23.jpg" alt="Feature Shot" class="w-full h-64 object-cover" />
+                        </div>
+                        <div class="rounded-lg overflow-hidden shadow-lg">
+                            <img src="/images/this si pagae.jpg.png" alt="Detail Shot" class="w-full h-48 object-cover" />
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

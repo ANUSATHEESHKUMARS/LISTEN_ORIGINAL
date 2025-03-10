@@ -8,6 +8,8 @@ import cartController from '../controller/user/cartController.js';
 import checkoutController from '../controller/user/checkoutController.js';
 import viewOrdersController from '../controller/user/viewOrdersController.js';
 import wishlistController from '../controller/user/wishlistController.js'
+import walletController from '../controller/user/walletController.js';
+
 
 const route = Router()
 
@@ -59,7 +61,7 @@ route.get('/logout', userMiddlewares.checkSession, authController.getLogout);
 
 route.get('/about',authController.getabout)
 
-// Add this new route for product details
+
 route.get('/', (req, res) => {
     res.render('your-template', {
       user: req.session.user, // or however you store your user
@@ -104,7 +106,6 @@ route.post("/orders/:orderId/items/:productId/cancel", userMiddlewares.checkSess
 
 route.post("/orders/:orderId/items/:productId/return", userMiddlewares.checkSession, viewOrdersController.requestReturnItem)
 
-// route.post('/orders/:orderId/items/:productId/cancel', userMiddlewares.checkSession, userOrderController.cancelOrderItem);
 
 
 route.get('/wishlist', userMiddlewares.checkSession, wishlistController.getWishlist);
@@ -115,9 +116,19 @@ route.delete('/wishlist/remove/:productId', userMiddlewares.checkSession, wishli
 
 route.get('/wishlist/check/:productId', userMiddlewares.checkSession, wishlistController.checkWishlistStatus);
 
+
+
 route.post('/checkout/create-razorpay-order', userMiddlewares.checkSession, checkoutController.createRazorpayOrder);
 
 route.post('/checkout/verify-payment', userMiddlewares.checkSession, checkoutController.verifyPayment);
+
+
+
+route.get('/wallet', userMiddlewares.checkSession, walletController.getWallet);
+
+route.post('/wallet/add-funds', userMiddlewares.checkSession, walletController.addFunds);
+
+route.post('/checkout/wallet-payment', userMiddlewares.checkSession, checkoutController.walletPayment);
 
 
 export default route;

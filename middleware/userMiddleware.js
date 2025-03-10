@@ -4,7 +4,7 @@ const checkSession = async (req, res, next) => {
     try {
         // Check if session exists
         if (!req.session.user) {
-            return res.redirect('/login?message=Please+login+to+continue&alertType=info');
+            return res.redirect('/user/login?message=Please+login+to+continue&alertType=info');
         }
 
         // Verify user exists and is active
@@ -13,13 +13,13 @@ const checkSession = async (req, res, next) => {
         if (!user) {
             // User no longer exists
             req.session.destroy();
-            return res.redirect('/login?message=Account+not+found&alertType=error');
+            return res.redirect('/user/login?message=Account+not+found&alertType=error');
         }
 
         if (user.blocked) {
             // User is blocked
             req.session.destroy();
-            return res.redirect('/login?message=Your+account+has+been+blocked&alertType=error');
+            return res.redirect('/user/login?message=Your+account+has+been+blocked&alertType=error');
         }
 
         // Attach user to response locals for views
@@ -28,7 +28,7 @@ const checkSession = async (req, res, next) => {
 
     } catch (error) {
         console.error('Session Check Error:', error);
-        return res.redirect('/login?message=Session+error+occurred&alertType=error');
+        return res.redirect('/user/login?message=Session+error+occurred&alertType=error');
     }
 }
 

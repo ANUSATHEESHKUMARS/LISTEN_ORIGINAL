@@ -34,13 +34,23 @@
                     <!-- Left: Image Gallery -->
                     <div class="space-y-4">
                         <!-- Main Image -->
-                        <div class="main-image-container">
-                            <img 
-                                id="mainImage"
-                                src="<%= product.imageUrl[0] %>"
-                                alt="<%= product.productName %>"
-                                class="w-full h-auto transition-transform duration-200"
-                            />
+                        <div class="relative">
+                            <div class="main-image-container">
+                                <img 
+                                    id="mainImage"
+                                    src="<%= product.imageUrl[0] %>"
+                                    alt="<%= product.productName %>"
+                                    class="w-full h-auto transition-transform duration-200"
+                                />
+                                
+                                <!-- Wishlist Button -->
+                                <button 
+                                    onclick="toggleWishlist('<%= product._id %>')"
+                                    class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-sm hover:bg-white transition-all duration-300"
+                                >
+                                    <i class="far fa-heart text-2xl text-gray-800 hover:text-red-500 transition-colors"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Thumbnails -->
@@ -354,38 +364,63 @@
                     body: JSON.stringify({ productId })
                 });
 
-                // Check if response is redirecting to login page
-                if (response.status === 401 || response.redirected) {
+                if (response.status === 401) {
                     window.location.href = '/login';
                     return;
                 }
 
                 const data = await response.json();
-
+                
                 if (response.ok) {
-                    const wishlistBtn = document.querySelector(`[onclick="toggleWishlist('${productId}')"]`);
-                    if (wishlistBtn) {
-                        wishlistBtn.innerHTML = data.added ? 
-                            '<i class="fas fa-heart text-red-500"></i> Remove from Wishlist' :
-                            '<i class="far fa-heart"></i> Add to Wishlist';
+                    const wishlistBtn = event.currentTarget;
+                    const icon = wishlistBtn.querySelector('i');
+                    
+                    if (data.added) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas', 'text-red-500');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Added to Wishlist',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    } else {
+                        icon.classList.remove('fas', 'text-red-500');
+                        icon.classList.add('far');
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Removed from Wishlist',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
                     }
-                } else {
-                    throw new Error(data.message);
                 }
             } catch (error) {
-                // If error is due to authentication, redirect to login
-                if (error.message.includes('<!DOCTYPE')) {
-                    window.location.href = '/login';
-                    return;
-                }
-
+                console.error('Error:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Please login to manage wishlist'
+                    text: 'Something went wrong!'
                 });
             }
         }
+
+        // Check initial wishlist status when page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const productId = '<%= product._id %>';
+                const response = await fetch(`/wishlist/check/${productId}`);
+                const data = await response.json();
+                
+                if (data.inWishlist) {
+                    const icon = document.querySelector('.wishlist-icon');
+                    icon.classList.remove('far');
+                    icon.classList.add('fas', 'text-red-500');
+                }
+            } catch (error) {
+                console.error('Error checking wishlist status:', error);
+            }
+        });
     </script>
 
     <style>

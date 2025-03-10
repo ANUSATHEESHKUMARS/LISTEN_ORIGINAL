@@ -1,5 +1,6 @@
 import orderSchema from '../../models/orderModels.js';
 import productSchema from '../../models/productModel.js';
+import wallet from '../../models/walletModels.js'
 
 const getOrders = async (req, res) => {
     try {
@@ -152,7 +153,7 @@ const updateItemStatus = async (req, res, next) => {
     }
 };
 
-const handleReturnRequest = async (req, res, next) => {
+const handleReturnRequest = async (req, res) => {
     try {
         const { orderId, productId } = req.params;
         const { returnStatus, adminComment } = req.body;
@@ -167,7 +168,7 @@ const handleReturnRequest = async (req, res, next) => {
             });
         }
 
-        const item = order.items.find(item =>
+        const item = order.items.find(item => 
             item.product._id.toString() === productId
         );
 
@@ -178,57 +179,85 @@ const handleReturnRequest = async (req, res, next) => {
             });
         }
 
+        // Update return status and admin comment
+        item.return.status = returnStatus;
+        item.return.adminComment = adminComment;
+        item.return.processedDate = new Date();
+
         if (returnStatus === 'approved') {
-            // Update only the necessary fields
-            const updateResult = await orderSchema.findOneAndUpdate(
-                {
-                    _id: orderId,
-                    'items.product': productId
-                },
-                {
-                    $set: {
-                        'items.$.order.status': 'returned',
-                        'items.$.return.status': returnStatus,
-                        'items.$.return.adminComment': adminComment,
-                        'items.$.return.isReturnAccepted': true,
-                        'payment.paymentStatus': 'refunded'
-                    },
-                    $push: {
-                        'items.$.order.statusHistory': {
-                            status: 'returned',
-                            date: new Date(),
-                            comment: `return approved by admin:${adminComment}`
-                        }
-                    }
-                },
-                { new: true }
+            item.order.status = 'returned';
+            item.return.isReturnAccepted = true;
+            
+            // Update product stock
+            await productSchema.findByIdAndUpdate(
+                item.product._id,
+                { $inc: { stock: item.quantity } }
             );
 
-            // Update product stock
-            await productSchema.findOneAndUpdate(
-                {
-                    _id: productId,
-                    'size.size': item.size
-                },
-                {
-                    $inc: { 'size.$.stock': item.quantity }
-                }
-            );
+            // Process refund if applicable
+            if (['online', 'razorpay', 'wallet'].includes(order.payment.method)) {
+                order.payment.paymentStatus = 'refund processing';
+                await processRefund(order, item);
+            }
+
+            // Add to status history
+            item.order.statusHistory.push({
+                status: 'returned',
+                date: new Date(),
+                comment: `Return approved: ${adminComment}`
+            });
+        } else if (returnStatus === 'rejected') {
+            item.order.status = 'delivered';
+            item.return.isReturnAccepted = false;
+
+            // Add to status history
+            item.order.statusHistory.push({
+                status: 'delivered',
+                date: new Date(),
+                comment: `Return rejected: ${adminComment}`
+            });
         }
+
+        await order.save();
 
         res.json({
             success: true,
-            message: 'Return request handled successfully'
+            message: `Return request ${returnStatus}`,
+            status: returnStatus
         });
 
     } catch (error) {
-        console.error('Error in handleReturnRequest:', error);
-        next(error);
+        console.error('Handle return error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error handling return request'
+        });
     }
 };
+
+async function processRefund(order) {
+    const wallet = await Wallet.findOne({ userId: order.userId });
+    
+    if (!wallet) {
+        throw new Error('User wallet not found');
+    }
+
+    wallet.balance += order.totalAmount;
+    wallet.transactions.push({
+        type: 'credit',
+        amount: order.totalAmount,
+        description: `Refund for order #${order.orderCode}`,
+        orderId: order._id
+    });
+
+    await wallet.save();
+    order.payment.paymentStatus = 'refunded';
+}
+
 
 export default {
     getOrders,
     updateItemStatus,
-    handleReturnRequest
+    handleReturnRequest,
+    processRefund
 }

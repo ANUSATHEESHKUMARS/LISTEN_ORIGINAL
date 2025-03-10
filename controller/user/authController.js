@@ -10,10 +10,6 @@ const saltRounds = 10;
 
 dotenv.config()
 
-// controller/user/authController.js
-// controller/user/authController.js
-
-// controller/user/authController.js
 
 export const getabout = async (req, res) => {
     try {
@@ -559,7 +555,6 @@ const getLogout = (req, res) => {
     });
 };
 
-// In your authController.js
 
 export default {
     getSignUp,

@@ -184,6 +184,31 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <% if (item.return?.isReturnRequested) { %>
+                                                <div class="mt-2">
+                                                    <% if (item.return.status === 'pending') { %>
+                                                        <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+                                                            Return Request Pending
+                                                        </span>
+                                                    <% } else if (item.return.status === 'approved') { %>
+                                                        <div class="text-green-600 text-sm">
+                                                            <i class="fas fa-check-circle"></i>
+                                                            Return Approved
+                                                            <% if (item.return.adminComment) { %>
+                                                                <p class="text-gray-600 text-xs mt-1"><%= item.return.adminComment %></p>
+                                                            <% } %>
+                                                        </div>
+                                                    <% } else if (item.return.status === 'rejected') { %>
+                                                        <div class="text-red-600 text-sm">
+                                                            <i class="fas fa-times-circle"></i>
+                                                            Return Rejected
+                                                            <% if (item.return.adminComment) { %>
+                                                                <p class="text-gray-600 text-xs mt-1"><%= item.return.adminComment %></p>
+                                                            <% } %>
+                                                        </div>
+                                                    <% } %>
+                                                </div>
+                                            <% } %>
                                         <% }); %>
                                     </div>
                                 </div>

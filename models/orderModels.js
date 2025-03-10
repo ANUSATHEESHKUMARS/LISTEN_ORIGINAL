@@ -51,7 +51,24 @@ const orderSchema = new mongoose.Schema({
                 comment: String
             }]
         },
-       
+        return: {
+            isReturnRequested: {
+                type: Boolean,
+                default: false
+            },
+            reason: String,
+            requestDate: Date,
+            status: {
+                type: String,
+                enum: ['pending', 'approved', 'rejected'],
+                default: 'pending'
+            },
+            adminComment: String,
+            isReturnAccepted: {
+                type: Boolean,
+                default: false
+            }
+        }
     }],
     totalAmount: {
         type: Number,

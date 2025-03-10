@@ -128,6 +128,27 @@ const wishlistController = {
                 message: 'Error checking wishlist status'
             });
         }
+    },
+
+    exportCheckWishlistStatus: async (req, res) => {
+        try {
+            if (!req.session.user) {
+                return res.json({ inWishlist: false });
+            }
+
+            const productId = req.params.productId;
+            const userId = req.session.user._id;
+
+            const wishlistItem = await Wishlist.findOne({
+                user: userId,
+                'items.product': productId
+            });
+
+            res.json({ inWishlist: !!wishlistItem });
+        } catch (error) {
+            console.error('Error checking wishlist status:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
     }
 };
 
