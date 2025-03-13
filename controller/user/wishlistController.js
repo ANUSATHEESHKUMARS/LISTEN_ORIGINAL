@@ -5,25 +5,30 @@ const wishlistController = {
     getWishlist: async (req, res) => {
         try {
             const userId = req.session.user;
+            const wishlist = await Wishlist.findOne({ userId })
+                .populate({
+                    path: 'items.productId',
+                    populate: {
+                        path: 'categoriesId'
+                    }
+                });
 
-            // Get wishlist with populated product details and category
-            const wishlist = await Wishlist.findOne({ userId }).populate({
-                path: 'items.productId',
-                populate: {
-                    path: 'categoriesId'
-                }
-            });
+            // Filter out unavailable products
+            const validItems = wishlist ? wishlist.items.filter(item => 
+                item.productId && 
+                item.productId.isActive && 
+                item.productId.categoriesId?.isActive
+            ) : [];
 
-            // Don't filter out inactive items, just pass them all to the view
             res.render('user/wishlist', {
-                wishlist: wishlist?.items || [],
+                wishlistItems: validItems,
                 user: req.session.user
             });
         } catch (error) {
             console.error('Get wishlist error:', error);
             res.status(500).render('error', { 
                 message: 'Error loading wishlist',
-                user: req.session.user
+                user: req.session.user 
             });
         }
     },
@@ -33,38 +38,43 @@ const wishlistController = {
             const userId = req.session.user;
             const { productId } = req.body;
 
-            // Check if product exists
-            const product = await Product.findById(productId);
-            if (!product) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Product not found'
-                });
-            }
+            // Check if product exists and is active
+            const product = await Product.findById(productId)
+                .populate('categoriesId');
 
-            // Find or create wishlist
-            let wishlist = await Wishlist.findOne({ userId });
-            if (!wishlist) {
-                wishlist = new Wishlist({ userId, items: [] });
-            }
-
-            // Check if product is already in wishlist
-            const existingItem = wishlist.items.find(
-                item => item.productId.toString() === productId
-            );
-
-            if (existingItem) {
+            if (!product || !product.isActive || !product.categoriesId?.isActive) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Product already in wishlist'
+                    message: 'Product is not available'
                 });
             }
 
-            // Add to wishlist
-            wishlist.items.push({ productId });
+            let wishlist = await Wishlist.findOne({ userId });
+
+            if (!wishlist) {
+                wishlist = new Wishlist({
+                    userId,
+                    items: [{ productId }]
+                });
+            } else {
+                // Check if product already exists in wishlist
+                const existingItem = wishlist.items.find(
+                    item => item.productId.toString() === productId
+                );
+
+                if (existingItem) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Product already in wishlist'
+                    });
+                }
+
+                wishlist.items.push({ productId });
+            }
+
             await wishlist.save();
 
-            res.json({
+            res.status(200).json({
                 success: true,
                 message: 'Product added to wishlist'
             });
@@ -72,7 +82,7 @@ const wishlistController = {
             console.error('Add to wishlist error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Error adding to wishlist'
+                message: 'Failed to add to wishlist'
             });
         }
     },
@@ -94,7 +104,7 @@ const wishlistController = {
                 });
             }
 
-            res.json({
+            res.status(200).json({
                 success: true,
                 message: 'Product removed from wishlist'
             });
@@ -102,7 +112,7 @@ const wishlistController = {
             console.error('Remove from wishlist error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Error removing from wishlist'
+                message: 'Failed to remove from wishlist'
             });
         }
     },
@@ -127,27 +137,6 @@ const wishlistController = {
                 success: false,
                 message: 'Error checking wishlist status'
             });
-        }
-    },
-
-    exportCheckWishlistStatus: async (req, res) => {
-        try {
-            if (!req.session.user) {
-                return res.json({ inWishlist: false });
-            }
-
-            const productId = req.params.productId;
-            const userId = req.session.user._id;
-
-            const wishlistItem = await Wishlist.findOne({
-                user: userId,
-                'items.product': productId
-            });
-
-            res.json({ inWishlist: !!wishlistItem });
-        } catch (error) {
-            console.error('Error checking wishlist status:', error);
-            res.status(500).json({ error: 'Server error' });
         }
     }
 };
