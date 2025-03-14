@@ -6,7 +6,7 @@ const getHome = async (req, res) => {
         // Get IDs of active categories
         const activeCategories = await Category.find({ isActive: true }).distinct('_id');
 
-        // Fetch active products with active categories
+        // Fetch active products with active categories and populate offers
         const products = await Product.find({ 
             isActive: true,
             categoriesId: { $in: activeCategories }
@@ -15,13 +15,30 @@ const getHome = async (req, res) => {
             path: 'categoriesId',
             match: { isActive: true }
         })
+        .populate('offer') // Add this to populate offer details
         .sort({ createdAt: -1 })
         .limit(5);
         
         // Filter out products where category wasn't populated
-        const filteredProducts = products.filter(product => product.categoriesId);
+        const filteredProducts = products.filter(product => product.categoriesId).map(product => {
+            const productObj = product.toObject();
+            
+            // Calculate discounted price if there's an active offer
+            if (product.offer && product.offer.status === 'active') {
+                const currentDate = new Date();
+                if (currentDate >= product.offer.startDate && currentDate <= product.offer.endDate) {
+                    productObj.discountPrice = Math.round(product.price * (1 - product.offer.discount / 100));
+                } else {
+                    productObj.discountPrice = product.price;
+                }
+            } else {
+                productObj.discountPrice = product.price;
+            }
+            
+            return productObj;
+        });
         
-        console.log('products', filteredProducts);
+        console.log('products with offers:', filteredProducts);
         res.render('user/home', { 
             products: filteredProducts,
             title: 'Home'

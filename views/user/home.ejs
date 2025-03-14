@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -246,11 +243,14 @@
                         <!-- Product Image -->
                         <div class="relative aspect-square overflow-hidden bg-gray-100">
                             <img src="<%= product.imageUrl[0] %>" alt="<%= product.productName %>" class="w-full h-full object-cover transform transition-all duration-500 group-hover:scale-105" loading="lazy" />
-                            <% if (product.discountPrice < product.price) { %>
-                            <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-gray-900 px-3 py-1 rounded-full text-xs font-medium">
-                                -<%= Math.round((product.price - product.discountPrice) / product.price * 100) %>%
-                            </div>
+                            
+                            <!-- Offer Badge -->
+                            <% if (product.offer && product.discountPrice < product.price) { %>
+                                <div class="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                                    <%= product.offer.discount %>% OFF
+                                </div>
                             <% } %>
+                            
                             <!-- Quick View Button -->
                             <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
                                 <span class="text-white text-sm font-medium">Quick View</span>
@@ -277,9 +277,19 @@
                             <div class="flex items-baseline gap-2">
                                 <span class="text-lg font-bold text-gray-900">₹<%= product.discountPrice %></span>
                                 <% if (product.discountPrice < product.price) { %>
-                                <span class="text-sm text-gray-400 line-through">₹<%= product.price %></span>
+                                    <span class="text-sm text-gray-400 line-through">₹<%= product.price %></span>
+                                    <span class="text-sm text-green-600">
+                                        Save ₹<%= (product.price - product.discountPrice).toFixed(2) %>
+                                    </span>
                                 <% } %>
                             </div>
+
+                            <!-- Offer Details -->
+                            <% if (product.offer && new Date() <= new Date(product.offer.endDate)) { %>
+                                <div class="mt-2 text-xs text-red-600">
+                                    Offer ends: <%= new Date(product.offer.endDate).toLocaleDateString() %>
+                                </div>
+                            <% } %>
                         </div>
                     </div>
                 </a>

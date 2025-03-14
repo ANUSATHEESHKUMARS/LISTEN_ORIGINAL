@@ -50,6 +50,19 @@ const productSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    offer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Offer'
+    },
+    offerApplied: {
+        type: Boolean,
+        default: false
+    },
+    offerType: {
+        type: String,
+        enum: ['product', 'category', null],
+        default: null
     }
 }, {
     timestamps: true
