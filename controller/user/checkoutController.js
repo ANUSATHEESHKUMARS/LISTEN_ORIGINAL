@@ -67,53 +67,25 @@ const createRazorpayOrder = async (req, res) => {
 
 const getCheckoutPage = async (req, res) => {
     try {
-        //get users addresses
-        const addresses = await addressSchema.find({
-            userId: req.session.user
-        });
+        const userId = req.session.user;
 
-        //get cart items with populated product details
-        const cart = await cartSchema.findOne({ userId: req.session.user })
-            .populate({
+        // Get user's addresses and cart items in parallel
+        const [addresses, cart] = await Promise.all([
+            addressSchema.find({ userId }),
+            cartSchema.findOne({ userId }).populate({
                 path: 'items.productId',
                 model: 'Product',
-                select: 'productName  price'
-            });
+                select: 'productName imageUrl price stock'
+            })
+        ]);
 
+        // Check if cart exists and has items
         if (!cart || !cart.items || cart.items.length === 0) {
             return res.redirect('/cart');
         }
 
-        //populate product details and calculate subtotals
-        const populatedCart = await cartSchema.findOne({ userId: req.session.user })
-            .populate({
-                path: 'items.productId',
-                model: 'Product',
-                select: 'productName imageUrl price stock'
-            });
-
-
-        //check stock availability with detailed logging
-        const stockValidationResults = populatedCart.items.map(item => ({
-            productName: item.productId.productName,
-            requested: item.quantity,
-            available: item.productId.stock,
-            hasError: item.productId.stock < item.quantity
-        }));
-
-        const hasStockError = stockValidationResults.some(item => item.hasError);
-
-        if (hasStockError) {
-
-            // Store the detailed error information in session
-            req.session.stockError = stockValidationResults.filter(item => item.hasError);
-            return res.redirect('/cart?error=stock');
-        }
-
-
-
-        //format cart items for the template 
-        const cartItems = populatedCart.items.map(item => ({
+        // Format cart items and check stock
+        const cartItems = cart.items.map(item => ({
             product: {
                 _id: item.productId._id,
                 productName: item.productId.productName,
@@ -124,25 +96,27 @@ const getCheckoutPage = async (req, res) => {
             subtotal: item.quantity * item.price
         }));
 
-        //calculate total
+        // Calculate total
         const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
 
-        res.render('user/checkout', {
+        // Get wallet balance
+        const userWallet = await wallet.findOne({ userId }) || { balance: 0 };
+
+        // Render checkout page
+        return res.render('user/checkout', {
             addresses,
             cartItems,
             total,
-            user: req.session.user
+            user: req.session.user,
+            wallet: userWallet
         });
+
     } catch (error) {
-        console.error('Checkout page error', error);
-        res.status(500).render('notFound', {
-            message: 'Error loading checkout page',
-            user: req.session.user
-        });
+        console.error('Checkout page error:', error);
+        // Redirect to cart with error instead of showing notFound page
+        return res.redirect('/cart?error=Something went wrong. Please try again.');
     }
 };
-
-
 
 const verifyPayment = async (req, res) => {
     try {

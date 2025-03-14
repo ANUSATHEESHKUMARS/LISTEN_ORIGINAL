@@ -124,11 +124,10 @@ route.post('/checkout/verify-payment', userMiddlewares.checkSession, checkoutCon
 
 
 
-route.get('/wallet', userMiddlewares.checkSession, walletController.getWallet);
+route.get("/wallet",userMiddlewares.checkSession,walletController.getWallet)
 
-route.post('/wallet/add-funds', userMiddlewares.checkSession, walletController.addFunds);
+route.post("/checkout/wallet-payment",userMiddlewares.checkSession,checkoutController.walletPayment)
 
-route.post('/checkout/wallet-payment', userMiddlewares.checkSession, checkoutController.walletPayment);
 
 
 export default route;
