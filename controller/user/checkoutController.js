@@ -6,6 +6,8 @@ import couponSchema from '../../models/couponModel.js';
 import razorpay from '../../utils/razorpay.js';
 import crypto from 'crypto';
 import wallet from '../../models/walletModels.js';
+import Wallet from '../../models/walletModels.js';
+import Coupon from '../../models/couponModel.js';
 
 
 // Function to create Razorpay order
@@ -405,7 +407,7 @@ const placeOrder = async (req, res) => {
     }
 };
 
- const walletPayment =  async (req, res) => {
+const walletPayment = async (req, res) => {
     try {
         const userId = req.session.user;
         const { addressId, couponCode } = req.body;
@@ -421,60 +423,31 @@ const placeOrder = async (req, res) => {
             });
         }
 
-        // Calculate cart total and coupon discount
+        // Calculate cart total
         const cartTotal = cart.items.reduce(
             (sum, item) => sum + (item.quantity * item.price), 
             0
         );
         
+        // Apply coupon discount if available
         let couponDiscount = 0;
+        let appliedCoupon = null;
         if (couponCode) {
-            const coupon = await Coupon.findOne({ code: couponCode });
-            if (coupon) {
-                couponDiscount = (cartTotal * coupon.discountPercentage) / 100;
-                if (coupon.maximumDiscount) {
-                    couponDiscount = Math.min(couponDiscount, coupon.maximumDiscount);
+            appliedCoupon = await Coupon.findOne({ code: couponCode });
+            if (appliedCoupon) {
+                couponDiscount = (cartTotal * appliedCoupon.discountPercentage) / 100;
+                if (appliedCoupon.maximumDiscount) {
+                    couponDiscount = Math.min(couponDiscount, appliedCoupon.maximumDiscount);
                 }
             }
         }
 
-        // Prepare initial items
-        const initialItems = cart.items.map(item => ({
-            product: item.productId._id,
-            quantity: item.quantity,
-            price: item.price
-        }));
-
-        // Calculate proportional discounts
-        const discountedItems = calculateProportionalDiscounts(initialItems, couponDiscount);
-
-        // Add order status and return fields to each item
-        const orderItems = discountedItems.map(item => ({
-            ...item,
-            order: {
-                status: 'processing',
-                statusHistory: [{
-                    status: 'processing',
-                    date: new Date(),
-                    comment: 'Order placed using wallet payment'
-                }]
-            },
-            return: {
-                isReturnRequested: false,
-                reason: null,
-                requestDate: null,
-                status: null,
-                adminComment: null,
-                isReturnAccepted: false
-            }
-        }));
-
-        // Calculate final total amount
-        const totalAmount = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+        // Calculate final amount
+        const finalAmount = cartTotal - couponDiscount;
 
         // Get wallet and check balance
-        const wallet = await Wallet.findOne({ userId });
-        if (!wallet || wallet.balance < totalAmount) {
+        const userWallet = await Wallet.findOne({ userId });
+        if (!userWallet || userWallet.balance < finalAmount) {
             return res.status(400).json({
                 success: false,
                 message: 'Insufficient wallet balance'
@@ -494,15 +467,38 @@ const placeOrder = async (req, res) => {
             });
         }
 
+        // Create order items
+        const orderItems = cart.items.map(item => ({
+            product: item.productId._id,
+            quantity: item.quantity,
+            price: item.price,
+            subtotal: item.quantity * item.price,
+            order: {
+                status: 'processing',
+                statusHistory: [{
+                    status: 'processing',
+                    date: new Date(),
+                    comment: 'Order placed using wallet payment'
+                }]
+            },
+            return: {
+                isReturnRequested: false,
+                reason: null,
+                requestDate: null,
+                status: null,
+                adminComment: null,
+                isReturnAccepted: false
+            }
+        }));
+
         // Create order
         const order = await orderSchema.create({
             userId,
             items: orderItems,
-            totalAmount: Math.round(totalAmount),
-            coupon: couponCode ? {
-                code: couponCode,
-                discount: couponDiscount
-            } : {},
+            subtotal: cartTotal,
+            discount: couponDiscount,
+            totalAmount: finalAmount,
+            couponCode: couponCode,
             shippingAddress: {
                 fullName: address.fullName,
                 mobileNumber: address.mobileNumber,
@@ -516,18 +512,31 @@ const placeOrder = async (req, res) => {
                 method: 'wallet',
                 paymentStatus: 'completed',
                 walletTransaction: {
-                    amount: totalAmount
+                    amount: finalAmount
                 }
             }
         });
 
         // Update product stock
-        for (const item of orderItems) {
+        for (const item of cart.items) {
             await productSchema.findByIdAndUpdate(
-                item.product,
+                item.productId._id,
                 { $inc: { stock: -item.quantity } }
             );
         }
+
+        // Update wallet balance and add transaction
+        const walletTransaction = {
+            type: 'debit',
+            amount: finalAmount,
+            description: `Payment for order #${order._id}`,
+            orderId: order._id,
+            date: new Date()
+        };
+
+        userWallet.balance -= finalAmount;
+        userWallet.transactions.push(walletTransaction);
+        await userWallet.save();
 
         // Clear cart
         await cartSchema.findByIdAndUpdate(cart._id, {
@@ -535,21 +544,8 @@ const placeOrder = async (req, res) => {
             totalAmount: 0
         });
 
-        // Update wallet balance and add transaction
-        const walletTransaction = {
-            type: 'debit',
-            amount: totalAmount,
-            description: `Payment for order #${order.orderCode}`,
-            orderId: order._id,
-            date: new Date()
-        };
-
-        wallet.balance -= totalAmount;
-        wallet.transactions.push(walletTransaction);
-        await wallet.save();
-
         // Update coupon usage if applicable
-        if (couponCode) {
+        if (appliedCoupon) {
             await Coupon.findOneAndUpdate(
                 { code: couponCode },
                 {
@@ -567,7 +563,7 @@ const placeOrder = async (req, res) => {
         res.json({
             success: true,
             message: 'Order placed successfully',
-            orderId: order.orderCode
+            orderId: order._id
         });
 
     } catch (error) {
@@ -577,7 +573,8 @@ const placeOrder = async (req, res) => {
             message: 'Error processing wallet payment'
         });
     }
-}
+};
+
 export default {
     getCheckoutPage,
     placeOrder,

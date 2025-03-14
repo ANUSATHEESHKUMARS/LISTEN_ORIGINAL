@@ -1,6 +1,7 @@
 import orderSchema from "../../models/orderModels.js";
 import userSchema from "../../models/userModels.js";
 import productSchema from "../../models/productModel.js";
+import Wallet from "../../models/walletModels.js";
 
 const getOrders = async (req, res) => {
     try {
@@ -72,15 +73,46 @@ const getOrders = async (req, res) => {
     }
 }
 
+// Add this function to handle refunds to wallet
+const handleWalletRefund = async (userId, amount, orderId) => {
+    try {
+        // Find or create wallet
+        let wallet = await Wallet.findOne({ userId });
+        if (!wallet) {
+            wallet = await Wallet.create({ userId, balance: 0 });
+        }
+
+        // Add refund transaction
+        const refundTransaction = {
+            type: 'credit',
+            amount: amount,
+            description: `Refund for cancelled order #${orderId}`,
+            orderId: orderId,
+            date: new Date()
+        };
+
+        // Update wallet balance and add transaction
+        wallet.balance += amount;
+        wallet.transactions.push(refundTransaction);
+        await wallet.save();
+
+        return true;
+    } catch (error) {
+        console.error('Wallet refund error:', error);
+        return false;
+    }
+};
+
+// Update the cancelOrder function
 const cancelOrder = async (req, res) => {
     try {
         const { orderId, productId } = req.params;
-        const { reason } = req.body;
         const userId = req.session.user;
 
-        // Find the order for the user
-        const order = await orderSchema.findOne({ _id: orderId, userId })
-            .populate('items.product');
+        const order = await orderSchema.findOne({
+            _id: orderId,
+            userId
+        });
 
         if (!order) {
             return res.status(404).json({
@@ -89,75 +121,80 @@ const cancelOrder = async (req, res) => {
             });
         }
 
-        // Find the item in the order
-        const itemIndex = order.items.findIndex(item =>
-            item.product._id.toString() === productId
+        // Find the specific item in the order
+        const orderItem = order.items.find(item => 
+            item.product.toString() === productId
         );
 
-        if (itemIndex === -1) {
+        if (!orderItem) {
             return res.status(404).json({
                 success: false,
-                message: 'Item not found in order'
+                message: 'Product not found in order'
             });
         }
 
-        const item = order.items[itemIndex];
-
-        // Check if the item can be cancelled
-        if (!['pending', 'processing'].includes(item.order.status)) {
+        // Check if item can be cancelled
+        if (!['processing', 'pending'].includes(orderItem.order.status)) {
             return res.status(400).json({
                 success: false,
-                message: 'This item cannot be cancelled at this stage'
+                message: 'Order cannot be cancelled at this stage'
             });
         }
 
-        // Get the product
-        const product = await productSchema.findById(productId);
-        if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found'
-            });
-        }
-
-        // Update stock
-        const quantityToAdd = Number(item.quantity);
-        product.stock += quantityToAdd; 
-        await product.save();
-
-        // Update item status
-        item.order.status = 'cancelled';
-        item.order.statusHistory.push({
+        // Update order item status
+        orderItem.order.status = 'cancelled';
+        orderItem.order.statusHistory.push({
             status: 'cancelled',
             date: new Date(),
-            comment: `Item cancelled by user: ${reason}`
+            comment: 'Order cancelled by customer'
         });
 
+        // Calculate refund amount for this item
+        const refundAmount = orderItem.subtotal;
+
+        // Process refund based on payment method
+        if (['razorpay', 'wallet'].includes(order.payment.method)) {
+            // Handle refund to wallet
+            const refundSuccess = await handleWalletRefund(userId, refundAmount, orderId);
+            if (!refundSuccess) {
+                throw new Error('Failed to process refund to wallet');
+            }
+        }
+
+        // Restore product stock
+        await productSchema.findByIdAndUpdate(
+            productId,
+            { $inc: { stock: orderItem.quantity } }
+        );
+
+        // Save the updated order
         await order.save();
 
         res.json({
             success: true,
-            message: 'Item cancelled successfully'
+            message: 'Order cancelled successfully. Refund will be processed to your wallet.'
         });
 
     } catch (error) {
-        console.error('Cancel item error:', error);
+        console.error('Cancel order error:', error);
         res.status(500).json({
             success: false,
-            message: error.message || 'Error cancelling item'
+            message: error.message || 'Error cancelling order'
         });
     }
 };
-const requestReturnItem = async (req, res, next) => {
+
+// Update the requestReturnItem function to handle refunds similarly
+const requestReturnItem = async (req, res) => {
     try {
-        console.log("requested ITem Route");
-        
         const { orderId, productId } = req.params;
         const { reason } = req.body;
         const userId = req.session.user;
 
-        const order = await orderSchema.findOne({ _id: orderId, userId })
-            .populate('items.product');
+        const order = await orderSchema.findOne({
+            _id: orderId,
+            userId
+        });
 
         if (!order) {
             return res.status(404).json({
@@ -166,60 +203,19 @@ const requestReturnItem = async (req, res, next) => {
             });
         }
 
-        //find the specific item
-        const itemIndex = order.items.findIndex(item =>
-            item.product._id.toString() === productId
+        const orderItem = order.items.find(item => 
+            item.product.toString() === productId
         );
 
-        if (itemIndex === -1) {
+        if (!orderItem) {
             return res.status(404).json({
                 success: false,
-                message: 'Item not found in order'
+                message: 'Product not found in order'
             });
         }
 
-        const item = order.items[itemIndex];
-
-        //check if item is delivered
-        if (item.order.status !== 'delivered') {
-            return res.status(400).json({
-                success: false,
-                message: 'Only delivered items can be returned'
-            });
-        }
-
-        //check if return is already requested
-        if (item.return?.isReturnRequested) {
-            return res.status(400).json({
-                success: false,
-                message: 'Return already requested for this item'
-            });
-        }
-
-        //check return window
-        const deliveryDate = item.order.statusHistory
-            .find(h => h.status === 'delivered')?.date;
-
-        if (!deliveryDate) {
-            return res.status(400).json({
-                success: false,
-                message: 'Delivery date not found'
-            });
-        }
-
-        const daysSinceDelivery = Math.floor(
-            (Date.now() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24)
-        );
-
-        if (daysSinceDelivery > 7) {
-            return res.status(400).json({
-                success: false,
-                message: 'Return window has expired'
-            });
-        }
-
-        //update return status for the item 
-        item.return = {
+        // Update return status
+        orderItem.return = {
             isReturnRequested: true,
             reason: reason,
             requestDate: new Date(),
@@ -228,40 +224,44 @@ const requestReturnItem = async (req, res, next) => {
             isReturnAccepted: false
         };
 
-        //update item status and add to history
-        item.order.status = 'processing';  // Using a valid enum value
-        item.order.statusHistory.push({
-            status: 'processing',          // Using the same valid enum value
-            date: new Date(),
-            comment: `Return requested: ${reason}`
-        });
+        // If return is auto-accepted, process refund immediately
+        if (process.env.AUTO_ACCEPT_RETURNS === 'true') {
+            orderItem.return.isReturnAccepted = true;
+            orderItem.return.status = 'accepted';
+            orderItem.order.status = 'returned';
 
-        //update payment status if payment was made
-        if (['wallet', 'online', 'razorpay'].includes(order.payment.method) &&
-            order.payment.paymentStatus === 'completed') {
-            order.payment.paymentStatus = 'processing';  // Using a valid enum value
+            // Process refund to wallet
+            const refundAmount = orderItem.subtotal;
+            const refundSuccess = await handleWalletRefund(userId, refundAmount, orderId);
+            
+            if (!refundSuccess) {
+                throw new Error('Failed to process refund to wallet');
+            }
+
+            // Restore product stock
+            await productSchema.findByIdAndUpdate(
+                productId,
+                { $inc: { stock: orderItem.quantity } }
+            );
         }
 
-        // Mark the modified paths
-        order.markModified('items');
-        order.markModified('payment');
-
         await order.save();
-        console.log(order,"retrun requested");
-        
+
         res.json({
             success: true,
-            message: 'Return requested successfully'
+            message: process.env.AUTO_ACCEPT_RETURNS === 'true' 
+                ? 'Return request accepted. Refund will be processed to your wallet.'
+                : 'Return request submitted successfully'
         });
 
     } catch (error) {
         console.error('Return request error:', error);
-        next(error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error processing return request'
+        });
     }
 };
-
-
-
 
 export default {
     getOrders,
