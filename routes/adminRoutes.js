@@ -7,7 +7,8 @@ import categoryController from '../controller/admin/categoryController.js';
 import productController from '../controller/admin/productController.js';
 import orderController from '../controller/admin/orderController.js';
 import offerController from '../controller/admin/offerController.js'
-import couponController from '../controller/admin/couponController.js'
+import couponController from '../controller/admin/couponController.js';
+import reportController from '../controller/admin/reportController.js';
 
 const router = express.Router();
 
@@ -83,6 +84,13 @@ router.post('/coupons/delete/:id', adminMiddleware.checkSession, couponControlle
 
 router.post('/coupons/toggle-status/:id', adminMiddleware.checkSession, couponController.toggleCouponStatus);
 
+
+
+
+router.get("/sales-report", adminMiddleware.checkSession, reportController.getSalesReport)
+
+router.get("/sales-report/download-excel", adminMiddleware.checkSession,  reportController.downloadExcel)
+router.get("/sales-report/download-pdf", adminMiddleware.checkSession,  reportController.downloadPDF)
 
 
 export default router;
