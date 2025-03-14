@@ -125,7 +125,7 @@
                       <div class="relative group">
                           <!-- Wishlist Button -->
                           <button 
-                              onclick="toggleWishlist('<%= product._id %>')"
+                              onclick="toggleWishlist('<%= product._id %>', this)"
                               class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-white transition-all duration-300"
                           >
                               <i class="far fa-heart text-gray-800 hover:text-red-500 transition-colors"></i>
@@ -341,7 +341,7 @@
           }
       });
 
-      async function toggleWishlist(productId) {
+      async function toggleWishlist(productId, button) {
           try {
               const response = await fetch('/wishlist/toggle', {
                   method: 'POST',
@@ -357,21 +357,56 @@
               const data = await response.json();
               
               if (response.ok) {
-                  const wishlistBtn = event.currentTarget;
-                  const icon = wishlistBtn.querySelector('i');
+                  const icon = button.querySelector('i');
                   
                   if (data.added) {
                       icon.classList.remove('far');
                       icon.classList.add('fas', 'text-red-500');
+                      showToast('success', 'Added to wishlist');
                   } else {
                       icon.classList.remove('fas', 'text-red-500');
                       icon.classList.add('far');
+                      showToast('info', 'Removed from wishlist');
                   }
               }
           } catch (error) {
               console.error('Error:', error);
+              showToast('error', 'Something went wrong!');
           }
       }
+
+      // Toast notification function
+      function showToast(type, message) {
+          const toast = document.createElement('div');
+          toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+              type === 'success' ? 'bg-green-500' :
+              type === 'error' ? 'bg-red-500' :
+              'bg-blue-500'
+          } text-white`;
+          toast.textContent = message;
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 3000);
+      }
+
+      // Check initial wishlist status for all products
+      document.addEventListener('DOMContentLoaded', async function() {
+          const productCards = document.querySelectorAll('[data-product-id]');
+          for (const card of productCards) {
+              const productId = card.dataset.productId;
+              try {
+                  const response = await fetch(`/wishlist/check/${productId}`);
+                  const data = await response.json();
+                  
+                  if (data.inWishlist) {
+                      const icon = card.querySelector('.fa-heart');
+                      icon.classList.remove('far');
+                      icon.classList.add('fas', 'text-red-500');
+                  }
+              } catch (error) {
+                  console.error('Error checking wishlist status:', error);
+              }
+          }
+      });
       </script>
   </body>
 </html>

@@ -45,7 +45,7 @@
                                 
                                 <!-- Wishlist Button -->
                                 <button 
-                                    onclick="toggleWishlist('<%= product._id %>')"
+                                    onclick="toggleWishlist('<%= product._id %>', this)"
                                     class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm p-3 rounded-full shadow-sm hover:bg-white transition-all duration-300"
                                 >
                                     <i class="far fa-heart text-2xl text-gray-800 hover:text-red-500 transition-colors"></i>
@@ -164,7 +164,7 @@
                                 </button>
                             <% } %>
                             <button 
-                                onclick="toggleWishlist('<%= product._id %>')"
+                                onclick="toggleWishlist('<%= product._id %>', this)"
                                 class="w-full py-4 bg-white text-gray-900 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                             >
                                 <i class="far fa-heart"></i>
@@ -356,7 +356,7 @@
             }
         }
 
-        async function toggleWishlist(productId) {
+        async function toggleWishlist(productId, button) {
             try {
                 const response = await fetch('/wishlist/toggle', {
                     method: 'POST',
@@ -372,12 +372,14 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    const wishlistBtn = event.currentTarget;
-                    const icon = wishlistBtn.querySelector('i');
+                    // Update all wishlist icons on the page
+                    const wishlistIcons = document.querySelectorAll('.fa-heart');
                     
                     if (data.added) {
-                        icon.classList.remove('far');
-                        icon.classList.add('fas', 'text-red-500');
+                        wishlistIcons.forEach(icon => {
+                            icon.classList.remove('far');
+                            icon.classList.add('fas', 'text-red-500');
+                        });
                         Swal.fire({
                             icon: 'success',
                             title: 'Added to Wishlist',
@@ -385,8 +387,10 @@
                             timer: 1500
                         });
                     } else {
-                        icon.classList.remove('fas', 'text-red-500');
-                        icon.classList.add('far');
+                        wishlistIcons.forEach(icon => {
+                            icon.classList.remove('fas', 'text-red-500');
+                            icon.classList.add('far');
+                        });
                         Swal.fire({
                             icon: 'info',
                             title: 'Removed from Wishlist',
@@ -413,9 +417,11 @@
                 const data = await response.json();
                 
                 if (data.inWishlist) {
-                    const icon = document.querySelector('.wishlist-icon');
-                    icon.classList.remove('far');
-                    icon.classList.add('fas', 'text-red-500');
+                    const wishlistIcons = document.querySelectorAll('.fa-heart');
+                    wishlistIcons.forEach(icon => {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas', 'text-red-500');
+                    });
                 }
             } catch (error) {
                 console.error('Error checking wishlist status:', error);

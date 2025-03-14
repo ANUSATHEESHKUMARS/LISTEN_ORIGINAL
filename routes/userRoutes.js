@@ -123,6 +123,8 @@ route.delete('/wishlist/remove/:productId', userMiddlewares.checkSession, wishli
 
 route.get('/wishlist/check/:productId', userMiddlewares.checkSession, wishlistController.checkWishlistStatus);
 
+route.post('/wishlist/toggle', userMiddlewares.checkSession, wishlistController.toggleWishlist);
+
 
 
 route.post('/checkout/create-razorpay-order', userMiddlewares.checkSession, checkoutController.createRazorpayOrder);

@@ -138,6 +138,64 @@ const wishlistController = {
                 message: 'Error checking wishlist status'
             });
         }
+    },
+
+    toggleWishlist: async (req, res) => {
+        try {
+            const userId = req.session.user;
+            const { productId } = req.body;
+
+            // Check if product exists and is active
+            const product = await Product.findById(productId)
+                .populate('categoriesId');
+
+            if (!product || !product.isActive || !product.categoriesId?.isActive) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Product is not available'
+                });
+            }
+
+            let wishlist = await Wishlist.findOne({ userId });
+            let added = false;
+
+            if (!wishlist) {
+                wishlist = new Wishlist({
+                    userId,
+                    items: [{ productId }]
+                });
+                added = true;
+            } else {
+                // Check if product already exists in wishlist
+                const existingItemIndex = wishlist.items.findIndex(
+                    item => item.productId.toString() === productId
+                );
+
+                if (existingItemIndex > -1) {
+                    // Remove if exists
+                    wishlist.items.splice(existingItemIndex, 1);
+                    added = false;
+                } else {
+                    // Add if doesn't exist
+                    wishlist.items.push({ productId });
+                    added = true;
+                }
+            }
+
+            await wishlist.save();
+
+            res.status(200).json({
+                success: true,
+                added,
+                message: added ? 'Added to wishlist' : 'Removed from wishlist'
+            });
+        } catch (error) {
+            console.error('Toggle wishlist error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to update wishlist'
+            });
+        }
     }
 };
 
