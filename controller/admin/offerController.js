@@ -164,34 +164,34 @@ const offerController = {
         }
     },
 
-    // Get single offer
-    getOffer: async (req, res) => {
-        try {
-            const { offerId } = req.params;
-            const offer = await Offer.findById(offerId)
-                .populate('productIds')
-                .populate('categoryId');
+    // // Get single offer
+    // getOffer: async (req, res) => {
+    //     try {
+    //         const { offerId } = req.params;
+    //         const offer = await Offer.findById(offerId)
+    //             .populate('productIds')
+    //             .populate('categoryId');
 
-            if (!offer) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Offer not found'
-                });
-            }
+    //         if (!offer) {
+    //             return res.status(404).json({
+    //                 success: false,
+    //                 message: 'Offer not found'
+    //             });
+    //         }
 
-            res.json({
-                success: true,
-                offer
-            });
+    //         res.json({
+    //             success: true,
+    //             offer
+    //         });
 
-        } catch (error) {
-            console.error('Get offer error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error fetching offer details'
-            });
-        }
-    },
+    //     } catch (error) {
+    //         console.error('Get offer error:', error);
+    //         res.status(500).json({
+    //             success: false,
+    //             message: 'Error fetching offer details'
+    //         });
+    //     }
+    // },
 
     // Update offer
     updateOffer: async (req, res) => {

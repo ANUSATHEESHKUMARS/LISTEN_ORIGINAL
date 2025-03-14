@@ -65,7 +65,7 @@ router.get('/offers', adminMiddleware.checkSession, offerController.getOffers);
 
 router.post('/offers', adminMiddleware.checkSession, offerController.createOffer);
 
-router.get('/offers/:offerId', adminMiddleware.checkSession, offerController.getOffer);
+// router.get('/offers/:offerId', adminMiddleware.checkSession, offerController.getOffer);
 
 router.put('/offers/:offerId', adminMiddleware.checkSession, offerController.updateOffer);
 

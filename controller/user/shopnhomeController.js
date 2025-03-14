@@ -1,51 +1,96 @@
 import Product from '../../models/productModel.js'
 import Category from '../../models/categoryModels.js';
+import Offer from '../../models/offerModel.js';
 
 const getHome = async (req, res) => {
     try {
-        // Get IDs of active categories
+        // Get active categories
         const activeCategories = await Category.find({ isActive: true }).distinct('_id');
 
-        // Fetch active products with active categories and populate offers
-        const products = await Product.find({ 
+        // Get active offers
+        const activeOffers = await Offer.find({
+            startDate: { $lte: new Date() },
+            endDate: { $gte: new Date() },
+            status: 'active'
+        }).populate('categoryId productIds');
+
+        // Create maps for offers
+        const productOfferMap = new Map();
+        const categoryOfferMap = new Map();
+
+        activeOffers.forEach(offer => {
+            if (offer.productIds && offer.productIds.length > 0) {
+                offer.productIds.forEach(productId => {
+                    const productIdStr = productId.toString();
+                    if (!productOfferMap.has(productIdStr) ||
+                        productOfferMap.get(productIdStr).discount < offer.discount) {
+                        productOfferMap.set(productIdStr, offer);
+                    }
+                });
+            } else if (offer.categoryId) {
+                const categoryIdStr = offer.categoryId._id.toString();
+                if (!categoryOfferMap.has(categoryIdStr) ||
+                    categoryOfferMap.get(categoryIdStr).discount < offer.discount) {
+                    categoryOfferMap.set(categoryIdStr, offer);
+                }
+            }
+        });
+
+        // Fetch active products
+        const products = await Product.find({
             isActive: true,
             categoriesId: { $in: activeCategories }
         })
-        .populate({
-            path: 'categoriesId',
-            match: { isActive: true }
-        })
-        .populate('offer') // Add this to populate offer details
+        .populate('categoriesId')
         .sort({ createdAt: -1 })
         .limit(5);
-        
-        // Filter out products where category wasn't populated
-        const filteredProducts = products.filter(product => product.categoriesId).map(product => {
-            const productObj = product.toObject();
+
+        // Process products with offers
+        const processedProducts = products.map(product => {
+            const productData = product.toObject();
+
+            // Get product-specific offer
+            const productOffer = productOfferMap.get(product._id.toString());
             
-            // Calculate discounted price if there's an active offer
-            if (product.offer && product.offer.status === 'active') {
-                const currentDate = new Date();
-                if (currentDate >= product.offer.startDate && currentDate <= product.offer.endDate) {
-                    productObj.discountPrice = Math.round(product.price * (1 - product.offer.discount / 100));
-                } else {
-                    productObj.discountPrice = product.price;
-                }
-            } else {
-                productObj.discountPrice = product.price;
+            // Get category offer
+            const categoryOffer = product.categoriesId ?
+                categoryOfferMap.get(product.categoriesId._id.toString()) : null;
+
+            // Calculate best discount
+            let bestDiscount = 0;
+            let appliedOffer = null;
+
+            if (productOffer) {
+                bestDiscount = productOffer.discount;
+                appliedOffer = productOffer;
             }
-            
-            return productObj;
+            if (categoryOffer && categoryOffer.discount > bestDiscount) {
+                bestDiscount = categoryOffer.discount;
+                appliedOffer = categoryOffer;
+            }
+
+            // Calculate discounted price
+            const discountedPrice = bestDiscount > 0 
+                ? Math.round(product.price * (1 - bestDiscount / 100))
+                : product.price;
+
+            return {
+                ...productData,
+                price: product.price,
+                discountPrice: discountedPrice,
+                offerApplied: bestDiscount > 0,
+                discountPercentage: bestDiscount,
+                appliedOffer: appliedOffer
+            };
         });
-        
-        console.log('products with offers:', filteredProducts);
-        res.render('user/home', { 
-            products: filteredProducts,
+
+        res.render('user/home', {
+            products: processedProducts,
             title: 'Home'
         });
     } catch (error) {
         console.error('Error fetching products:', error);
-        res.render('user/home', { 
+        res.render('user/home', {
             products: [],
             title: 'Home'
         });
@@ -58,33 +103,44 @@ const getShop = async (req, res) => {
         const limit = 12;
         const skip = (page - 1) * limit;
 
-        // Build filter query
-        const filter = { 
-            isActive: true,
-            $expr: {
-                $and: [
-                    { $eq: ["$isActive", true] },
-                    {
-                        $in: [
-                            "$categoriesId",
-                            await Category.find({ isActive: true }).distinct('_id')
-                        ]
+        // Get active offers
+        const activeOffers = await Offer.find({
+            startDate: { $lte: new Date() },
+            endDate: { $gte: new Date() },
+            status: 'active'
+        }).populate('categoryId productIds');
+
+        // Create maps for offers
+        const productOfferMap = new Map();
+        const categoryOfferMap = new Map();
+
+        activeOffers.forEach(offer => {
+            if (offer.productIds && offer.productIds.length > 0) {
+                offer.productIds.forEach(pid => {
+                    const productIdStr = pid.toString();
+                    if (!productOfferMap.has(productIdStr) ||
+                        productOfferMap.get(productIdStr).discount < offer.discount) {
+                        productOfferMap.set(productIdStr, offer);
                     }
-                ]
+                });
+            } else if (offer.categoryId) {
+                const categoryIdStr = offer.categoryId._id.toString();
+                if (!categoryOfferMap.has(categoryIdStr) ||
+                    categoryOfferMap.get(categoryIdStr).discount < offer.discount) {
+                    categoryOfferMap.set(categoryIdStr, offer);
+                }
             }
-        };
+        });
+
+        // Build filter query
+        const filter = { isActive: true };
 
         // Add search filter
         if (req.query.search) {
             filter.$or = [
-                { productName: { $regex: req.query.search, $options: 'i' } },
-                { brand: { $regex: req.query.search, $options: 'i' } }
+                { productName: { $regex: new RegExp(req.query.search, 'i') } },
+                { brand: { $regex: new RegExp(req.query.search, 'i') } }
             ];
-        }
-
-        // Add color filter
-        if (req.query.color && req.query.color !== '') {
-            filter.color = { $regex: new RegExp(`^${req.query.color}$`, 'i') };
         }
 
         // Add price range filter
@@ -110,40 +166,67 @@ const getShop = async (req, res) => {
             case 'priceHighToLow':
                 sortQuery = { price: -1 };
                 break;
-            case 'ratingHighToLow':
-                sortQuery = { rating: -1 };
+            case 'nameAZ':
+                sortQuery = { productName: 1 };
                 break;
-            case 'newArrivals':
-                sortQuery = { createdAt: -1 };
+            case 'nameZA':
+                sortQuery = { productName: -1 };
                 break;
             default:
                 sortQuery = { createdAt: -1 };
         }
 
-        // Fetch products
+        // Fetch products with filters and sorting
         const products = await Product.find(filter)
-            .populate({
-                path: 'categoriesId',
-                match: { isActive: true }
-            })
+            .populate('categoriesId')
             .sort(sortQuery)
             .skip(skip)
             .limit(limit);
 
-        // Filter out products where category wasn't populated
-        const filteredProducts = products.filter(product => product.categoriesId);
+        // Process products with offers
+        const processedProducts = products.map(product => {
+            const productData = product.toObject();
+
+            // Get product-specific offer
+            const productOffer = productOfferMap.get(product._id.toString());
+            
+            // Get category offer
+            const categoryOffer = product.categoriesId ?
+                categoryOfferMap.get(product.categoriesId._id.toString()) : null;
+
+            // Calculate best discount
+            let bestDiscount = 0;
+            let appliedOffer = null;
+
+            if (productOffer) {
+                bestDiscount = productOffer.discount;
+                appliedOffer = productOffer;
+            }
+            if (categoryOffer && categoryOffer.discount > bestDiscount) {
+                bestDiscount = categoryOffer.discount;
+                appliedOffer = categoryOffer;
+            }
+
+            // Calculate discounted price
+            const discountedPrice = bestDiscount > 0 
+                ? Math.round(product.price * (1 - bestDiscount / 100))
+                : product.price;
+
+            return {
+                ...productData,
+                price: product.price,
+                discountPrice: discountedPrice,
+                offerApplied: bestDiscount > 0,
+                discountPercentage: bestDiscount,
+                appliedOffer: appliedOffer
+            };
+        });
 
         // Get total count for pagination
         const totalProducts = await Product.countDocuments(filter);
         const totalPages = Math.ceil(totalProducts / limit);
 
-        // Process products
-        const processedProducts = filteredProducts.map(product => ({
-            ...product.toObject(),
-            price: product.price,
-            discountPrice: product.price // Set discount price same as regular price for now
-        }));
-
+        // Handle AJAX requests
         if (req.xhr) {
             return res.json({
                 products: processedProducts,
@@ -156,6 +239,7 @@ const getShop = async (req, res) => {
             });
         }
 
+        // Render the page
         res.render('user/shop', {
             products: processedProducts,
             pagination: {
@@ -164,28 +248,25 @@ const getShop = async (req, res) => {
                 hasNextPage: page < totalPages,
                 hasPrevPage: page > 1
             },
-            title: 'Shop'
+            filters: {
+                search: req.query.search || '',
+                minPrice: req.query.minPrice || '',
+                maxPrice: req.query.maxPrice || '',
+                sort: req.query.sort || '',
+                stock: req.query.stock || ''
+            }
         });
+
     } catch (error) {
         console.error('Error in getShop:', error);
         if (req.xhr) {
             return res.status(500).json({ error: 'Failed to load products' });
         }
-        res.status(500).render('user/shop', {
-            products: [],
-            pagination: {
-                currentPage: 1,
-                totalPages: 1,
-                hasNextPage: false,
-                hasPrevPage: false
-            },
-            title: 'Shop',
-            error: 'Failed to load products'
-        });
+        res.status(500).render('error', { message: 'Error loading products' });
     }
 };
 
 export default {
     getHome,
-    getShop,
-}
+    getShop
+};
