@@ -9,6 +9,7 @@ import checkoutController from '../controller/user/checkoutController.js';
 import viewOrdersController from '../controller/user/viewOrdersController.js';
 import wishlistController from '../controller/user/wishlistController.js'
 import walletController from '../controller/user/walletController.js';
+import couponController from '../controller/user/couponController.js';
 
 
 const route = Router()
@@ -99,6 +100,11 @@ route.get("/checkout", userMiddlewares.checkSession, checkoutController.getCheck
 
 route.post("/checkout/place-order", userMiddlewares.checkSession, checkoutController.placeOrder)
 
+route.get("/checkout/available-coupons", userMiddlewares.checkSession, checkoutController.getAvailableCoupons)
+
+route.post("/checkout/apply-coupon", userMiddlewares.checkSession, checkoutController.applyCoupon)
+
+route.post("/checkout/remove-coupon", userMiddlewares.checkSession, checkoutController.removeCoupon)
 
 route.get("/orders", userMiddlewares.checkSession, viewOrdersController.getOrders)
 
@@ -128,6 +134,8 @@ route.post('/checkout/verify-payment', userMiddlewares.checkSession, checkoutCon
 route.get("/wallet",userMiddlewares.checkSession,walletController.getWallet)
 
 route.post("/checkout/wallet-payment",userMiddlewares.checkSession,checkoutController.walletPayment)
+
+route.get("/coupons",userMiddlewares.checkSession ,couponController.getCoupons)
 
 
 

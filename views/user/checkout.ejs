@@ -378,379 +378,214 @@ class="fixed inset-0 flex items-center justify-center z-50 hidden"
       let currentDiscount = 0;
       const cartTotal = <%= total %>;
 
+      function openCouponModal() {
+          fetchCoupons();
+          document.getElementById('couponModal').classList.remove('hidden');
+      }
 
-    //   async function applyCoupon(couponCode) {
-    //     try {
-    //         const response = await fetch('/checkout/apply-coupon', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json'
-    //             },
-    //             body: JSON.stringify({ couponCode })
-    //         });
+      function closeCouponModal() {
+          document.getElementById('couponModal').classList.add('hidden');
+      }
 
-    //         const data = await response.json();
-    //         if (data.success) {
-    //             // Update UI elements
-    //             const discountRow = document.getElementById('discountRow');
-    //             const discountAmount = document.getElementById('discountAmount');
-    //             const finalTotal = document.getElementById('finalTotal');
-    //             const appliedCouponInfo = document.getElementById('appliedCouponInfo');
-    //             const appliedCouponCode = document.getElementById('appliedCouponCode');
-    //             const discountInfo = document.getElementById('discountInfo');
-
-    //             discountRow.classList.remove('hidden');
-    //             discountAmount.textContent = data.discount.toFixed(2);
-    //             finalTotal.textContent = (cartTotal - data.discount).toFixed(2);
-
-    //             appliedCouponInfo.classList.remove('hidden');
-    //             appliedCouponCode.textContent = couponCode;
-    //             discountInfo.textContent = `₹${data.discount.toFixed(2)} discount applied`;
-
-    //             // Close coupon modal
-    //             closeCouponModal();
-    //         } else {
-    //             await showAlert('error', data.message);
-    //         }
-    //     } catch (error) {
-    //         console.error('Error applying coupon:', error);
-    //         await showAlert('error', 'Failed to apply coupon');
-    //     }
-    // }
-
-    // async function removeCoupon() {
-    //     try {
-    //         const response = await fetch('/checkout/remove-coupon', {
-    //             method: 'POST'
-    //         });
-
-    //         const data = await response.json();
-    //         if (data.success) {
-    //             // Reset UI elements
-    //             const discountRow = document.getElementById('discountRow');
-    //             const discountAmount = document.getElementById('discountAmount');
-    //             const finalTotal = document.getElementById('finalTotal');
-    //             const appliedCouponInfo = document.getElementById('appliedCouponInfo');
-
-    //             discountRow.classList.add('hidden');
-    //             discountAmount.textContent = '0.00';
-    //             finalTotal.textContent = cartTotal.toFixed(2);
-    //             appliedCouponInfo.classList.add('hidden');
-
-    //             await showAlert('success', 'Coupon removed successfully');
-    //         } else {
-    //             await showAlert('error', data.message);
-    //         }
-    //     } catch (error) {
-    //         console.error('Error removing coupon:', error);
-    //         await showAlert('error', 'Failed to remove coupon');
-    //     }
-    // }
-      // function openCouponModal() {
-      //     fetchCoupons();
-      //     document.getElementById('couponModal').classList.remove('hidden');
-      // }
-
-      // function closeCouponModal() {
-      //     document.getElementById('couponModal').classList.add('hidden');
-      // }
-
-      // async function fetchCoupons() {
-      //     try {
-      //         const response = await fetch('/checkout/available-coupons');
-      //         const data = await response.json();
-
-      //         if (data.success) {
-      //             renderCoupons(data.coupons);
-      //         } else {
-      //             throw new Error(data.message);
-      //         }
-      //     } catch (error) {
-      //         console.error('Error fetching coupons:', error);
-      //         await showAlert('error', 'Failed to load coupons');
-      //     }
-      // }
-
-      // function renderCoupons(coupons) {
-      //     const activeCouponsList = document.getElementById('activeCouponsList');
-      //     activeCouponsList.innerHTML = '';
-
-      //     // Separate applicable and non-applicable coupons
-      //     const applicableCoupons = coupons.filter(coupon => coupon.isApplicable);
-      //     const nonApplicableCoupons = coupons.filter(coupon => !coupon.isApplicable);
-
-      //     // Render applicable coupons first with a header
-      //     if (applicableCoupons.length > 0) {
-      //         activeCouponsList.innerHTML += `
-      //             <div class="mb-4">
-      //                 <h4 class="text-sm font-medium text-green-600 mb-3">Available for You</h4>
-      //                 <div class="space-y-3">
-      //                     ${applicableCoupons.map(coupon =>
-      //                         createCouponElement(coupon, true).outerHTML
-      //                     ).join('')}
-      //                 </div>
-      //             </div>
-      //         `;
-      //     }
-
-      //     // Render non-applicable coupons with a header
-      //     if (nonApplicableCoupons.length > 0) {
-      //         activeCouponsList.innerHTML += `
-      //             <div>
-      //                 ${applicableCoupons.length > 0 ? '<hr class="my-4">' : ''}
-      //                 <h4 class="text-sm font-medium text-gray-600 mb-3">Other Coupons</h4>
-      //                 <div class="space-y-3">
-      //                     ${nonApplicableCoupons.map(coupon =>
-      //                         createCouponElement(coupon, false).outerHTML
-      //                     ).join('')}
-      //                 </div>
-      //             </div>
-      //         `;
-      //     }
-
-      //     // Show "No coupons" message if both sections are empty
-      //     if (!applicableCoupons.length && !nonApplicableCoupons.length) {
-      //         activeCouponsList.innerHTML = `
-      //             <div class="text-gray-500 text-center py-3">
-      //                 No coupons available
-      //             </div>
-      //         `;
-      //     }
-      // }
-
-      // function createCouponElement(coupon, isApplicable) {
-      //     const div = document.createElement('div');
-      //     div.className = `p-4 border rounded-lg ${isApplicable ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`;
-
-      //     div.innerHTML = `
-      //         <div class="flex justify-between items-start">
-      //             <div>
-      //                 <h3 class="font-medium ${isApplicable ? 'text-green-700' : 'text-gray-700'}">${coupon.code}</h3>
-      //                 <p class="text-sm text-gray-600 mt-1">
-      //                     ${coupon.discountPercentage}% OFF
-      //                     ${coupon.maximumDiscount ? ` up to ₹${coupon.maximumDiscount}` : ''}
-      //                 </p>
-      //                 <p class="text-xs text-gray-500 mt-1">
-      //                     Min purchase: ₹${coupon.minimumPurchase}
-      //                 </p>
-      //                 <p class="text-xs text-gray-500">
-      //                     Valid till: ${new Date(coupon.expiryDate).toLocaleDateString()}
-      //                 </p>
-      //             </div>
-      //             ${isApplicable ? `
-      //                 <button onclick="applyCoupon('${coupon.code}')"
-      //                         class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      //                     Apply
-      //                 </button>
-      //             ` : `
-      //                 <span class="text-xs text-gray-500 italic">
-      //                     Not applicable
-      //                 </span>
-      //             `}
-      //         </div>
-      //     `;
-
-      //     return div;
-      // }
-
-      // function getCouponInactiveReason(coupon) {
-      //     if (coupon.minimumPurchase > cartTotal) return `Min. purchase ₹${coupon.minimumPurchase}`;
-      //     if (coupon.totalCoupon && coupon.usedCouponCount >= coupon.totalCoupon) return 'Coupon limit reached';
-      //     return 'Not applicable';
-      // }
-
-      // Add this function to manage the Apply Coupon button state
-      // function toggleApplyCouponButton(disabled) {
-      //     const applyCouponButton = document.querySelector('button[onclick="openCouponModal()"]');
-      //     if (applyCouponButton) {
-      //         applyCouponButton.disabled = disabled;
-      //         if (disabled) {
-      //             applyCouponButton.classList.add('opacity-50', 'cursor-not-allowed');
-      //             applyCouponButton.classList.remove('hover:bg-gray-200');
-      //         } else {
-      //             applyCouponButton.classList.remove('opacity-50', 'cursor-not-allowed');
-      //             applyCouponButton.classList.add('hover:bg-gray-200');
-      //         }
-      //     }
-      // }
-
-      // async function applyCoupon(couponCode) {
-      //     try {
-
-      //         // Check for empty or whitespace-only coupon code
-      //         if (!couponCode || !couponCode.trim()) {
-      //             await showAlert('error', 'Please enter a valid coupon code');
-      //             return;
-      //         }
-
-      //         // Remove leading and trailing spaces
-      //         const trimmedCode = couponCode.trim().toUpperCase();
-
-
-      //         const response = await fetch('/checkout/apply-coupon', {
-      //             method: 'POST',
-      //             headers: {
-      //                 'Content-Type': 'application/json'
-      //             },
-      //             body: JSON.stringify({ code: trimmedCode })
-      //         });
-
-      //         const data = await response.json();
-
-      //         if (data.success) {
-
-      //             // Update UI elements
-      //             const discountRow = document.getElementById('discountRow');
-      //             const discountAmount = document.getElementById('discountAmount');
-      //             const finalTotal = document.getElementById('finalTotal');
-      //             const appliedCouponInfo = document.getElementById('appliedCouponInfo');
-      //             const appliedCouponCode = document.getElementById('appliedCouponCode');
-      //             const discountInfo = document.getElementById('discountInfo');
-
-      //             // Check if all required elements exist
-      //             if (!discountRow || !discountAmount || !finalTotal || !appliedCouponInfo ||
-      //                 !appliedCouponCode || !discountInfo) {
-      //                 console.error('Some required elements are missing');
-      //                 return;
-      //             }
-
-      //             // Update discount and coupon info
-      //             discountRow.classList.remove('hidden');
-      //             discountAmount.textContent = data.discount.toFixed(2);
-      //             finalTotal.textContent = (cartTotal - data.discount).toFixed(2);
-
-      //             appliedCouponInfo.classList.remove('hidden');
-      //             appliedCouponCode.textContent = trimmedCode;
-      //             discountInfo.textContent = `₹${data.discount.toFixed(2)} discount applied`;
-
-      //             // Close coupon modal
-      //             closeCouponModal();
-
-      //             updatePaymentMethodsAfterCoupon((cartTotal - data.discount).toFixed(2))
-      //             // Show success message
-      //             await showAlert('success', 'Coupon applied successfully!');
-      //         } else {
-      //             throw new Error(data.message || 'Failed to apply coupon');
-      //         }
-      //     } catch (error) {
-      //         console.error('Error in applyCoupon:', error);
-      //     }
-      // }
-
-      // async function removeCoupon() {
-      //     try {
-
-      //         // Reset UI elements
-      //         const discountRow = document.getElementById('discountRow');
-      //         const discountAmount = document.getElementById('discountAmount');
-      //         const finalTotal = document.getElementById('finalTotal');
-      //         const appliedCouponInfo = document.getElementById('appliedCouponInfo');
-      //         const subtotalElement = document.getElementById('subtotal');
-
-      //             // Get the original subtotal
-      //             const originalTotal = parseFloat(subtotalElement.textContent);
-
-      //             // Update UI elements
-      //             discountRow.classList.add('hidden');
-      //             discountAmount.textContent = '0.00';
-      //             finalTotal.textContent = originalTotal.toFixed(2);
-      //             appliedCouponInfo.classList.add('hidden');
-
-      //             // Important: Clear the appliedCouponCode content
-      //             if (appliedCouponCode) {
-      //                 appliedCouponCode.textContent = '';
-      //                 appliedCouponCode.setAttribute('data-coupon', ''); // Also clear data attribute if exists
-      //             }
-
-      //         // Update payment methods based on original total
-      //         updatePaymentMethodsAfterCoupon(originalTotal);
-
-      //         // Show success message
-      //         await showAlert('success', 'Coupon removed successfully');
-      //     } catch (error) {
-      //         console.error('Error removing coupon:', error);
-      //         await showAlert('error', error.message || 'Failed to remove coupon. Please try again.');
-      //     }
-      // }
-
-      // function updateTotalWithDiscount(discount) {
-      //     const finalTotalElement = document.getElementById('finalTotal');
-      //     const discountElement = document.getElementById('discountAmount');
-      //     const discountRow = document.getElementById('discountRow');
-
-      //     if (discount > 0) {
-      //         discountRow.classList.remove('hidden');
-      //         discountElement.textContent = discount.toFixed(2);
-      //         finalTotalElement.textContent = (cartTotal - discount).toFixed(2);
-      //     } else {
-      //         discountRow.classList.add('hidden');
-      //         discountElement.textContent = '0';
-      //         finalTotalElement.textContent = cartTotal.toFixed(2);
-      //     }
-      // }
-
-      // // Add this function to get the current total with discount
-      // function getDiscountedTotal() {
-      //     const subtotal = parseFloat(document.getElementById('subtotal').textContent);
-      //     const discountAmount = parseFloat(document.getElementById('discountAmount').textContent) || 0;
-      //     return subtotal - discountAmount;
-      // }
-
-      // Update createRazorpayOrder function
-      async function createRazorpayOrder(addressId) {
+      async function fetchCoupons() {
           try {
-              const couponCode = document.getElementById('appliedCouponCode')?.textContent;
+              showAlert('loading', 'Loading coupons...');
+              
+              const response = await fetch('/checkout/available-coupons', {
+                  method: 'GET',
+                  headers: {
+                      'Accept': 'application/json'
+                  }
+              });
 
-              const response = await fetch('/checkout/create-razorpay-order', {
+              if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+              }
+
+              const data = await response.json();
+              hideAlert();
+
+              if (data.success) {
+                  renderCoupons(data.coupons);
+              } else {
+                  throw new Error(data.message || 'Failed to fetch coupons');
+              }
+          } catch (error) {
+              console.error('Error fetching coupons:', error);
+              hideAlert();
+              await showAlert('error', 'Failed to load coupons. Please try again.');
+          }
+      }
+
+      function renderCoupons(coupons) {
+          const activeCouponsList = document.getElementById('activeCouponsList');
+          if (!activeCouponsList) {
+              console.error('Coupons list container not found');
+              return;
+          }
+
+          activeCouponsList.innerHTML = '';
+
+          if (!coupons || coupons.length === 0) {
+              activeCouponsList.innerHTML = `
+                  <div class="text-center py-6">
+                      <p class="text-gray-500">No coupons available at the moment</p>
+                  </div>
+              `;
+              return;
+          }
+
+          // Separate applicable and non-applicable coupons
+          const applicableCoupons = coupons.filter(coupon => coupon.isApplicable);
+          const nonApplicableCoupons = coupons.filter(coupon => !coupon.isApplicable);
+
+          if (applicableCoupons.length === 0 && nonApplicableCoupons.length === 0) {
+              activeCouponsList.innerHTML = `
+                  <div class="text-center py-6">
+                      <p class="text-gray-500">No coupons available</p>
+                  </div>
+              `;
+              return;
+          }
+
+          // Render applicable coupons
+          if (applicableCoupons.length > 0) {
+              activeCouponsList.innerHTML += `
+                  <div class="mb-4">
+                      <h4 class="text-sm font-medium text-green-600 mb-3">Available for You</h4>
+                      <div class="space-y-3">
+                          ${applicableCoupons.map(coupon => createCouponElement(coupon, true)).join('')}
+                      </div>
+                  </div>
+              `;
+          }
+
+          // Render non-applicable coupons
+          if (nonApplicableCoupons.length > 0) {
+              activeCouponsList.innerHTML += `
+                  <div>
+                      ${applicableCoupons.length > 0 ? '<hr class="my-4">' : ''}
+                      <h4 class="text-sm font-medium text-gray-600 mb-3">Other Coupons</h4>
+                      <div class="space-y-3">
+                          ${nonApplicableCoupons.map(coupon => createCouponElement(coupon, false)).join('')}
+                      </div>
+                  </div>
+              `;
+          }
+      }
+
+      function createCouponElement(coupon, isApplicable) {
+          return `
+              <div class="p-4 border rounded-lg ${isApplicable ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}">
+                  <div class="flex justify-between items-start">
+                      <div>
+                          <h3 class="font-medium ${isApplicable ? 'text-green-700' : 'text-gray-700'}">${coupon.code}</h3>
+                          <p class="text-sm text-gray-600 mt-1">
+                              ${coupon.discountPercentage}% OFF
+                              ${coupon.maximumDiscount ? ` up to ₹${coupon.maximumDiscount}` : ''}
+                          </p>
+                          <p class="text-xs text-gray-500 mt-1">
+                              Min purchase: ₹${coupon.minimumPurchase}
+                          </p>
+                          <p class="text-xs text-gray-500">
+                              Valid till: ${new Date(coupon.expiryDate).toLocaleDateString()}
+                          </p>
+                      </div>
+                      ${isApplicable ? `
+                          <button onclick="applyCoupon('${coupon.code}')"
+                                  class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                              Apply
+                          </button>
+                      ` : `
+                          <span class="text-xs text-gray-500 italic">
+                              ${getCouponInactiveReason(coupon)}
+                          </span>
+                      `}
+                  </div>
+              </div>
+          `;
+      }
+
+      function getCouponInactiveReason(coupon) {
+          if (coupon.minimumPurchase > cartTotal) return `Min. purchase ₹${coupon.minimumPurchase}`;
+          if (coupon.totalCoupon && coupon.usedCouponCount >= coupon.totalCoupon) return 'Coupon limit reached';
+          return 'Not applicable';
+      }
+
+      async function applyCoupon(couponCode) {
+          try {
+              showAlert('loading', 'Applying coupon...');
+              const response = await fetch('/checkout/apply-coupon', {
                   method: 'POST',
                   headers: {
                       'Content-Type': 'application/json'
                   },
-                  body: JSON.stringify({
-                      addressId: addressId,
-                      couponCode: couponCode || null,
-                      paymentMethod: 'razorpay'
-                  })
+                  body: JSON.stringify({ code: couponCode })
               });
 
               const data = await response.json();
-              if (!data.success) {
+              hideAlert();
+
+              if (data.success) {
+                  // Update UI elements
+                  const discountRow = document.getElementById('discountRow');
+                  const discountAmount = document.getElementById('discountAmount');
+                  const finalTotal = document.getElementById('finalTotal');
+                  const appliedCouponInfo = document.getElementById('appliedCouponInfo');
+                  const appliedCouponCode = document.getElementById('appliedCouponCode');
+                  const discountInfo = document.getElementById('discountInfo');
+
+                  discountRow.classList.remove('hidden');
+                  discountAmount.textContent = data.discount.toFixed(2);
+                  finalTotal.textContent = (cartTotal - data.discount).toFixed(2);
+
+                  appliedCouponInfo.classList.remove('hidden');
+                  appliedCouponCode.textContent = couponCode;
+                  discountInfo.textContent = `₹${data.discount.toFixed(2)} discount applied`;
+
+                  closeCouponModal();
+                  updateCODAvailability(cartTotal - data.discount);
+                  await showAlert('success', 'Coupon applied successfully!');
+              } else {
                   throw new Error(data.message);
               }
-              return data;
           } catch (error) {
-              console.error('Error creating Razorpay order:', error);
-              throw error;
+              console.error('Error applying coupon:', error);
+              await showAlert('error', error.message || 'Failed to apply coupon');
           }
       }
 
-      // Update wallet payment function
-      // async function processWalletPayment(addressId) {
-      //     try {
-      //         const finalAmount = getDiscountedTotal();
+      async function removeCoupon() {
+          try {
+              showAlert('loading', 'Removing coupon...');
+              const response = await fetch('/checkout/remove-coupon', {
+                  method: 'POST'
+              });
 
-      //         const response = await fetch('/checkout/wallet-payment', {
-      //             method: 'POST',
-      //             headers: {
-      //                 'Content-Type': 'application/json'
-      //             },
-      //             body: JSON.stringify({
-      //                 addressId: addressId,
-      //                 amount: finalAmount,
-      //                 couponCode: document.getElementById('appliedCouponCode')?.textContent
-      //             })
-      //         });
+              const data = await response.json();
+              hideAlert();
 
-      //         const data = await response.json();
-      //         if (!data.success) {
-      //             throw new Error(data.message || 'Wallet payment failed');
-      //         }
-      //         return data;
-      //     } catch (error) {
-      //         console.error('Error processing wallet payment:', error);
-      //         throw error;
-      //     }
-      // }
+              if (data.success) {
+                  const discountRow = document.getElementById('discountRow');
+                  const discountAmount = document.getElementById('discountAmount');
+                  const finalTotal = document.getElementById('finalTotal');
+                  const appliedCouponInfo = document.getElementById('appliedCouponInfo');
+
+                  discountRow.classList.add('hidden');
+                  discountAmount.textContent = '0.00';
+                  finalTotal.textContent = cartTotal.toFixed(2);
+                  appliedCouponInfo.classList.add('hidden');
+
+                  updateCODAvailability(cartTotal);
+                  await showAlert('success', 'Coupon removed successfully');
+              } else {
+                  throw new Error(data.message);
+              }
+          } catch (error) {
+              console.error('Error removing coupon:', error);
+              await showAlert('error', error.message || 'Failed to remove coupon');
+          }
+      }
 
       async function placeOrder() {
           try {
@@ -985,11 +820,6 @@ const finalTotal = finalTotalElement ? parseFloat(finalTotalElement.textContent.
               codMessage.textContent = 'Pay when you receive the order';
           }
       }
-
-      // Update COD availability when coupon is applied or removed
-      // function updatePaymentMethodsAfterCoupon(finalAmount) {
-      //     updateCODAvailability(finalAmount);
-      // }
 
       // Initial update
       document.addEventListener('DOMContentLoaded', function() {

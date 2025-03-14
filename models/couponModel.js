@@ -1,51 +1,70 @@
-import mongoose from 'mongoose';   
+import mongoose from "mongoose";
 
 const couponSchema = new mongoose.Schema({
-    code: {
-        type: String,
-        required: true,
-        unique: true,
-        uppercase: true,
-        trim: true
+  code: {
+    type: String,
+    required: true,
+    unique: true,
+    uppercase: true,
+    trim: true
+  },
+  description: {
+    type: String,
+  },
+  discountPercentage: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 100
+  },
+  minimumPurchase: {
+    type: Number,
+    default: 0
+  },
+  maximumDiscount: {
+    type: Number,
+    default: null
+  },
+  startDate: {
+    type: Date,
+    required: true
+  },
+  expiryDate: {
+    type: Date,
+    required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  totalCoupon: {
+    type: Number,
+    default: null
+  },
+  usedCouponCount: {
+    type: Number,
+    default: 0
+  },
+  userUsageLimit: {
+    type: Number,
+    default: 1
+  },
+  usedBy: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users'
     },
-    description: {
-        type: String,
-        required: true
+    usedAt: {
+      type: Date,
+      default: Date.now
     },
-    discountType: {
-        type: String,
-        enum: ['percentage', 'fixed'],
-        required: true
-    },
-    discountValue: {
-        type: Number,
-        required: true
-    },
-    maxDiscount: {
-        type: Number,
-        default: null
-    },
-    minPurchase: {
-        type: Number,
-        default: 0
-    },
-    isActive: {
-        type: Boolean,
-        default: true
-    },
-    expiryDate: {
-        type: Date,
-        required: true
-    },
-    usedBy: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }],
-    createdAt: {
-        type: Date,
-        default: Date.now
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Order'
     }
+  }]
+}, {
+  timestamps: true
 });
 
-const Coupon = mongoose.model('Coupon', couponSchema);
-export default Coupon;
+export default mongoose.model('coupon', couponSchema);

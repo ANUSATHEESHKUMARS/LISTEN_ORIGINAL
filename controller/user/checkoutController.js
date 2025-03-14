@@ -66,7 +66,6 @@ const createRazorpayOrder = async (req, res) => {
         });
     }
 };
-
 const getCheckoutPage = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -119,7 +118,6 @@ const getCheckoutPage = async (req, res) => {
         return res.redirect('/cart?error=Something went wrong. Please try again.');
     }
 };
-
 const verifyPayment = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -242,7 +240,6 @@ const verifyPayment = async (req, res) => {
         });
     }
 };
-
 // Function to place the order
 const placeOrder = async (req, res) => {
     try {
@@ -406,7 +403,6 @@ const placeOrder = async (req, res) => {
         });
     }
 };
-
 const walletPayment = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -574,12 +570,201 @@ const walletPayment = async (req, res) => {
         });
     }
 };
+const getAvailableCoupons = async (req, res) => {
+    try {
+        const userId = req.session.user;
+
+        // Get active coupons within valid date range
+        const coupons = await Coupon.find({
+            isActive: true,
+            startDate: { $lte: new Date() },
+            expiryDate: { $gte: new Date() }
+        });
+
+        // Get user's cart total
+        const cart = await cartSchema.findOne({ userId })
+            .populate('items.productId');
+
+        if (!cart) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cart not found'
+            });
+        }
+
+        const cartTotal = cart.items.reduce(
+            (sum, item) => sum + (item.quantity * item.price), 
+            0
+        );
+
+        // Process coupons with validation info
+        const processedCoupons = await Promise.all(coupons.map(async (coupon) => {
+            // Check user's usage count for this coupon
+            const userUsageCount = await Coupon.countDocuments({
+                code: coupon.code,
+                'usedBy.userId': userId
+            });
+
+            // Check if coupon is applicable
+            const isApplicable = 
+                cartTotal >= coupon.minimumPurchase &&
+                (!coupon.totalCoupon || coupon.usedCouponCount < coupon.totalCoupon) &&
+                userUsageCount < coupon.userUsageLimit;
+
+            return {
+                code: coupon.code,
+                description: coupon.description,
+                discountPercentage: coupon.discountPercentage,
+                minimumPurchase: coupon.minimumPurchase,
+                maximumDiscount: coupon.maximumDiscount,
+                expiryDate: coupon.expiryDate,
+                totalCoupon: coupon.totalCoupon,
+                usedCouponCount: coupon.usedCouponCount,
+                userUsageLimit: coupon.userUsageLimit,
+                isApplicable
+            };
+        }));
+
+        res.json({
+            success: true,
+            coupons: processedCoupons
+        });
+
+    } catch (error) {
+        console.error('Get available coupons error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching coupons'
+        });
+    }
+};
+const applyCoupon = async (req, res, next) => {
+    try {
+        const { code } = req.body;
+        const userId = req.session.user;
+
+        //find the coupon
+        const coupon = await Coupon.findOne({
+            code: code.toUpperCase(),
+            isActive: true,
+            startDate: { $lte: new Date() },
+            expiryDate: { $gte: new Date() }
+        });
+
+        if (!coupon) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or expired coupon'
+            });
+        }
+
+        // Check total coupon usage limit first
+        if (coupon.totalCoupon !== null) {
+            if (coupon.usedCouponCount >= coupon.totalCoupon) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Coupon limit has been exceeded. This coupon is no longer available.'
+                });
+            }
+        }
+
+        // Check individual user usage limit
+        const userUsageCount = coupon.usedBy.filter(
+            usage => usage.userId.toString() === userId.toString()
+        ).length;
+
+        if (userUsageCount >= coupon.userUsageLimit) {
+            return res.status(400).json({
+                success: false,
+                message: `You have exceeded the usage limit (${coupon.userUsageLimit}) for this coupon`
+            });
+        }
+
+        //get cart total 
+        const cart = await cartSchema.findOne({ userId })
+            .populate('items.productId');
+
+        const cartTotal = cart.items.reduce(
+            (sum, item) => sum + (item.quantity * item.price),
+            0
+        );
+
+        //check minimum purchase required
+        if (cartTotal < coupon.minimumPurchase) {
+            return res.status(400).json({
+                success: false,
+                message: `Minimum purchase of ₹${coupon.minimumPurchase} required`
+            });
+        }
+
+        //calculate discount 
+        let discount = (cartTotal * coupon.discountPercentage) / 100;
+        if (coupon.maximumDiscount) {
+            discount = Math.min(discount, coupon.maximumDiscount);
+        }
+
+        res.json({
+            success: true,
+            discount,
+            couponCode: coupon.code,
+            message: 'Coupon applied successfully'
+        });
+
+    } catch (error) {
+        next(error)
+    }
+};
+const removeCoupon = async (req, res, next) => {
+    try {
+        res.json({
+            success: true,
+            message: 'Coupon removed successfully'
+        });
+    } catch (error) {
+        next(error)
+    }
+}
+const getOrderSuccessPage = async (req, res) => {
+    try {
+        const { orderId } = req.query;
+        
+        if (!orderId) {
+            return res.redirect('/orders');
+        }
+        
+        const order = await orderSchema.findOne({
+            orderCode: orderId,
+            userId: req.session.user
+        });
+        
+        if (!order) {
+            return res.redirect('/orders');
+        }
+        
+        const user = await userSchema.findById(req.session.user);
+        
+        res.render('user/orderSuccess', {
+            orderId: order.orderCode,
+            userEmail: user.email,
+            user: req.session.user
+        });
+    } catch (error) {
+        console.error('Order success page error:', error);
+        res.redirect('/orders');
+    }
+};
+
 
 export default {
     getCheckoutPage,
     placeOrder,
     verifyPayment,
     createRazorpayOrder,
-    walletPayment
+    walletPayment,
+    getAvailableCoupons,
+    getOrderSuccessPage,
+    removeCoupon,
+    applyCoupon
+
 
 };

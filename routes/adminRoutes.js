@@ -90,7 +90,16 @@ router.post('/coupons/toggle-status/:id', adminMiddleware.checkSession, couponCo
 router.get("/sales-report", adminMiddleware.checkSession, reportController.getSalesReport)
 
 router.get("/sales-report/download-excel", adminMiddleware.checkSession,  reportController.downloadExcel)
+
 router.get("/sales-report/download-pdf", adminMiddleware.checkSession,  reportController.downloadPDF)
 
+
+
+//coupon routes
+router.get("/coupon", adminMiddleware.checkSession, couponController.getCoupons)
+
+router.post("/coupons/add", adminMiddleware.checkSession, couponController.addCoupon)
+
+router.delete("/coupons/delete/:id", adminMiddleware.checkSession,  couponController.deleteCoupon)
 
 export default router;
