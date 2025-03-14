@@ -543,36 +543,45 @@
 
         async function downloadInvoice(orderId) {
             try {
-                showAlert('loading');
+                showAlert('loading', 'Generating invoice...');
+                
                 const response = await fetch(`/orders/${orderId}/invoice`, {
-                    method: 'GET'
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/pdf'
+                    }
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to generate invoice');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                // Create a blob from the PDF stream
+                // Get the blob from response
                 const blob = await response.blob();
+                
+                // Create a URL for the blob
                 const url = window.URL.createObjectURL(blob);
                 
-                // Create a temporary link and trigger download
+                // Create a temporary link element
                 const a = document.createElement('a');
+                a.style.display = 'none';
                 a.href = url;
                 a.download = `invoice-${orderId}.pdf`;
+                
+                // Add to document, click it, and remove it
                 document.body.appendChild(a);
                 a.click();
                 
                 // Cleanup
                 window.URL.revokeObjectURL(url);
-                a.remove();
-                hideAlert();
+                document.body.removeChild(a);
                 
+                hideAlert();
                 showAlert('success', 'Invoice downloaded successfully');
             } catch (error) {
                 console.error('Invoice download error:', error);
                 hideAlert();
-                showAlert('error', 'Failed to download invoice');
+                showAlert('error', 'Failed to download invoice. Please try again.');
             }
         }
 

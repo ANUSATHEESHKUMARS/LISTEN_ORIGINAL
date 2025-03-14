@@ -106,6 +106,7 @@ route.post("/orders/:orderId/items/:productId/cancel", userMiddlewares.checkSess
 
 route.post("/orders/:orderId/items/:productId/return", userMiddlewares.checkSession, viewOrdersController.requestReturnItem)
 
+route.get('/orders/:orderId/invoice', userMiddlewares.checkSession, viewOrdersController.generateInvoice)
 
 
 route.get('/wishlist', userMiddlewares.checkSession, wishlistController.getWishlist);

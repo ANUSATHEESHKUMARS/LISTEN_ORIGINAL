@@ -2,6 +2,7 @@ import orderSchema from "../../models/orderModels.js";
 import userSchema from "../../models/userModels.js";
 import productSchema from "../../models/productModel.js";
 import Wallet from "../../models/walletModels.js";
+import PDFDocument from "pdfkit"
 
 const getOrders = async (req, res) => {
     try {
@@ -263,8 +264,94 @@ const requestReturnItem = async (req, res) => {
     }
 };
 
+const generateInvoice = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const userId = req.session.user;
+
+        // Find the order and populate necessary fields
+        const order = await orderSchema.findOne({ _id: orderId, userId })
+            .populate('userId')
+            .populate('items.product');
+
+        if (!order) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Order not found' 
+            });
+        }
+
+        // Create PDF document
+        const doc = new PDFDocument({ margin: 50 });
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=invoice-${order._id}.pdf`);
+
+        // Pipe the PDF directly to the response
+        doc.pipe(res);
+
+        // Add content to PDF
+        doc.fontSize(20)
+            .text('INVOICE', { align: 'center' })
+            .moveDown();
+
+        // Add company details
+        doc.fontSize(12)
+            .text('LISTEN HEADPHONES', { align: 'left' })
+            .text('123 Street, City')
+            .text('Phone: +1234567890')
+            .text('Email: example@listen.com')
+            .moveDown();
+
+        // Add customer details
+        doc.text(`Order ID: ${order._id}`)
+            .text(`Date: ${order.createdAt.toLocaleDateString()}`)
+            .text(`Customer Name: ${order.shippingAddress.fullName}`)
+            .text(`Address: ${order.shippingAddress.addressLine1}`)
+            .text(`${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.pincode}`)
+            .moveDown();
+
+        // Add items table
+        doc.text('Items:', { underline: true }).moveDown();
+        
+        order.items.forEach(item => {
+            doc.text(`${item.product.productName}`)
+               .text(`Quantity: ${item.quantity}`)
+               .text(`Price: ₹${item.price}`)
+               .text(`Subtotal: ₹${item.subtotal}`)
+               .moveDown();
+        });
+
+        // Add total
+        doc.moveDown()
+           .text(`Subtotal: ₹${order.subtotal}`, { align: 'right' });
+
+        if (order.discount > 0) {
+            doc.text(`Discount: -₹${order.discount}`, { align: 'right' });
+        }
+
+        doc.text(`Total Amount: ₹${order.totalAmount}`, { align: 'right' })
+           .moveDown();
+
+        // Finalize the PDF
+        doc.end();
+
+    } catch (error) {
+        console.error('Generate invoice error:', error);
+        if (!res.headersSent) {
+            res.status(500).json({
+                success: false,
+                message: 'Error generating invoice'
+            });
+        }
+    }
+};
+
+
 export default {
     getOrders,
     cancelOrder,
-    requestReturnItem
+    requestReturnItem,
+    generateInvoice
 }
