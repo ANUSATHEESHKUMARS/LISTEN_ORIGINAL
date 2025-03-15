@@ -409,7 +409,14 @@ const resetPassword = async (req, res) => {
             $unset: { otp: 1, otpExpiresAt: 1, otpAttempts: 1 }
         });
 
-        res.status(200).json({ message: 'Password reset successfully' });
+        // Set session for automatic login
+        req.session.user = user._id;
+        req.session.userEmail = user.email;
+
+        res.status(200).json({ 
+            message: 'Password reset successfully',
+            redirectUrl: '/home'
+        });
     } catch (error) {
         console.error('Reset password error:', error);
         res.status(500).json({ message: 'Failed to reset password' });

@@ -1,4 +1,5 @@
 import userSchema from "../../models/userModels.js";
+import { generateOTP, sendOTPEmail } from "../../utils/sentOTP.js";
 
 const getProfile = async (req, res) => {
     try {
@@ -59,4 +60,74 @@ const updateProfile = async (req, res) => {
     }
 };
 
-export default { getProfile, updateProfile }
+const initiateEmailChange = async (req, res) => {
+    try {
+        const { newEmail } = req.body;
+        
+        // Check if email is different from current email
+        const currentUser = await userSchema.findById(req.session.user);
+        if (currentUser.email === newEmail) {
+            return res.status(400).json({ message: 'New email must be different from current email' });
+        }
+
+        // Check if email is already in use
+        const existingUser = await userSchema.findOne({ email: newEmail });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Email already in use' });
+        }
+
+        // Generate OTP
+        const otp = generateOTP();
+        
+        // Store OTP and new email in session
+        req.session.emailChange = {
+            otp,
+            newEmail,
+            timestamp: Date.now()
+        };
+
+        // Send OTP email
+        await sendOTPEmail(newEmail, otp);
+
+        res.status(200).json({ message: 'OTP sent successfully' });
+    } catch (error) {
+        console.error('Error initiating email change:', error);
+        res.status(500).json({ message: 'Failed to send OTP' });
+    }
+};
+
+const verifyEmailOTP = async (req, res) => {
+    try {
+        const { otp } = req.body;
+
+        if (!req.session.emailChange) {
+            return res.status(400).json({ message: 'No email change request found' });
+        }
+
+        const { otp: storedOTP, newEmail, timestamp } = req.session.emailChange;
+
+        // Check if OTP has expired (10 minutes)
+        if (Date.now() - timestamp > 600000) {
+            delete req.session.emailChange;
+            return res.status(400).json({ message: 'OTP has expired' });
+        }
+
+        // Verify OTP
+        if (otp !== storedOTP) {
+            return res.status(400).json({ message: 'Invalid OTP' });
+        }
+
+        // Update email
+        await userSchema.findByIdAndUpdate(req.session.user, { email: newEmail });
+
+        // Clear email change session data
+        delete req.session.emailChange;
+
+        res.status(200).json({ message: 'Email updated successfully' });
+    } catch (error) {
+        console.error('Error verifying email OTP:', error);
+        res.status(500).json({ message: 'Failed to verify OTP' });
+    }
+};
+
+export default { getProfile, updateProfile, initiateEmailChange, verifyEmailOTP };

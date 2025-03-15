@@ -42,11 +42,11 @@ route.post('/login', authController.postLogin);
 
 route.get('/forgot-password', userMiddlewares.isLogin, authController.getForgotPassword);
 
-route.post('/forgot-password/send-otp', authController.sendForgotPasswordOTP);
+route.post('/send-forgot-password-otp', authController.sendForgotPasswordOTP);
 
-route.post('/forgot-password/verify-otp', authController.verifyForgotPasswordOTP);
+route.post('/verify-forgot-password-otp', authController.verifyForgotPasswordOTP);
 
-route.post('/forgot-password/reset-password', authController.resetPassword);
+route.post('/reset-password', authController.resetPassword);
 
 route.get('/change-password', userMiddlewares.checkSession, authController.getChangePassword);
 
@@ -76,6 +76,8 @@ route.get('/profile', userMiddlewares.checkSession, profileController.getProfile
 
 route.post('/profile/update', userMiddlewares.checkSession, profileController.updateProfile);
 
+route.post('/profile/initiate-email-change', profileController.initiateEmailChange);
+route.post('/profile/verify-email-otp', profileController.verifyEmailOTP);
 
 route.get('/address', userMiddlewares.checkSession, addressController.getAddress);
 
