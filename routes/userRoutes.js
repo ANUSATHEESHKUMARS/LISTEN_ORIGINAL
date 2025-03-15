@@ -141,6 +141,7 @@ route.post("/checkout/wallet-payment",userMiddlewares.checkSession,checkoutContr
 
 route.get("/coupons",userMiddlewares.checkSession ,couponController.getCoupons)
 
+route.get('/order-success', checkoutController.getOrderSuccessPage);
 
 
 export default route;

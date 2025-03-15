@@ -83,7 +83,7 @@ const getHome = async (req, res) => {
                 appliedOffer: appliedOffer
             };
         });
-
+        
         res.render('user/home', {
             products: processedProducts,
             title: 'Home'
@@ -238,7 +238,8 @@ const getShop = async (req, res) => {
                 }
             });
         }
-
+        console.log("HIII")
+        console.log("Product", processedProducts)
         // Render the page
         res.render('user/shop', {
             products: processedProducts,

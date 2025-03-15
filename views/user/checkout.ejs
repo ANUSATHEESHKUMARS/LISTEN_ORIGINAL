@@ -648,7 +648,7 @@ class="fixed inset-0 flex items-center justify-center z-50 hidden"
                                   const verifyData = await verifyResponse.json();
                                   if (verifyData.success) {
                                       await showAlert('success', 'Payment successful!');
-                                      window.location.href = `/orders?success=true&orderId=${verifyData.orderId}`;
+                                      window.location.href = `/order-success?orderId=${verifyData.orderId}`;
                                   } else {
                                       throw new Error(verifyData.message || 'Payment verification failed');
                                   }
@@ -709,7 +709,7 @@ class="fixed inset-0 flex items-center justify-center z-50 hidden"
                       const data = await response.json();
                       if (data.success) {
                           await showAlert('success', 'Order placed successfully!');
-                          window.location.href = `/orders?success=true&orderId=${data.orderId}`;
+                          window.location.href = `/order-success?orderId=${data.orderId}`;
                       } else {
                           throw new Error(data.message || 'Failed to place order');
                       }
@@ -733,7 +733,7 @@ class="fixed inset-0 flex items-center justify-center z-50 hidden"
                       const data = await response.json();
                       if (data.success) {
                           await showAlert('success', 'Order placed successfully!');
-                          window.location.href = `/orders?success=true&orderId=${data.orderId}`;
+                          window.location.href = `/order-success?orderId=${data.orderId}`;
                       } else {
                           throw new Error(data.message || 'Failed to place order');
                       }

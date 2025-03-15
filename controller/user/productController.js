@@ -2,6 +2,8 @@ import Product from '../../models/productModel.js';
 import Offer from "../../models/offerModel.js";
 
 const getProductDetails = async (req, res) => {
+    console.log("HELLOOOO");
+    
     try {
         const productId = req.params.id;
         console.log('Fetching product with ID:', productId); // Debug log
@@ -128,7 +130,7 @@ const getProductDetails = async (req, res) => {
                 appliedOffer: relatedAppliedOffer
             };
         }));
-
+        
         res.render('user/productdetails', {
             product: processedProduct,
             relatedProducts: processedRelatedProducts

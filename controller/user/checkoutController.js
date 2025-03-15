@@ -386,13 +386,13 @@ const placeOrder = async (req, res) => {
             totalAmount: 0
         });
         
-        // Clear applied coupon from session
         delete req.session.appliedCoupon;
 
         res.json({
             success: true,
             message: 'Order placed successfully',
-            orderId: order.orderCode
+            orderId: order._id,
+            redirectUrl: `/order-success?orderId=${order._id}`
         });
 
     } catch (error) {
@@ -731,22 +731,18 @@ const getOrderSuccessPage = async (req, res) => {
         if (!orderId) {
             return res.redirect('/orders');
         }
-        
-        const order = await orderSchema.findOne({
-            orderCode: orderId,
-            userId: req.session.user
-        });
-        
-        if (!order) {
+
+        const order = await orderSchema.findById(orderId)
+            .populate('items.product');
+
+        if (!order || order.userId.toString() !== req.session.user.toString()) {
             return res.redirect('/orders');
         }
-        
-        const user = await userSchema.findById(req.session.user);
-        
-        res.render('user/orderSuccess', {
-            orderId: order.orderCode,
-            userEmail: user.email,
-            user: req.session.user
+
+        res.render('user/order-success', {
+            orderId: order._id,
+            orderDetails: order,
+            userEmail: req.session.userEmail
         });
     } catch (error) {
         console.error('Order success page error:', error);
