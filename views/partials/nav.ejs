@@ -61,8 +61,9 @@
             </span>
             <% } %>
         </a>
-        <button onclick="handleLogout()" class="p-1.5 sm:p-2 text-white hover:text-gray-300 transition-colors">
-          <i class="fa-solid fa-sign-out-alt text-lg sm:text-xl"></i>
+        <button onclick="handleLogout()" 
+            class="p-1.5 sm:p-2 text-slate-700 hover:text-black transition-colors">
+            <i class="fa-solid fa-sign-out-alt text-lg sm:text-xl"></i>
         </button>
       </div>
     </div>
@@ -178,21 +179,43 @@
 
   let isMenuOpen = false;
 
-  // Handle logout
+  // Updated handleLogout function
   async function handleLogout() {
     try {
-      const response = await fetch('/user/logout', {
-        method: 'POST',
+      const response = await fetch('/logout', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         credentials: 'same-origin'
       });
 
+      if (response.redirected) {
+        window.location.href = response.url;
+        return;
+      }
+
       if (response.ok) {
-        window.location.href = '/user/login';
+        Swal.fire({
+          icon: 'success',
+          title: 'Logged out successfully!',
+          showConfirmButton: false,
+          timer: 1500
+        }).then(() => {
+          window.location.href = '/login';
+        });
       } else {
-        console.error('Logout failed');
+        const data = await response.json();
+        throw new Error(data.message || 'Logout failed');
       }
     } catch (error) {
       console.error('Logout error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: error.message || 'Something went wrong! Please try again.'
+      });
     }
   }
 

@@ -364,14 +364,16 @@
                     body: JSON.stringify({ productId })
                 });
 
-                if (response.status === 401) {
-                    window.location.href = '/login';
+                // Check if user is not authenticated (status 401) or response is redirecting
+                if (response.status === 401 || response.redirected) {
+                    window.location.href = '/user/login'; // Redirect to login page
                     return;
                 }
 
-                const data = await response.json();
-                
+                // Only try to parse JSON if the response is ok
                 if (response.ok) {
+                    const data = await response.json();
+                    
                     // Update all wishlist icons on the page
                     const wishlistIcons = document.querySelectorAll('.fa-heart');
                     
@@ -398,13 +400,21 @@
                             timer: 1500
                         });
                     }
+                } else {
+                    throw new Error('Failed to update wishlist');
                 }
             } catch (error) {
-                console.error('Error:', error);
+                // If the error contains HTML (redirect to login page), handle it
+                if (error.message.includes('<!DOCTYPE')) {
+                    window.location.href = '/user/login';
+                    return;
+                }
+                
+                // For other errors, show error message
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Something went wrong!'
+                    text: 'Please login to add items to wishlist'
                 });
             }
         }
@@ -414,14 +424,22 @@
             try {
                 const productId = '<%= product._id %>';
                 const response = await fetch(`/wishlist/check/${productId}`);
-                const data = await response.json();
                 
-                if (data.inWishlist) {
-                    const wishlistIcons = document.querySelectorAll('.fa-heart');
-                    wishlistIcons.forEach(icon => {
-                        icon.classList.remove('far');
-                        icon.classList.add('fas', 'text-red-500');
-                    });
+                // Check for authentication issues
+                if (response.status === 401 || response.redirected) {
+                    // Don't redirect, just don't update the wishlist icon
+                    return;
+                }
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.inWishlist) {
+                        const wishlistIcons = document.querySelectorAll('.fa-heart');
+                        wishlistIcons.forEach(icon => {
+                            icon.classList.remove('far');
+                            icon.classList.add('fas', 'text-red-500');
+                        });
+                    }
                 }
             } catch (error) {
                 console.error('Error checking wishlist status:', error);
