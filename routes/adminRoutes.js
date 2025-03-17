@@ -48,6 +48,8 @@ router.post('/product/add', adminMiddleware.checkSession, productController.addP
 
 router.get('/product/:id', adminMiddleware.checkSession, productController.getProductDetails);
 
+
+
 router.post('/product/edit/:id', adminMiddleware.checkSession, productController.updateProduct);
 
 router.post('/product/delete/:id', adminMiddleware.checkSession, productController.deleteProduct);

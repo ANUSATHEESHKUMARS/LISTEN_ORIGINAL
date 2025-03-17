@@ -77,6 +77,7 @@ route.get('/profile', userMiddlewares.checkSession, profileController.getProfile
 route.post('/profile/update', userMiddlewares.checkSession, profileController.updateProfile);
 
 route.post('/profile/initiate-email-change', profileController.initiateEmailChange);
+
 route.post('/profile/verify-email-otp', profileController.verifyEmailOTP);
 
 route.get('/address', userMiddlewares.checkSession, addressController.getAddress);
@@ -114,7 +115,9 @@ route.post("/orders/:orderId/items/:productId/cancel", userMiddlewares.checkSess
 
 route.post("/orders/:orderId/items/:productId/return", userMiddlewares.checkSession, viewOrdersController.requestReturnItem)
 
-route.get('/orders/:orderId/invoice', userMiddlewares.checkSession, viewOrdersController.generateInvoice)
+route.get('/orders/:orderId/invoice', userMiddlewares.checkSession, viewOrdersController.generateInvoice);
+
+
 
 
 route.get('/wishlist', userMiddlewares.checkSession, wishlistController.getWishlist);

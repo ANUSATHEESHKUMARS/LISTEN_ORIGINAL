@@ -28,9 +28,14 @@ const createRazorpayOrder = async (req, res) => {
         }
 
         // Calculate total
-        const amount = cart.items.reduce((total, item) => {
+        let amount = cart.items.reduce((total, item) => {
             return total + (item.quantity * item.price);
         }, 0);
+
+        // Apply coupon discount if available
+        if (req.session.coupon) {
+            amount = req.session.coupon.discountedTotal;
+        }
 
         // Create Razorpay order with proper formatting
         const options = {
@@ -125,7 +130,7 @@ const verifyPayment = async (req, res) => {
             razorpay_order_id,
             razorpay_payment_id,
             razorpay_signature,
-            addressId  // Make sure this is passed from the frontend
+            addressId
         } = req.body;
 
         // Verify signature
@@ -162,29 +167,31 @@ const verifyPayment = async (req, res) => {
             });
         }
 
-        // Create order items
-        const orderItems = cart.items.map(item => ({
-            product: item.productId._id,
-            quantity: item.quantity,
-            price: item.price,
-            subtotal: item.quantity * item.price,
-            order: {
-                status: 'processing',
-                statusHistory: [{
-                    status: 'processing',
-                    date: new Date(),
-                    comment: 'Payment completed successfully'
-                }]
-            }
-        }));
-
         // Calculate totals
-        const subtotal = cart.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        let subtotal = cart.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+
+        // Apply coupon discount if available
+        if (req.session.coupon) {
+            subtotal = req.session.coupon.discountedTotal;
+        }
 
         // Create the order with shipping address
         const order = await orderSchema.create({
             userId,
-            items: orderItems,
+            items: cart.items.map(item => ({
+                product: item.productId._id,
+                quantity: item.quantity,
+                price: item.price,
+                subtotal: item.quantity * item.price,
+                order: {
+                    status: 'processing',
+                    statusHistory: [{
+                        status: 'processing',
+                        date: new Date(),
+                        comment: 'Payment completed successfully'
+                    }]
+                }
+            })),
             subtotal: subtotal,
             totalAmount: subtotal,
             shippingAddress: {
@@ -221,9 +228,9 @@ const verifyPayment = async (req, res) => {
             totalAmount: 0
         });
 
-        // Clear any pending order data from session
-        if (req.session.pendingOrder) {
-            delete req.session.pendingOrder;
+        // Clear coupon session
+        if (req.session.coupon) {
+            delete req.session.coupon;
         }
 
         res.status(200).json({
@@ -643,7 +650,7 @@ const applyCoupon = async (req, res, next) => {
         const { code } = req.body;
         const userId = req.session.user;
 
-        //find the coupon
+        // Find the coupon
         const coupon = await Coupon.findOne({
             code: code.toUpperCase(),
             isActive: true,
@@ -658,14 +665,12 @@ const applyCoupon = async (req, res, next) => {
             });
         }
 
-        // Check total coupon usage limit first
-        if (coupon.totalCoupon !== null) {
-            if (coupon.usedCouponCount >= coupon.totalCoupon) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Coupon limit has been exceeded. This coupon is no longer available.'
-                });
-            }
+        // Check total coupon usage limit
+        if (coupon.totalCoupon !== null && coupon.usedCouponCount >= coupon.totalCoupon) {
+            return res.status(400).json({
+                success: false,
+                message: 'Coupon limit has been exceeded. This coupon is no longer available.'
+            });
         }
 
         // Check individual user usage limit
@@ -680,7 +685,7 @@ const applyCoupon = async (req, res, next) => {
             });
         }
 
-        //get cart total 
+        // Get cart total
         const cart = await cartSchema.findOne({ userId })
             .populate('items.productId');
 
@@ -689,7 +694,7 @@ const applyCoupon = async (req, res, next) => {
             0
         );
 
-        //check minimum purchase required
+        // Check minimum purchase required
         if (cartTotal < coupon.minimumPurchase) {
             return res.status(400).json({
                 success: false,
@@ -697,11 +702,18 @@ const applyCoupon = async (req, res, next) => {
             });
         }
 
-        //calculate discount 
+        // Calculate discount
         let discount = (cartTotal * coupon.discountPercentage) / 100;
         if (coupon.maximumDiscount) {
             discount = Math.min(discount, coupon.maximumDiscount);
         }
+
+        // Store discount details in session
+        req.session.coupon = {
+            code: coupon.code,
+            discount: discount,
+            discountedTotal: cartTotal - discount
+        };
 
         res.json({
             success: true,
@@ -711,7 +723,7 @@ const applyCoupon = async (req, res, next) => {
         });
 
     } catch (error) {
-        next(error)
+        next(error);
     }
 };
 const removeCoupon = async (req, res, next) => {
