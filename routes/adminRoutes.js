@@ -19,7 +19,7 @@ router.post('/login', authController.postAdmin);
 
 router.get('/dashboard', adminMiddleware.checkSession, dashboardController.getDashboard);
 
-// router.get('/dashboard/data', adminMiddleware.checkSession, dashboardController.getDashboardData);
+router.get('/dashboard/data', adminMiddleware.checkSession, dashboardController.getDashboardData);
 
 router.get('/logout', adminMiddleware.checkSession, authController.getLogout);
 
