@@ -1,0 +1,242 @@
+<!-- Main Header -->
+<div class="fixed z-50 top-0 w-full h-16 sm:h-20 flex items-center justify-between px-4 sm:px-8 bg-gray-900/95 backdrop-blur-md border-b border-gray-800/50">
+  <div class="flex items-center justify-between w-full">
+    <!-- Logo -->
+    <div class="flex items-center">
+      <img src="/images/logooooo.png" alt="logo" class="h-10 sm:h-12 w-auto object-contain transition-all duration-300" />
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <div class="lg:hidden">
+      <button id="menu-toggle" class="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/80 transition-all">
+        <i class="fa-solid fa-bars text-xl sm:text-2xl"></i>
+      </button>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <nav class="hidden lg:flex items-center space-x-8">
+      <a href="/home" class="nav-link">Home</a>
+      <a href="/shop" class="nav-link">Shop</a>
+      <a href="/contact" class="nav-link">Contact</a>
+      <a href="/about" class="nav-link">About</a>
+    </nav>
+    
+    <!-- Auth/User Actions -->
+    <div class="flex items-center justify-end space-x-4 sm:space-x-6">
+      <!-- Auth Buttons (Not Logged In) -->
+      <div class="flex items-center space-x-3" id="authButtons">
+        <a href="/user/login" class="auth-button">
+          <i class="fa-solid fa-sign-in-alt mr-2"></i>Login
+        </a>
+        <a href="/user/signup" class="auth-button-primary">
+          <i class="fa-solid fa-user-plus mr-2"></i>Sign Up
+        </a>
+      </div>
+
+      <!-- User Icons (Logged In) -->
+      <div class="hidden items-center space-x-6" id="userIcons">
+        <a href="/wishlist" class="icon-button">
+          <i class="fa-regular fa-heart text-xl"></i>
+        </a>
+        <a href="/profile" class="icon-button">
+          <i class="fa-regular fa-user text-xl"></i>
+        </a>
+        <a href="/cart" class="icon-button relative">
+          <i class="fa-solid fa-cart-shopping text-xl"></i>
+          <% if (locals.cartCount && cartCount > 0) { %>
+            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+              <%= cartCount > 9 ? '9+' : cartCount %>
+            </span>
+          <% } %>
+        </a>
+        <button onclick="handleLogout()" class="icon-button">
+          <i class="fa-solid fa-sign-out-alt text-xl"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Menu -->
+<div id="mobile-menu" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden lg:hidden z-40">
+  <div class="fixed top-16 sm:top-20 right-0 w-full max-w-sm h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] bg-gray-900 border-l border-gray-800/50 transform transition-all duration-300 overflow-y-auto">
+    <nav class="flex flex-col p-4 space-y-2">
+      <a href="/home" class="mobile-nav-link">
+        <i class="fa-solid fa-home mr-3"></i>Home
+      </a>
+      <a href="/shop" class="mobile-nav-link">
+        <i class="fa-solid fa-shopping-bag mr-3"></i>Shop
+      </a>
+      <a href="/contact" class="mobile-nav-link">
+        <i class="fa-solid fa-envelope mr-3"></i>Contact
+      </a>
+      <a href="/about" class="mobile-nav-link">
+        <i class="fa-solid fa-info-circle mr-3"></i>About
+      </a>
+
+      <!-- Mobile Auth Section -->
+      <div class="border-t border-gray-800/50 mt-4 pt-4">
+        <div id="mobileAuthButtons">
+          <a href="/user/login" class="mobile-auth-button">
+            <i class="fa-solid fa-sign-in-alt mr-3"></i>Login
+          </a>
+          <a href="/user/signup" class="mobile-auth-button-primary">
+            <i class="fa-solid fa-user-plus mr-3"></i>Sign Up
+          </a>
+        </div>
+
+        <div id="mobileUserIcons" class="hidden space-y-2">
+          <a href="/wishlist" class="mobile-nav-link">
+            <i class="fa-regular fa-heart mr-3"></i>Wishlist
+          </a>
+          <a href="/profile" class="mobile-nav-link">
+            <i class="fa-regular fa-user mr-3"></i>Profile
+          </a>
+          <a href="/cart" class="mobile-nav-link">
+            <i class="fa-solid fa-cart-shopping mr-3"></i>Cart
+            <% if (locals.cartCount && cartCount > 0) { %>
+              <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                <%= cartCount > 9 ? '9+' : cartCount %>
+              </span>
+            <% } %>
+          </a>
+          <button onclick="handleLogout()" class="mobile-nav-link text-left w-full">
+            <i class="fa-solid fa-sign-out-alt mr-3"></i>Logout
+          </button>
+        </div>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<style>
+  /* Navigation Links */
+  .nav-link {
+    @apply text-gray-300 hover:text-white text-sm font-medium transition-colors relative;
+  }
+  .nav-link::after {
+    content: '';
+    @apply absolute left-0 bottom-0 w-0 h-0.5 bg-emerald-500 transition-all duration-300;
+  }
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+
+  /* Auth Buttons */
+  .auth-button {
+    @apply text-sm font-medium text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-all;
+  }
+  .auth-button-primary {
+    @apply text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-lg transition-all;
+  }
+
+  /* Icon Buttons */
+  .icon-button {
+    @apply p-2 text-gray-400 hover:text-white hover:bg-gray-800/80 rounded-lg transition-all;
+  }
+
+  /* Mobile Navigation */
+  .mobile-nav-link {
+    @apply p-3 text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all flex items-center;
+  }
+  .mobile-auth-button {
+    @apply w-full p-3 text-sm font-medium text-gray-300 hover:text-white hover:bg-gray-800/50 rounded-lg transition-all flex items-center mb-2;
+  }
+  .mobile-auth-button-primary {
+    @apply w-full p-3 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all flex items-center justify-center;
+  }
+</style>
+
+<script>
+  const menuToggle = document.getElementById("menu-toggle");
+  const mobileMenu = document.getElementById("mobile-menu");
+  let isMenuOpen = false;
+
+  // Check session status
+  document.addEventListener("DOMContentLoaded", async function () {
+    try {
+      const response = await fetch('/check-session');
+      const data = await response.json();
+      
+      // Update desktop menu
+      document.getElementById("authButtons").style.display = data.isLoggedIn ? "none" : "flex";
+      document.getElementById("userIcons").style.display = data.isLoggedIn ? "flex" : "none";
+      
+      // Update mobile menu
+      document.getElementById("mobileAuthButtons").style.display = data.isLoggedIn ? "none" : "block";
+      document.getElementById("mobileUserIcons").style.display = data.isLoggedIn ? "block" : "none";
+    } catch (error) {
+      console.error("Error checking session:", error);
+    }
+  });
+
+  // Logout handler
+  async function handleLogout() {
+    try {
+      const response = await fetch('/logout', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'same-origin'
+      });
+
+      if (response.redirected) {
+        window.location.href = response.url;
+        return;
+      }
+
+      if (response.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Logged out successfully!',
+          showConfirmButton: false,
+          timer: 1500,
+          background: '#1F2937',
+          color: '#F3F4F6',
+          customClass: {
+            popup: 'rounded-xl border border-gray-700'
+          }
+        }).then(() => {
+          window.location.href = '/login';
+        });
+      } else {
+        const data = await response.json();
+        throw new Error(data.message || 'Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: error.message || 'Something went wrong! Please try again.',
+        background: '#1F2937',
+        color: '#F3F4F6',
+        customClass: {
+          popup: 'rounded-xl border border-gray-700'
+        }
+      });
+    }
+  }
+
+  // Mobile menu toggle
+  menuToggle.addEventListener("click", () => {
+    isMenuOpen = !isMenuOpen;
+    mobileMenu.classList.toggle("hidden");
+    document.body.classList.toggle("overflow-hidden");
+
+    const menuIcon = menuToggle.querySelector('i');
+    menuIcon.classList.replace(isMenuOpen ? 'fa-bars' : 'fa-xmark', isMenuOpen ? 'fa-xmark' : 'fa-bars');
+  });
+
+  // Close menu when clicking outside
+  mobileMenu.addEventListener('click', (event) => {
+    if (event.target === mobileMenu) {
+      mobileMenu.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
+      isMenuOpen = false;
+      menuToggle.querySelector('i').classList.replace('fa-xmark', 'fa-bars');
+    }
+  });
+</script>
