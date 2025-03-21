@@ -1,11 +1,23 @@
 import Category from '../../models/categoryModels.js';
 import Offer from '../../models/offerModel.js';
+import Product from '../../models/productModel.js';
 
 const categoryController = {
     // Get all categories
     getCategories: async (req, res) => {
         try {
-            const categories = await Category.find().sort({ createdAt: -1 });
+            const categories = await Category.find()
+                .sort({ createdAt: -1 })
+                .lean();
+
+            // Get product count for each category
+            for (let category of categories) {
+                category.productCount = await Product.countDocuments({
+                    categoriesId: category._id,
+                    isActive: true
+                });
+            }
+
             res.render('admin/categories', { categories });
         } catch (error) {
             console.error('Error fetching categories:', error);

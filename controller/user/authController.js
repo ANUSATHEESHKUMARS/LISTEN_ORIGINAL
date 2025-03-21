@@ -11,6 +11,19 @@ const saltRounds = 10;
 dotenv.config()
 
 
+export const getContact = async (req, res) => {
+    try {
+        // Add some logging to debug
+        console.log('Rendering contact');
+        console.log('Views directory:', req.app.get('views'));
+        res.render('user/contact');
+    } catch (error) {
+        console.error('Error rendering about page:', error);
+        res.status(500).send('Internal Server Error');
+    }
+};
+
+
 export const getabout = async (req, res) => {
     try {
         // Add some logging to debug
@@ -580,7 +593,8 @@ export default {
     getGoogle,
     getGoogleCallback,
     getLogout,
-    getabout
+    getabout,
+    getContact
 
 
 

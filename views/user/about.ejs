@@ -4,9 +4,8 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>About Us - Listen</title>
-        <!-- Update CSS path -->
-        <link rel="stylesheet" href="/user/tailwindcss/output.css" />
+        <title>About Us - Listen Headphones</title>
+        <link rel="stylesheet" href="../user/tailwindcss/output.css" />
         <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
@@ -15,87 +14,193 @@
             referrerpolicy="no-referrer"
         />
     </head>
-<body class="bg-gray-500">
+<body class="bg-gray-50">
     <%- include("../partials/nav") %>
 
-    <!-- About Hero Section -->
-    <section class="pt-24 pb-12 bg-gray-900 text-white">
-        <div class="container mx-auto px-4">
-            <div class="max-w-4xl mx-auto text-center">
-                <h1 class="text-4xl sm:text-5xl font-bold mb-6">About Listen</h1>
+<!-- Hero Section with Carousel -->
+<div class="relative h-[300px] overflow-hidden">
+    <!-- Carousel Container -->
+    <div class="carousel-container h-full">
+        <!-- Slide 1 -->
+        <div class="carousel-slide absolute w-full h-full transition-opacity duration-500">
+            <img src="/images/kardkfksdf.jpg" alt="Premium Headphones" class="w-full h-full object-cover">
+        </div>
+        <!-- Slide 2 -->
+        <div class="carousel-slide absolute w-full h-full transition-opacity duration-500">
+            <img src="/images/nookii.jpg" alt="Quality Audio" class="w-full h-full object-cover">
+        </div>
+        <!-- Slide 3 -->
+        <div class="carousel-slide absolute w-full h-full transition-opacity duration-500">
+            <img src="/images/rredasd.jpg" alt="Perfect Sound" class="w-full h-full object-cover">
+        </div>
+
+        <!-- Overlay Text (Stays constant) -->
+        <div class="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+            <div class="text-center text-white">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">About Listen Headphones</h1>
+                <p class="text-lg md:text-xl">Your Premium Audio Destination</p>
             </div>
         </div>
-    </section>
 
-    <!-- Main Content -->
-    <section class="py-16">
+        <!-- Carousel Navigation Dots -->
+        <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-20">
+            <button class="w-2 h-2 rounded-full bg-white opacity-50 carousel-dot"></button>
+            <button class="w-2 h-2 rounded-full bg-white opacity-50 carousel-dot"></button>
+            <button class="w-2 h-2 rounded-full bg-white opacity-50 carousel-dot"></button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .carousel-slide {
+        opacity: 0;
+    }
+    .carousel-slide.active {
+        opacity: 1;
+    }
+    .carousel-dot.active {
+        opacity: 1;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.carousel-dot');
+        let currentSlide = 0;
+
+        // Function to show specific slide
+        function showSlide(index) {
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+            dots.forEach(dot => {
+                dot.classList.remove('active');
+            });
+
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
+        }
+
+        // Initialize first slide
+        showSlide(0);
+
+        // Auto advance slides
+        setInterval(() => {
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+        }, 3000); // Change slide every 3 seconds
+
+        // Add click handlers for dots
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                currentSlide = index;
+                showSlide(currentSlide);
+            });
+        });
+    });
+</script>
+
+    <!-- Our Story Section -->
+    <div class="py-16">
         <div class="container mx-auto px-4">
-            <div class="max-w-4xl mx-auto">
-                <!-- Our Story -->
-                <div class="mb-16">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
-                    <div class="prose prose-lg text-gray-900 max-w-none">
-                        <p class="mb-6">
-                            At Listen, we believe that great sound has the power to enhance every moment of your life. Our journey began with a simple mission: to provide high-quality audio products that deliver exceptional sound experiences to our customers.
-                        </p>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <img src="\images\sresessh.jpg" alt="Our Store" class="rounded-lg shadow-lg w-3/4">
                 </div>
-
-                <!-- Sound Quality Section -->
-                <div class="bg-white rounded-2xl p-8 shadow-sm mb-16">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">
-                        Powerful Sound Drivers for Clear HD Sound
-                    </h2>
-                    <div class="prose prose-lg text-gray-600">
-                        <p class="mb-6">
-                            Immerse yourself in a range of Hammer headphones that are designed ergonomically, especially for you! Our selection of headphones comes with powerful sound drivers that are designed to deliver crystal-clear HD sound, providing an immersive listening experience across various genres of music, movies, and gaming.
-                        </p>
-                        <p class="mb-6">
-                            Our Headphones with powerful sound are often equipped with large audio drivers, typically around 40mm or larger. If you like to enjoy bass-heavy music genres like EDM or hip-hop, then our headphones with powerful drivers that deliver deep, punchy bass without overwhelming the rest of the audio spectrum, are a perfect pick.
-                        </p>
-                        <p>
-                            While emphasizing powerful bass, Hammer high-quality headphones maintain a balanced sound signature, ensuring that all frequencies are well-represented for a natural and immersive listening experience.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Features Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="bg-white p-6 rounded-xl shadow-sm">
-                        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-headphones text-2xl text-emerald-600"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Premium Sound Quality</h3>
-                        <p class="text-gray-600">Experience music like never before with our high-fidelity audio technology.</p>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-sm">
-                        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-battery-full text-2xl text-emerald-600"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Long Battery Life</h3>
-                        <p class="text-gray-600">Enjoy uninterrupted music with our long-lasting battery performance.</p>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-sm">
-                        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-wifi text-2xl text-emerald-600"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Wireless Freedom</h3>
-                        <p class="text-gray-600">Move freely with our advanced Bluetooth connectivity.</p>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-sm">
-                        <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
-                            <i class="fas fa-heart text-2xl text-emerald-600"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Comfort First</h3>
-                        <p class="text-gray-600">Designed for extended wear with premium comfort materials.</p>
-                    </div>
+                <div>
+                    <h2 class="text-3xl font-bold mb-6">Our Story</h2>
+                    <p class="text-gray-600 mb-6">
+                        Listen Headphones started with a simple mission: to provide premium audio experiences to everyone. 
+                        We understand that finding the perfect headphones is a personal journey, and we're here to guide 
+                        you every step of the way.
+                    </p>
+                    <p class="text-gray-600">
+                        Our carefully curated selection of headphones and audio accessories represents the best in sound 
+                        quality, comfort, and style. Whether you're an audiophile, music enthusiast, or casual listener, 
+                        we have the perfect pair waiting for you.
+                    </p>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+
+    <!-- Why Choose Us -->
+    <div class="bg-gray-100 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">Why Choose Us?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Quality -->
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-6 mx-auto">
+                        <i class="fas fa-check text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-center mb-4">Premium Quality</h3>
+                    <p class="text-gray-600 text-center">
+                        We offer only the finest selection of headphones from trusted brands.
+                    </p>
+                </div>
+
+                <!-- Expert Advice -->
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-6 mx-auto">
+                        <i class="fas fa-headset text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-center mb-4">Expert Advice</h3>
+                    <p class="text-gray-600 text-center">
+                        Our knowledgeable team helps you find your perfect audio match.
+                    </p>
+                </div>
+
+                <!-- Customer Service -->
+                <div class="bg-white p-8 rounded-lg shadow-md">
+                    <div class="w-16 h-16 bg-black rounded-full flex items-center justify-center mb-6 mx-auto">
+                        <i class="fas fa-heart text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-center mb-4">Customer First</h3>
+                    <p class="text-gray-600 text-center">
+                        Your satisfaction is our top priority, with excellent support and service.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Our Commitment -->
+    <div class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-3xl font-bold mb-6">Our Commitment</h2>
+                    <p class="text-gray-600 mb-6">
+                        We believe that everyone deserves to experience their music in the best possible way. 
+                        That's why we're committed to:
+                    </p>
+                    <ul class="space-y-4">
+                        <li class="flex items-center">
+                            <i class="fas fa-circle-check text-black mr-3"></i>
+                            <span class="text-gray-600">Offering only authentic, high-quality products</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-circle-check text-black mr-3"></i>
+                            <span class="text-gray-600">Providing honest, expert advice</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-circle-check text-black mr-3"></i>
+                            <span class="text-gray-600">Ensuring excellent customer service</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-circle-check text-black mr-3"></i>
+                            <span class="text-gray-600">Maintaining competitive prices</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <img src="\images\djfkskdofk.jpg" alt="Our Commitment" class="rounded-lg shadow-lg w-full">
+                </div>
+            </div>
+        </div>
+    </div>
 
     <%- include("../partials/footer") %>
 </body>

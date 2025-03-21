@@ -27,4 +27,11 @@ const categorySchema = new mongoose.Schema({
     }
 });
 
+// Add virtual for products
+categorySchema.virtual('products', {
+    ref: 'Product',
+    localField: '_id',
+    foreignField: 'categoriesId'
+});
+
 export default mongoose.model('Category', categorySchema);

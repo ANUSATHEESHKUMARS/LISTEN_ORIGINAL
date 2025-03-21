@@ -10,6 +10,7 @@ import viewOrdersController from '../controller/user/viewOrdersController.js';
 import wishlistController from '../controller/user/wishlistController.js'
 import walletController from '../controller/user/walletController.js';
 import couponController from '../controller/user/couponController.js';
+import productController from '../controller/user/productController.js';
 
 
 const route = Router()
@@ -145,6 +146,10 @@ route.post("/checkout/wallet-payment",userMiddlewares.checkSession,checkoutContr
 route.get("/coupons",userMiddlewares.checkSession ,couponController.getCoupons)
 
 route.get('/order-success', checkoutController.getOrderSuccessPage);
+
+route.get('/product/:id', productController.getProductDetails);
+
+route.get('/contact',authController.getContact)
 
 
 export default route;
