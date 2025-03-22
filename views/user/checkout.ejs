@@ -167,15 +167,14 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
             </h4>
             <p class="text-sm text-gray-500">Qty: <%= item.quantity %></p>
             <div class="flex items-baseline gap-2 flex-wrap">
-              <span class="text-gray-800"
-                >₹<%= item.price.toFixed(2) %></span
-              >
-              <% if (item.discountedPrice && item.discountedPrice <
-              item.price) { %>
-              <span class="text-green-600 text-sm">
-                Saved: ₹<%= (item.price - item.discountedPrice).toFixed(2)
-                %>
-              </span>
+              <% if (item.offerApplied) { %>
+                <span class="text-gray-800">₹<%= item.discountPrice.toFixed(2) %></span>
+                <span class="text-gray-500 line-through text-sm">₹<%= item.price.toFixed(2) %></span>
+                <span class="text-red-500 text-sm">
+                  <%= item.discountPercentage %>% OFF
+                </span>
+              <% } else { %>
+                <span class="text-gray-800">₹<%= item.price.toFixed(2) %></span>
               <% } %>
             </div>
           </div>
@@ -215,28 +214,24 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
       <div class="space-y-3">
         <div class="flex justify-between">
           <span>Subtotal:</span>
-          <span>₹<span id="subtotal"><%= total.toFixed(2) %></span></span>
+          <span>₹<span id="subtotal"><%= subtotal.toFixed(2) %></span></span>
         </div>
 
-        <div
-          id="discountRow"
-          class="flex justify-between <%= locals.discount ? '' : 'hidden' %>"
-        >
-          <span>Discount:</span>
-          <span class="text-green-500"
-            >-₹<span id="discountAmount"
-              ><%= (locals.discount || 0).toFixed(2) %></span
-            ></span
-          >
+        <% if (offerDiscount > 0) { %>
+        <div class="flex justify-between text-green-600">
+            <span>Offer Discount:</span>
+            <span>-₹<%= offerDiscount.toFixed(2) %></span>
+        </div>
+        <% } %>
+
+        <div id="discountRow" class="flex justify-between <%= couponDiscount ? '' : 'hidden' %>">
+            <span>Coupon Discount:</span>
+            <span class="text-green-500">-₹<span id="discountAmount"><%= couponDiscount.toFixed(2) %></span></span>
         </div>
 
         <div class="flex justify-between font-bold">
-          <span>Total Amount:</span>
-          <span
-            >₹<span id="finalTotal"
-              ><%= (total - (locals.discount || 0)).toFixed(2) %></span
-            ></span
-          >
+            <span>Total Amount:</span>
+            <span>₹<span id="finalTotal"><%= finalTotal.toFixed(2) %></span></span>
         </div>
       </div>
 
@@ -652,7 +647,7 @@ class="fixed inset-0 flex items-center justify-center z-50 hidden"
 
                                   const verifyData = await verifyResponse.json();
                                   if (verifyData.success) {
-                                      await showAlert('success', 'Payment successful!');
+                                      await showAlert('success', `Payment successful! Total amount paid: ₹${verifyData.amount.toFixed(2)}`);
                                       window.location.href = `/order-success?orderId=${verifyData.orderId}`;
                                   } else {
                                       throw new Error(verifyData.message || 'Payment verification failed');

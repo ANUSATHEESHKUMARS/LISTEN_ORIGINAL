@@ -78,8 +78,20 @@ referrerpolicy="no-referrer"
                   </button>
                 </div>
                 <div class="text-right">
-                  <div class="font-semibold" id="subtotal-<%= item.product._id %>">₹<%= item.subtotal %></div>
-                  <div class="text-sm text-gray-500">₹<%= item.price %> each</div>
+                  <div class="font-semibold" id="subtotal-<%= item.product._id %>">
+                    ₹<%= item.subtotal %>
+                  </div>
+                  <% if (item.offerApplied) { %>
+                      <div class="text-sm">
+                          <span class="text-gray-500 line-through">₹<%= item.price %></span>
+                          <span class="text-green-500 ml-1">₹<%= item.discountPrice %> each</span>
+                      </div>
+                      <div class="text-xs text-red-500">
+                          <%= item.discountPercentage %>% OFF
+                      </div>
+                  <% } else { %>
+                      <div class="text-sm text-gray-500">₹<%= item.price %> each</div>
+                  <% } %>
                 </div>
               </div>
             </div>
@@ -153,12 +165,20 @@ referrerpolicy="no-referrer"
                     </button>
                   </div>
                   <div class="text-right">
-                    <div class="text-lg font-semibold text-gray-800" id="subtotal">
+                    <div class="text-lg font-semibold text-gray-800" id="subtotal-<%= item.product._id %>">
                       ₹<%= item.subtotal %>
                     </div>
-                    <div class="text-sm text-gray-500">
-                      ₹<%= item.price %> each
-                    </div>
+                    <% if (item.offerApplied) { %>
+                        <div class="text-sm">
+                            <span class="text-gray-500 line-through">₹<%= item.price %></span>
+                            <span class="text-green-500 ml-1">₹<%= item.discountPrice %> each</span>
+                        </div>
+                        <div class="text-xs text-red-500">
+                            <%= item.discountPercentage %>% OFF
+                        </div>
+                    <% } else { %>
+                        <div class="text-sm text-gray-500">₹<%= item.price %> each</div>
+                    <% } %>
                   </div>
                 </div>
               </div>

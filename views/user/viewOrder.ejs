@@ -119,15 +119,18 @@
                                                     <p class="font-medium"><%= item.product.productName %></p>
                                                     <div class="text-sm text-gray-500">
                                                         <p>Quantity: <%= item.quantity %></p>
-                                                        <p>Price: ₹<%= item.price %></p>
-                                                        <% if (item.discountedPrice && item.price !== item.discountedPrice) { %>
-                                                            <p class="text-green-600">
-                                                                Discounted Price: ₹<%= item.discountedPrice %>
-                                                                <span class="text-xs">
-                                                                    (Save ₹<%= (item.price - item.discountedPrice).toFixed(2) %>)
+                                                        <% if (item.discountedPrice && item.discountedPrice !== item.price) { %>
+                                                            <p>
+                                                                <span class="line-through text-gray-400">₹<%= item.price.toFixed(2) %></span>
+                                                                <span class="text-green-600 ml-2">₹<%= item.discountedPrice.toFixed(2) %></span>
+                                                                <span class="text-xs text-green-600">
+                                                                    (<%= Math.round((1 - item.discountedPrice/item.price) * 100) %>% OFF)
                                                                 </span>
                                                             </p>
+                                                        <% } else { %>
+                                                            <p>Price: ₹<%= item.price.toFixed(2) %></p>
                                                         <% } %>
+                                                        <p>Subtotal: ₹<%= (item.discountedPrice || item.price) * item.quantity %></p>
                                                     </div>
                                                 </div>
 

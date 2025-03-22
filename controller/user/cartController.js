@@ -1,6 +1,7 @@
 import cartSchema from '../../models/cartModels.js';
 import productSchema from '../../models/productModel.js';
 import Category from '../../models/categoryModels.js';
+import Offer from '../../models/offerModel.js';
 
 const getCart = async (req, res) => {
     try {
@@ -9,6 +10,35 @@ const getCart = async (req, res) => {
         // Get active categories
         const activeCategories = await Category.find({ isActive: true }).distinct('_id');
         
+        // Get active offers
+        const activeOffers = await Offer.find({
+            startDate: { $lte: new Date() },
+            endDate: { $gte: new Date() },
+            status: 'active'
+        }).populate('categoryId productIds');
+
+        // Create maps for offers
+        const productOfferMap = new Map();
+        const categoryOfferMap = new Map();
+
+        activeOffers.forEach(offer => {
+            if (offer.productIds && offer.productIds.length > 0) {
+                offer.productIds.forEach(productId => {
+                    const productIdStr = productId.toString();
+                    if (!productOfferMap.has(productIdStr) ||
+                        productOfferMap.get(productIdStr).discount < offer.discount) {
+                        productOfferMap.set(productIdStr, offer);
+                    }
+                });
+            } else if (offer.categoryId) {
+                const categoryIdStr = offer.categoryId._id.toString();
+                if (!categoryOfferMap.has(categoryIdStr) ||
+                    categoryOfferMap.get(categoryIdStr).discount < offer.discount) {
+                    categoryOfferMap.set(categoryIdStr, offer);
+                }
+            }
+        });
+
         const cart = await cartSchema.findOne({ userId }).populate({
             path: 'items.productId',
             populate: {
@@ -38,11 +68,37 @@ const getCart = async (req, res) => {
             await cart.save();
         }
 
-        // Process remaining items
+        // Process remaining items with offers
         const updatedItems = validItems.map(item => {
             const product = item.productId;
             const quantity = parseInt(item.quantity) || 1;
-            const subtotal = product.price * quantity;
+            
+            // Get product-specific offer
+            const productOffer = productOfferMap.get(product._id.toString());
+            
+            // Get category offer
+            const categoryOffer = product.categoriesId ?
+                categoryOfferMap.get(product.categoriesId._id.toString()) : null;
+
+            // Calculate best discount
+            let bestDiscount = 0;
+            let appliedOffer = null;
+
+            if (productOffer) {
+                bestDiscount = productOffer.discount;
+                appliedOffer = productOffer;
+            }
+            if (categoryOffer && categoryOffer.discount > bestDiscount) {
+                bestDiscount = categoryOffer.discount;
+                appliedOffer = categoryOffer;
+            }
+
+            // Calculate prices
+            const originalPrice = product.price;
+            const discountedPrice = bestDiscount > 0 
+                ? Math.round(originalPrice * (1 - bestDiscount / 100))
+                : originalPrice;
+            const subtotal = discountedPrice * quantity;
 
             return {
                 product: {
@@ -53,15 +109,19 @@ const getCart = async (req, res) => {
                     color: product.color
                 },
                 quantity: quantity,
-                price: product.price,
-                subtotal: subtotal
+                price: originalPrice,
+                discountPrice: discountedPrice,
+                subtotal: subtotal,
+                offerApplied: bestDiscount > 0,
+                discountPercentage: bestDiscount,
+                appliedOffer: appliedOffer
             };
         });
 
-        // Calculate total
-        const total = updatedItems.reduce((sum, item) => sum + (parseFloat(item.subtotal) || 0), 0);
+        // Calculate total with discounts
+        const total = updatedItems.reduce((sum, item) => sum + item.subtotal, 0);
 
-        // Update cart in database
+        // Update cart in database with new prices
         cart.items = cart.items.map((item, index) => ({
             ...item,
             subtotal: updatedItems[index].subtotal
@@ -155,8 +215,6 @@ const addToCart = async (req, res) => {
         res.status(500).json({ message: 'Failed to add product to cart' });
     }
 };
-
-
 
 const updateQuantity = async (req, res) => {
     try {
