@@ -95,6 +95,22 @@
               </select>
             </div>
 
+            <!-- Category Filter -->
+            <div>
+              <label for="categoryFilter" class="block text-gray-700 font-medium mb-2">Category</label>
+              <select id="categoryFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900">
+                <option value="">All Categories</option>
+                <% if (categories && categories.length > 0) { %>
+                    <% categories.forEach(category => { %>
+                        <option value="<%= category._id %>" 
+                                <%= filters.category === category._id.toString() ? 'selected' : '' %>>
+                            <%= category.name %>
+                        </option>
+                    <% }); %>
+                <% } %>
+              </select>
+            </div>
+
             <!-- Reset Button -->
             <button 
               id="resetFilters"
@@ -213,6 +229,7 @@
           const minPriceInput = document.getElementById('minPrice');
           const maxPriceInput = document.getElementById('maxPrice');
           const stockFilter = document.getElementById('stockFilter');
+          const categoryFilter = document.getElementById('categoryFilter');
           const resetButton = document.getElementById('resetFilters');
 
           // Function to apply filters
@@ -224,8 +241,14 @@
                       sort: sortFilter.value,
                       minPrice: minPriceInput.value,
                       maxPrice: maxPriceInput.value,
-                      stock: stockFilter.value
+                      stock: stockFilter.value,
+                      category: categoryFilter.value
                   });
+
+                  // Remove empty params
+                  for (const [key, value] of params.entries()) {
+                      if (!value) params.delete(key);
+                  }
 
                   const response = await fetch(`/shop?${params.toString()}`, {
                       headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -236,11 +259,12 @@
                   const data = await response.json();
                   updateProductGrid(data.products);
                   updatePagination(data.pagination);
-                  updateURL(params);
-
+                  
+                  // Update URL without reloading the page
+                  window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
               } catch (error) {
                   console.error('Error applying filters:', error);
-                  // Show error message to user
+                  showToast('error', 'Failed to load products');
               }
           }
 
@@ -254,6 +278,7 @@
           searchInput.addEventListener('input', debounce(() => applyFilters(), 500));
           sortFilter.addEventListener('change', () => applyFilters());
           stockFilter.addEventListener('change', () => applyFilters());
+          categoryFilter.addEventListener('change', () => applyFilters(1));
 
           // Price filter with debounce
           [minPriceInput, maxPriceInput].forEach(input => {
@@ -261,13 +286,14 @@
           });
 
           // Reset filters
-          resetButton.addEventListener('click', () => {
+          resetButton.addEventListener('click', function() {
               searchInput.value = '';
               sortFilter.value = '';
               minPriceInput.value = '';
               maxPriceInput.value = '';
               stockFilter.value = '';
-              applyFilters();
+              categoryFilter.value = '';
+              applyFilters(1);
           });
 
           // Debounce function

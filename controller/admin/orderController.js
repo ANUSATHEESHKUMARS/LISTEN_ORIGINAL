@@ -159,7 +159,8 @@ const handleReturnRequest = async (req, res) => {
         const { returnStatus, adminComment } = req.body;
 
         const order = await orderSchema.findById(orderId)
-            .populate('items.product');
+            .populate('items.product')
+            .populate('userId');
 
         if (!order) {
             return res.status(404).json({
@@ -185,6 +186,7 @@ const handleReturnRequest = async (req, res) => {
         item.return.processedDate = new Date();
 
         if (returnStatus === 'approved') {
+            // Update item status to returned
             item.order.status = 'returned';
             item.return.isReturnAccepted = true;
             
@@ -194,29 +196,45 @@ const handleReturnRequest = async (req, res) => {
                 { $inc: { stock: item.quantity } }
             );
 
-            // Process refund if applicable
+            // Process refund if payment was online
             if (['online', 'razorpay', 'wallet'].includes(order.payment.method)) {
-                order.payment.paymentStatus = 'refund processing';
-                await processRefund(order, item);
+                // Add refund to user's wallet
+                const refundAmount = item.subtotal;
+                await wallet.findOneAndUpdate(
+                    { userId: order.userId._id },
+                    {
+                        $inc: { balance: refundAmount },
+                        $push: {
+                            transactions: {
+                                type: 'credit',
+                                amount: refundAmount,
+                                description: `Refund for return of order #${order.orderCode}`,
+                                orderId: order._id
+                            }
+                        }
+                    },
+                    { upsert: true }
+                );
+                
+                item.order.statusHistory.push({
+                    status: 'refund processed',
+                    date: new Date(),
+                    comment: `Refund of ₹${refundAmount} processed to wallet`
+                });
             }
 
-            // Add to status history
-            item.order.statusHistory.push({
-                status: 'returned',
-                date: new Date(),
-                comment: `Return approved: ${adminComment}`
-            });
         } else if (returnStatus === 'rejected') {
+            // Keep the item status as delivered
             item.order.status = 'delivered';
             item.return.isReturnAccepted = false;
-
-            // Add to status history
-            item.order.statusHistory.push({
-                status: 'delivered',
-                date: new Date(),
-                comment: `Return rejected: ${adminComment}`
-            });
         }
+
+        // Add status history entry
+        item.order.statusHistory.push({
+            status: returnStatus === 'approved' ? 'returned' : 'return rejected',
+            date: new Date(),
+            comment: `Return ${returnStatus}. ${adminComment}`
+        });
 
         await order.save();
 

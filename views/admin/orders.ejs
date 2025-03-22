@@ -93,13 +93,13 @@
                                                             <% } %>
 
                                                             <% if (item.return?.isReturnRequested && item.return.status === 'pending') { %>
-                                                                <div class="return-actions flex gap-2">
+                                                                <div class="return-actions flex gap-2 mt-2">
                                                                     <button onclick="handleReturn('<%= order._id %>', '<%= item.product._id %>', 'approved')"
-                                                                            class="text-xs bg-green-500 text-white px-2 py-1 rounded">
+                                                                            class="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600">
                                                                         Approve Return
                                                                     </button>
                                                                     <button onclick="handleReturn('<%= order._id %>', '<%= item.product._id %>', 'rejected')"
-                                                                            class="text-xs bg-red-500 text-white px-2 py-1 rounded">
+                                                                            class="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
                                                                         Reject Return
                                                                     </button>
                                                                 </div>
@@ -485,41 +485,41 @@
 
     // Updated return handling function
     async function handleReturn(orderId, productId, returnStatus) {
-        const title = `${returnStatus === 'approved' ? 'Approve' : 'Reject'} Return Request`;
-        const message = `Are you sure you want to ${returnStatus} this return request?`;
-        
-        showAlert('confirm', message, title);
-            
-        document.getElementById('confirmProceed').onclick = async () => {
-            try {
-                hideAlert();
-                showAlert('loading');
+        try {
+            // Show confirmation dialog
+            const { value: adminComment } = await Swal.fire({
+                title: `${returnStatus === 'approved' ? 'Approve' : 'Reject'} Return Request`,
+                input: 'textarea',
+                inputLabel: 'Add a comment (optional)',
+                inputPlaceholder: 'Enter your comment here...',
+                showCancelButton: true,
+                confirmButtonText: returnStatus === 'approved' ? 'Approve' : 'Reject',
+                confirmButtonColor: returnStatus === 'approved' ? '#10B981' : '#EF4444'
+            });
 
+            if (adminComment !== undefined) {  // Check if not cancelled
                 const response = await fetch(`/admin/orders/${orderId}/items/${productId}/return`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         returnStatus,
-                        adminComment: document.getElementById('returnModalComment')?.value || `Return request ${returnStatus}`
+                        adminComment: adminComment || `Return request ${returnStatus}`
                     })
                 });
 
                 const data = await response.json();
-                
-                hideAlert();
-                if (response.ok) {
-                    updateUIReturn(orderId, productId, returnStatus);
-                    showAlert('success', 'Return request processed successfully');
-                } else {
-                    throw new Error(data.message || 'Failed to process return request');
-                }
-            } catch (error) {
-                hideAlert();
-                showAlert('error', error.message);
-            }
-        };
 
-        document.getElementById('confirmCancel').onclick = hideAlert;
+                if (response.ok) {
+                    Swal.fire('Success', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.message);
+                }
+            }
+        } catch (error) {
+            Swal.fire('Error', error.message || 'Failed to process return request', 'error');
+        }
     }
 
     function closeReturnModal() {

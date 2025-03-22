@@ -31,13 +31,13 @@ const categoryController = {
     // Add new category
     addCategory: async (req, res) => {
         try {
-            const { categoryName, categoryDescription } = req.body;
+            const { categoryName, categoryDescription, type } = req.body;
 
             // Validate input
-            if (!categoryName || !categoryDescription) {
+            if (!categoryName || !categoryDescription || !type) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Category name and description are required'
+                    message: 'Category name, description, and type are required'
                 });
             }
 
@@ -56,7 +56,8 @@ const categoryController = {
             // Create new category
             const newCategory = new Category({
                 name: categoryName.trim(),
-                description: categoryDescription.trim()
+                description: categoryDescription.trim(),
+                type: type
             });
 
             await newCategory.save();

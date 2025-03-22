@@ -1,6 +1,7 @@
 import Product from '../../models/productModel.js'
 import Category from '../../models/categoryModels.js';
 import Offer from '../../models/offerModel.js';
+import mongoose from 'mongoose';
 
 const getHome = async (req, res) => {
     try {
@@ -103,6 +104,9 @@ const getShop = async (req, res) => {
         const limit = 12;
         const skip = (page - 1) * limit;
 
+        // Get active categories for the filter dropdown
+        const categories = await Category.find({ isActive: true }).sort({ name: 1 });
+
         // Get active offers
         const activeOffers = await Offer.find({
             startDate: { $lte: new Date() },
@@ -134,6 +138,11 @@ const getShop = async (req, res) => {
 
         // Build filter query
         const filter = { isActive: true };
+
+        // Add category filter
+        if (req.query.category) {
+            filter.categoriesId = new mongoose.Types.ObjectId(req.query.category);
+        }
 
         // Add search filter
         if (req.query.search) {
@@ -176,12 +185,15 @@ const getShop = async (req, res) => {
                 sortQuery = { createdAt: -1 };
         }
 
-        // Fetch products with filters and sorting
+        // Fetch products with filters
         const products = await Product.find(filter)
             .populate('categoriesId')
             .sort(sortQuery)
             .skip(skip)
             .limit(limit);
+
+        const totalProducts = await Product.countDocuments(filter);
+        const totalPages = Math.ceil(totalProducts / limit);
 
         // Process products with offers
         const processedProducts = products.map(product => {
@@ -222,11 +234,6 @@ const getShop = async (req, res) => {
             };
         });
 
-        // Get total count for pagination
-        const totalProducts = await Product.countDocuments(filter);
-        const totalPages = Math.ceil(totalProducts / limit);
-
-        // Handle AJAX requests
         if (req.xhr) {
             return res.json({
                 products: processedProducts,
@@ -238,11 +245,10 @@ const getShop = async (req, res) => {
                 }
             });
         }
-        console.log("HIII")
-        console.log("Product", processedProducts)
-        // Render the page
+
         res.render('user/shop', {
             products: processedProducts,
+            categories: categories,
             pagination: {
                 currentPage: page,
                 totalPages,
@@ -251,6 +257,7 @@ const getShop = async (req, res) => {
             },
             filters: {
                 search: req.query.search || '',
+                category: req.query.category || '',
                 minPrice: req.query.minPrice || '',
                 maxPrice: req.query.maxPrice || '',
                 sort: req.query.sort || '',
@@ -260,10 +267,24 @@ const getShop = async (req, res) => {
 
     } catch (error) {
         console.error('Error in getShop:', error);
-        if (req.xhr) {
-            return res.status(500).json({ error: 'Failed to load products' });
-        }
-        res.status(500).render('error', { message: 'Error loading products' });
+        res.render('user/shop', {
+            products: [],
+            categories: [],
+            pagination: {
+                currentPage: 1,
+                totalPages: 0,
+                hasNextPage: false,
+                hasPrevPage: false
+            },
+            filters: {
+                search: '',
+                category: '',
+                minPrice: '',
+                maxPrice: '',
+                sort: '',
+                stock: ''
+            }
+        });
     }
 };
 

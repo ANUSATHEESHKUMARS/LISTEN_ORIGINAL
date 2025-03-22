@@ -225,34 +225,18 @@ const requestReturnItem = async (req, res) => {
             isReturnAccepted: false
         };
 
-        // If return is auto-accepted, process refund immediately
-        if (process.env.AUTO_ACCEPT_RETURNS === 'true') {
-            orderItem.return.isReturnAccepted = true;
-            orderItem.return.status = 'accepted';
-            orderItem.order.status = 'returned';
-
-            // Process refund to wallet
-            const refundAmount = orderItem.subtotal;
-            const refundSuccess = await handleWalletRefund(userId, refundAmount, orderId);
-            
-            if (!refundSuccess) {
-                throw new Error('Failed to process refund to wallet');
-            }
-
-            // Restore product stock
-            await productSchema.findByIdAndUpdate(
-                productId,
-                { $inc: { stock: orderItem.quantity } }
-            );
-        }
+        // Add to status history
+        orderItem.order.statusHistory.push({
+            status: 'return requested',
+            date: new Date(),
+            comment: `Return requested: ${reason}`
+        });
 
         await order.save();
 
         res.json({
             success: true,
-            message: process.env.AUTO_ACCEPT_RETURNS === 'true' 
-                ? 'Return request accepted. Refund will be processed to your wallet.'
-                : 'Return request submitted successfully'
+            message: 'Return request submitted successfully'
         });
 
     } catch (error) {

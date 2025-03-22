@@ -11,8 +11,11 @@ const categorySchema = new mongoose.Schema({
         type: String,
         required: true
     },
-  
-
+    type: {
+        type: String,
+        enum: ['wired', 'wireless'],
+        required: true
+    },
     isActive: {
         type: Boolean,
         default: true

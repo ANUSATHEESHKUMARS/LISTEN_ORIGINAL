@@ -252,23 +252,10 @@ const placeOrder = async (req, res) => {
     try {
         const { addressId, paymentMethod } = req.body;
         const userId = req.session.user;
-        const appliedCoupon = req.session.appliedCoupon;
-
-        // Validate inputs
-        if (!addressId || !paymentMethod) {
-            return res.status(400).json({
-                success: false,
-                message: 'Missing required fields'
-            });
-        }
-
+        
         // Get cart and validate
         const cart = await cartSchema.findOne({ userId })
-            .populate({
-                path: 'items.productId',
-                model: 'Product',
-                select: 'productName price'
-            });
+            .populate('items.productId');
 
         if (!cart || cart.items.length === 0) {
             return res.status(400).json({
@@ -280,31 +267,18 @@ const placeOrder = async (req, res) => {
         // Calculate the total amount
         const subtotal = cart.items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
         
-        // Apply discount if coupon is used
+        // Apply discount if coupon exists in session
+        let finalAmount = subtotal;
         let discountAmount = 0;
         let couponCode = null;
-        
-        if (appliedCoupon) {
-            couponCode = appliedCoupon.code;
-            if (appliedCoupon.type === 'percentage') {
-                discountAmount = (subtotal * appliedCoupon.value) / 100;
-                if (appliedCoupon.maxDiscount && discountAmount > appliedCoupon.maxDiscount) {
-                    discountAmount = appliedCoupon.maxDiscount;
-                }
-            } else {
-                discountAmount = appliedCoupon.value;
-            }
-            
-            // Update coupon usage
-            await couponSchema.findOneAndUpdate(
-                { code: couponCode },
-                { $addToSet: { usedBy: userId } }
-            );
+
+        if (req.session.coupon) {
+            discountAmount = req.session.coupon.discount;
+            couponCode = req.session.coupon.code;
+            finalAmount = subtotal - discountAmount;
         }
         
-        const finalAmount = subtotal - discountAmount;
-        
-        // Validate COD payment method
+        // Validate COD payment method with final amount (after discount)
         if (paymentMethod === 'cod' && finalAmount > 1000) {
             return res.status(400).json({
                 success: false,

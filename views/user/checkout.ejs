@@ -535,16 +535,20 @@ class="fixed inset-0 flex items-center justify-center z-50 hidden"
                   const appliedCouponCode = document.getElementById('appliedCouponCode');
                   const discountInfo = document.getElementById('discountInfo');
 
+                  const newFinalAmount = cartTotal - data.discount;
+
                   discountRow.classList.remove('hidden');
                   discountAmount.textContent = data.discount.toFixed(2);
-                  finalTotal.textContent = (cartTotal - data.discount).toFixed(2);
+                  finalTotal.textContent = newFinalAmount.toFixed(2);
 
                   appliedCouponInfo.classList.remove('hidden');
                   appliedCouponCode.textContent = couponCode;
                   discountInfo.textContent = `₹${data.discount.toFixed(2)} discount applied`;
 
+                  // Update COD availability based on new final amount
+                  updateCODAvailability(newFinalAmount);
+
                   closeCouponModal();
-                  updateCODAvailability(cartTotal - data.discount);
                   await showAlert('success', 'Coupon applied successfully!');
               } else {
                   throw new Error(data.message);
@@ -576,6 +580,7 @@ class="fixed inset-0 flex items-center justify-center z-50 hidden"
                   finalTotal.textContent = cartTotal.toFixed(2);
                   appliedCouponInfo.classList.add('hidden');
 
+                  // Update COD availability based on original amount
                   updateCODAvailability(cartTotal);
                   await showAlert('success', 'Coupon removed successfully');
               } else {
@@ -799,7 +804,10 @@ const finalTotal = finalTotalElement ? parseFloat(finalTotalElement.textContent.
           const codAvailability = document.getElementById('codAvailability');
           const codMessage = document.getElementById('codMessage');
 
-          if (finalAmount > 1000) {
+          // Get the current final amount from the page
+          const currentAmount = parseFloat(document.getElementById('finalTotal').textContent);
+
+          if (currentAmount > 1000) {
               codOption.classList.add('opacity-60');
               codOption.classList.remove('hover:bg-gray-50');
               codPayment.disabled = true;
@@ -808,9 +816,9 @@ const finalTotal = finalTotalElement ? parseFloat(finalTotalElement.textContent.
               codAvailability.textContent = 'Not Available';
               codMessage.textContent = 'Not available for orders above ₹1,000';
 
-              // If COD was selected, switch to a different payment method
+              // If COD was selected, unselect it
               if (codPayment.checked) {
-                  document.querySelector('input[name="paymentMethod"][value="online"]').checked = true;
+                  codPayment.checked = false;
               }
           } else {
               codOption.classList.remove('opacity-60');
@@ -821,10 +829,12 @@ const finalTotal = finalTotalElement ? parseFloat(finalTotalElement.textContent.
           }
       }
 
-      // Initial update
+      // Add event listener for initial load
       document.addEventListener('DOMContentLoaded', function() {
-          const finalTotal = parseFloat(document.getElementById('codOption').dataset.finalTotal);
-          updateCODAvailability(finalTotal);
+          const finalTotal = document.getElementById('finalTotal');
+          if (finalTotal) {
+              updateCODAvailability(parseFloat(finalTotal.textContent));
+          }
       });
 
       document.addEventListener('DOMContentLoaded', function() {
