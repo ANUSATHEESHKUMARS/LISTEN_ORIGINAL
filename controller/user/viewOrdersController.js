@@ -75,25 +75,26 @@ const getOrders = async (req, res) => {
 }
 
 // Add this function to handle refunds to wallet
-const handleWalletRefund = async (userId, amount, orderId) => {
+const handleWalletRefund = async (userId, amount, orderId, description) => {
     try {
-        // Find or create wallet
         let wallet = await Wallet.findOne({ userId });
         if (!wallet) {
             wallet = await Wallet.create({ userId, balance: 0 });
         }
 
-        // Add refund transaction
+        // Ensure amount is properly rounded
+        const refundAmount = Math.round(amount * 100) / 100;
+
         const refundTransaction = {
             type: 'credit',
-            amount: amount,
-            description: `Refund for cancelled order #${orderId}`,
+            amount: refundAmount,
+            description: description || `Refund for cancelled order #${orderId}`,
             orderId: orderId,
             date: new Date()
         };
 
-        // Update wallet balance and add transaction
-        wallet.balance += amount;
+        // Update wallet balance with exact amount
+        wallet.balance = Math.round((wallet.balance + refundAmount) * 100) / 100;
         wallet.transactions.push(refundTransaction);
         await wallet.save();
 
@@ -142,6 +143,26 @@ const cancelOrder = async (req, res) => {
             });
         }
 
+        // Calculate refund amount with discount
+        let refundAmount = orderItem.subtotal;
+        
+        if (order.discount && order.subtotal > 0) {
+            // Calculate the discount ratio for this specific item
+            const discountRatio = order.discount / order.subtotal;
+            // Apply the proportional discount to this item's subtotal
+            const itemDiscount = orderItem.subtotal * discountRatio;
+            refundAmount = orderItem.subtotal - itemDiscount;
+
+            console.log('Refund Calculation:', {
+                orderSubtotal: order.subtotal,
+                orderDiscount: order.discount,
+                itemSubtotal: orderItem.subtotal,
+                discountRatio: discountRatio,
+                itemDiscount: itemDiscount,
+                finalRefundAmount: refundAmount
+            });
+        }
+
         // Update order item status
         orderItem.order.status = 'cancelled';
         orderItem.order.statusHistory.push({
@@ -150,16 +171,26 @@ const cancelOrder = async (req, res) => {
             comment: 'Order cancelled by customer'
         });
 
-        // Calculate refund amount for this item
-        const refundAmount = orderItem.subtotal;
-
         // Process refund based on payment method
         if (['razorpay', 'wallet'].includes(order.payment.method)) {
-            // Handle refund to wallet
-            const refundSuccess = await handleWalletRefund(userId, refundAmount, orderId);
+            // Handle refund to wallet with exact amount
+            const refundSuccess = await handleWalletRefund(
+                userId, 
+                Math.round(refundAmount * 100) / 100, // Round to 2 decimal places
+                orderId,
+                `Refund for cancelled order #${order._id} (Including applied discounts)`
+            );
+
             if (!refundSuccess) {
                 throw new Error('Failed to process refund to wallet');
             }
+
+            // Add refund status to history with exact amount
+            orderItem.order.statusHistory.push({
+                status: 'refunded',
+                date: new Date(),
+                comment: `Refund of ₹${refundAmount.toFixed(2)} processed to wallet (Including discounts)`
+            });
         }
 
         // Restore product stock
@@ -168,12 +199,11 @@ const cancelOrder = async (req, res) => {
             { $inc: { stock: orderItem.quantity } }
         );
 
-        // Save the updated order
         await order.save();
 
         res.json({
             success: true,
-            message: 'Order cancelled successfully. Refund will be processed to your wallet.'
+            message: `Order cancelled successfully. Refund of ₹${refundAmount.toFixed(2)} will be processed to your wallet.`
         });
 
     } catch (error) {

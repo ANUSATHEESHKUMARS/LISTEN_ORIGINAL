@@ -1,5 +1,5 @@
 import Order from "../../models/orderModels.js"
-import ExcelJS from 'express-async-handler'
+import ExcelJS from 'exceljs'
 import PDFDocument from "pdfkit-table"
 
 const getSalesReport = async (req, res, next) => {
@@ -106,7 +106,7 @@ const downloadExcel = async (req, res, next) => {
         const startDay = new Date(startDate);
         const endDay = new Date(endDate);
 
-        const start = new Date(startDay.setHours(23, 59, 59, 999));
+        const start = new Date(startDay.setHours(0, 0, 0, 0));
         const end = new Date(endDay.setHours(23, 59, 59, 999));
 
         const orders = await Order.find({
@@ -118,9 +118,11 @@ const downloadExcel = async (req, res, next) => {
             .populate('items.product', 'productName')
             .lean();
 
+        // Create a new workbook and worksheet
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Sales Report');
 
+        // Define columns
         worksheet.columns = [
             { header: 'Order ID', key: 'orderId', width: 15 },
             { header: 'Date', key: 'date', width: 12 },
@@ -131,7 +133,7 @@ const downloadExcel = async (req, res, next) => {
             { header: 'Amount', key: 'amount', width: 12 }
         ];
 
-        // Style header
+        // Style header row
         worksheet.getRow(1).font = { bold: true };
         worksheet.getRow(1).fill = {
             type: 'pattern',
@@ -139,32 +141,50 @@ const downloadExcel = async (req, res, next) => {
             fgColor: { argb: 'FFE0E0E0' }
         };
 
-        // Add data
+        // Add data rows
         orders.forEach(order => {
             worksheet.addRow({
-                orderId: order.orderCode,
+                orderId: order._id.toString(),
                 date: new Date(order.createdAt).toLocaleDateString(),
                 customer: `${order.userId?.firstName || ''} ${order.userId?.lastName || ''}`,
-                items: order.items.map(item =>
-                    `${item.quantity}x ${item.product?.productName || 'Unknown'} `
-                ).join('\n'),
+                items: order.items.map(item => `${item.product?.productName} (${item.quantity})`).join(', '),
                 status: order.items[0]?.order?.status || 'N/A',
-                paymentMethod: `${order.payment.method} (${order.payment.paymentStatus})`,
-                amount: order.totalAmount.toFixed(2)
+                paymentMethod: order.payment?.method || 'N/A',
+                amount: order.totalAmount
             });
         });
 
+        // Add totals row
+        const totalAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+        worksheet.addRow({
+            orderId: '',
+            date: '',
+            customer: '',
+            items: '',
+            status: '',
+            paymentMethod: 'Total:',
+            amount: totalAmount
+        }).font = { bold: true };
+
         // Set response headers
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', `attachment; filename=sales-report-${startDate}-${endDate}.xlsx`);
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=sales-report-${startDate}-to-${endDate}.xlsx`
+        );
 
         // Write to response
-        return workbook.xlsx.write(res).then(() => {
-            res.status(200).end();
-        });
+        await workbook.xlsx.write(res);
 
     } catch (error) {
-        next(error)
+        console.error('Excel download error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to generate Excel report'
+        });
     }
 };
 

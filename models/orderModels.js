@@ -45,7 +45,8 @@ const orderSchema = new mongoose.Schema({
                     'return approved',
                     'return rejected',
                     'refund processing',
-                    'refunded'
+                    'refunded',
+                    'refund processed'
                 ],
                 default: 'pending'
             },
@@ -63,7 +64,8 @@ const orderSchema = new mongoose.Schema({
                         'return approved',
                         'return rejected',
                         'refund processing',
-                        'refunded'
+                        'refunded',
+                        'refund processed'
                     ],
                     required: true
                 },
