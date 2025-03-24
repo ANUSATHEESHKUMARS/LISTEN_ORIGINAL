@@ -107,7 +107,7 @@ const getShop = async (req, res) => {
         // Get active categories for the filter dropdown
         const categories = await Category.find({ isActive: true }).sort({ name: 1 });
 
-        // Get active offers
+        // Get active offers first
         const activeOffers = await Offer.find({
             startDate: { $lte: new Date() },
             endDate: { $gte: new Date() },
@@ -136,27 +136,22 @@ const getShop = async (req, res) => {
             }
         });
 
-        // Build filter query
+        // Build base filter query
         const filter = { isActive: true };
+
+        // Add search filter
+        if (req.query.search) {
+            const searchRegex = new RegExp(req.query.search.trim(), 'i');
+            filter.$or = [
+                { productName: searchRegex },
+                { brand: searchRegex },
+                { description: searchRegex }
+            ];
+        }
 
         // Add category filter
         if (req.query.category) {
             filter.categoriesId = new mongoose.Types.ObjectId(req.query.category);
-        }
-
-        // Add search filter
-        if (req.query.search) {
-            filter.$or = [
-                { productName: { $regex: new RegExp(req.query.search, 'i') } },
-                { brand: { $regex: new RegExp(req.query.search, 'i') } }
-            ];
-        }
-
-        // Add price range filter
-        if (req.query.minPrice || req.query.maxPrice) {
-            filter.price = {};
-            if (req.query.minPrice) filter.price.$gte = Number(req.query.minPrice);
-            if (req.query.maxPrice) filter.price.$lte = Number(req.query.maxPrice);
         }
 
         // Add stock filter
@@ -166,47 +161,17 @@ const getShop = async (req, res) => {
             filter.stock = 0;
         }
 
-        // Build sort query
-        let sortQuery = {};
-        switch (req.query.sort) {
-            case 'priceLowToHigh':
-                sortQuery = { price: 1 };
-                break;
-            case 'priceHighToLow':
-                sortQuery = { price: -1 };
-                break;
-            case 'nameAZ':
-                sortQuery = { productName: 1 };
-                break;
-            case 'nameZA':
-                sortQuery = { productName: -1 };
-                break;
-            default:
-                sortQuery = { createdAt: -1 };
-        }
-
-        // Fetch products with filters
-        const products = await Product.find(filter)
+        // Fetch all products first to apply price filter after discount calculation
+        let products = await Product.find(filter)
             .populate('categoriesId')
-            .sort(sortQuery)
-            .skip(skip)
-            .limit(limit);
+            .lean();
 
-        const totalProducts = await Product.countDocuments(filter);
-        const totalPages = Math.ceil(totalProducts / limit);
-
-        // Process products with offers
-        const processedProducts = products.map(product => {
-            const productData = product.toObject();
-
-            // Get product-specific offer
+        // Process products with offers and apply price filter
+        let processedProducts = products.map(product => {
             const productOffer = productOfferMap.get(product._id.toString());
-            
-            // Get category offer
             const categoryOffer = product.categoriesId ?
                 categoryOfferMap.get(product.categoriesId._id.toString()) : null;
 
-            // Calculate best discount
             let bestDiscount = 0;
             let appliedOffer = null;
 
@@ -219,13 +184,12 @@ const getShop = async (req, res) => {
                 appliedOffer = categoryOffer;
             }
 
-            // Calculate discounted price
             const discountedPrice = bestDiscount > 0 
                 ? Math.round(product.price * (1 - bestDiscount / 100))
                 : product.price;
 
             return {
-                ...productData,
+                ...product,
                 price: product.price,
                 discountPrice: discountedPrice,
                 offerApplied: bestDiscount > 0,
@@ -233,6 +197,40 @@ const getShop = async (req, res) => {
                 appliedOffer: appliedOffer
             };
         });
+
+        // Apply price filter after discount calculation
+        if (req.query.minPrice || req.query.maxPrice) {
+            processedProducts = processedProducts.filter(product => {
+                const effectivePrice = product.discountPrice;
+                const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice) : 0;
+                const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice) : Infinity;
+                return effectivePrice >= minPrice && effectivePrice <= maxPrice;
+            });
+        }
+
+        // Apply sorting after processing
+        const sortField = req.query.sort;
+        if (sortField) {
+            processedProducts.sort((a, b) => {
+                switch (sortField) {
+                    case 'priceLowToHigh':
+                        return a.discountPrice - b.discountPrice;
+                    case 'priceHighToLow':
+                        return b.discountPrice - a.discountPrice;
+                    case 'nameAZ':
+                        return a.productName.localeCompare(b.productName);
+                    case 'nameZA':
+                        return b.productName.localeCompare(a.productName);
+                    default:
+                        return 0;
+                }
+            });
+        }
+
+        // Apply pagination after filtering and sorting
+        const totalProducts = processedProducts.length;
+        const totalPages = Math.ceil(totalProducts / limit);
+        processedProducts = processedProducts.slice(skip, skip + limit);
 
         if (req.xhr) {
             return res.json({
@@ -248,7 +246,7 @@ const getShop = async (req, res) => {
 
         res.render('user/shop', {
             products: processedProducts,
-            categories: categories,
+            categories,
             pagination: {
                 currentPage: page,
                 totalPages,
@@ -267,7 +265,7 @@ const getShop = async (req, res) => {
 
     } catch (error) {
         console.error('Error in getShop:', error);
-        res.render('user/shop', {
+        res.status(500).render('user/shop', {
             products: [],
             categories: [],
             pagination: {

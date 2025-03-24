@@ -221,61 +221,100 @@ const updateQuantity = async (req, res) => {
         const { productId, quantity } = req.body;
         const userId = req.session.user;
 
-        if (quantity < 1) {
-            return res.status(400).json({ message: 'Quantity must be at least 1' });
-        }
+        // Get active offers
+        const activeOffers = await Offer.find({
+            startDate: { $lte: new Date() },
+            endDate: { $gte: new Date() },
+            status: 'active'
+        }).populate('categoryId productIds');
 
-        // Check product availability and stock
-        const product = await productSchema.findById(productId).populate({
-            path: 'categoriesId',
-            match: { isActive: true }
+        // Create maps for offers
+        const productOfferMap = new Map();
+        const categoryOfferMap = new Map();
+
+        activeOffers.forEach(offer => {
+            if (offer.productIds?.length > 0) {
+                offer.productIds.forEach(pid => {
+                    if (!productOfferMap.has(pid.toString()) ||
+                        productOfferMap.get(pid.toString()).discount < offer.discount) {
+                        productOfferMap.set(pid.toString(), offer);
+                    }
+                });
+            } else if (offer.categoryId) {
+                const categoryIdStr = offer.categoryId._id.toString();
+                if (!categoryOfferMap.has(categoryIdStr) ||
+                    categoryOfferMap.get(categoryIdStr).discount < offer.discount) {
+                    categoryOfferMap.set(categoryIdStr, offer);
+                }
+            }
         });
 
-        if (!product || !product.isActive || !product.categoriesId) {
-            return res.status(400).json({ message: 'Product is not available' });
+        // Find and validate product
+        const product = await productSchema.findById(productId).populate('categoriesId');
+        if (!product || !product.isActive) {
+            return res.status(400).json({ success: false, message: 'Product not available' });
         }
 
-        if (product.stock < quantity) {
-            return res.status(400).json({ message: 'Not enough stock available' });
+        // Calculate offer price
+        const productOffer = productOfferMap.get(productId);
+        const categoryOffer = product.categoriesId ? 
+            categoryOfferMap.get(product.categoriesId._id.toString()) : null;
+
+        let bestDiscount = 0;
+        let appliedOffer = null;
+
+        if (productOffer) {
+            bestDiscount = productOffer.discount;
+            appliedOffer = productOffer;
+        }
+        if (categoryOffer && categoryOffer.discount > bestDiscount) {
+            bestDiscount = categoryOffer.discount;
+            appliedOffer = categoryOffer;
         }
 
-        // Find and update cart
+        const originalPrice = product.price;
+        const discountPrice = bestDiscount > 0 
+            ? Math.round(originalPrice * (1 - bestDiscount / 100))
+            : originalPrice;
+        const subtotal = discountPrice * quantity;
+
+        // Update cart
         const cart = await cartSchema.findOne({ userId });
         if (!cart) {
-            return res.status(404).json({ message: 'Cart not found' });
+            return res.status(404).json({ success: false, message: 'Cart not found' });
         }
 
         const cartItem = cart.items.find(item => item.productId.toString() === productId);
         if (!cartItem) {
-            return res.status(404).json({ message: 'Product not found in cart' });
+            return res.status(404).json({ success: false, message: 'Item not found in cart' });
         }
 
         cartItem.quantity = quantity;
+        cartItem.subtotal = subtotal;
         await cart.save();
 
-        // Calculate new totals
-        const updatedCart = await cartSchema.findOne({ userId }).populate('items.productId');
-        const cartItems = updatedCart.items.map(item => ({
-            product: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-            subtotal: item.quantity * item.price
-        }));
+        // Calculate new total
+        const total = cart.items.reduce((sum, item) => sum + item.subtotal, 0);
 
-        const total = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
-
-        res.status(200).json({ 
+        res.json({
             success: true,
-            message: 'Quantity updated successfully',
-            quantity: quantity,
-            subtotal: quantity * cartItem.price,
-            total: total
+            item: {
+                productId,
+                originalPrice,
+                discountPrice,
+                discountPercentage: bestDiscount,
+                subtotal,
+                offerApplied: bestDiscount > 0,
+                quantity
+            },
+            total,
+            itemCount: cart.items.length
         });
 
     } catch (error) {
-        console.error('Error updating quantity:', error);
+        console.error('Update quantity error:', error);
         res.status(500).json({ 
-            success: false,
+            success: false, 
             message: 'Failed to update quantity' 
         });
     }

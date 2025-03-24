@@ -239,8 +239,8 @@
             <!-- Products Grid -->
             <div class="flex overflow-x-auto gap-4 sm:grid sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 sm:gap-6 pb-4 sm:pb-0">
                 <% products.forEach(product => { %>
-                <a href="/product/<%= product._id %>" class="group min-w-[240px] sm:min-w-0">
-                    <div class="bg-white rounded-2xl overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300">
+                <div class="group min-w-[240px] sm:min-w-0">
+                    <div class="bg-white rounded-2xl overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300 h-full flex flex-col">
                         <!-- Product Image -->
                         <div class="relative aspect-square overflow-hidden bg-gray-100">
                             <img 
@@ -256,15 +256,10 @@
                                     <%= product.discountPercentage %>% OFF
                                 </div>
                             <% } %>
-                            
-                            <!-- Quick View Button -->
-                            <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                                <span class="text-white text-sm font-medium">Quick View</span>
-                            </div>
                         </div>
 
                         <!-- Product Info -->
-                        <div class="p-5">
+                        <div class="p-5 flex flex-col flex-grow">
                             <!-- Brand & Rating -->
                             <div class="flex justify-between items-center mb-2">
                                 <div class="text-sm text-gray-500 font-medium"><%= product.brand %></div>
@@ -280,7 +275,7 @@
                             </h3>
                             
                             <!-- Price -->
-                            <div class="flex items-baseline gap-2">
+                            <div class="flex items-baseline gap-2 mb-4">
                                 <span class="text-lg font-bold text-gray-900">₹<%= product.discountPrice %></span>
                                 <% if (product.offerApplied) { %>
                                     <span class="text-sm text-gray-400 line-through">₹<%= product.price %></span>
@@ -290,6 +285,12 @@
                                 <% } %>
                             </div>
 
+                            <!-- View Details Button -->
+                            <a href="/product/<%= product._id %>" 
+                               class="mt-auto w-full text-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                                View Details
+                            </a>
+
                             <!-- Offer Details -->
                             <% if (product.offerApplied && product.appliedOffer) { %>
                                 <div class="mt-2 text-xs text-red-600">
@@ -298,7 +299,7 @@
                             <% } %>
                         </div>
                     </div>
-                </a>
+                </div>
                 <% }); %>
             </div>
         </div>

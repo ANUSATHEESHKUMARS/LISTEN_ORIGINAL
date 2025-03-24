@@ -316,98 +316,113 @@ function checkProductAvailability(item) {
 }
 
 async function updateQuantity(button, productId, action) {
-  const cartItem = button.closest('[id^="cart-item-"]');
-  if (!cartItem) return;
+    const cartItem = button.closest('[id^="cart-item-"]');
+    if (!cartItem) return;
 
-  const quantityDisplay = cartItem.querySelector('.quantity-display');
-  const currentQuantity = parseInt(quantityDisplay.textContent);
-  
-  let newQuantity;
-  if (action === 'increase') {
-      if (currentQuantity >= 3) return;
-      newQuantity = currentQuantity + 1;
-  } else {
-      if (currentQuantity <= 1) return;
-      newQuantity = currentQuantity - 1;
-  }
+    const quantityDisplay = cartItem.querySelector('.quantity-display');
+    const currentQuantity = parseInt(quantityDisplay.textContent);
+    
+    let newQuantity;
+    if (action === 'increase') {
+        if (currentQuantity >= 3) return;
+        newQuantity = currentQuantity + 1;
+    } else {
+        if (currentQuantity <= 1) return;
+        newQuantity = currentQuantity - 1;
+    }
 
-  // Disable buttons during update
-  const buttons = cartItem.querySelectorAll('.quantity-btn');
-  buttons.forEach(btn => btn.disabled = true);
+    // Disable buttons during update
+    const buttons = cartItem.querySelectorAll('.quantity-btn');
+    buttons.forEach(btn => btn.disabled = true);
 
-  try {
-      const response = await fetch('/cart/update-quantity', {
-          method: 'PATCH',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-              productId,
-              quantity: newQuantity
-          })
-      });
+    try {
+        const response = await fetch('/cart/update-quantity', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                productId,
+                quantity: newQuantity
+            }),
+            credentials: 'same-origin'
+        });
 
-      const data = await response.json();
+        // Check if response is ok before trying to parse JSON
+        if (!response.ok) {
+            if (response.status === 401) {
+                // Session expired
+                window.location.href = '/login';
+                return;
+            }
+            throw new Error('Network response was not ok');
+        }
 
-      if (data.success) {
-          // Update quantity display
-          quantityDisplay.textContent = newQuantity;
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Received non-JSON response from server');
+        }
 
-          //   // Update subtotal
-          //   const subtotalElement = cartItem.querySelector(`#subtotal-${productId}`);
-          // if (subtotalElement) {
-          //     subtotalElement.textContent = `₹${data.subtotal}`;
-          // }
+        const data = await response.json();
 
+        if (data.success) {
+            // Update quantity display
+            quantityDisplay.textContent = newQuantity;
 
-          // Update subtotal 
-          const subtotalElements = document.querySelectorAll(`#subtotal-${productId}, #cart-item-${productId} #subtotal`);
-          subtotalElements.forEach(el => {
-              el.textContent = `₹${data.subtotal}`;
-          });
+            // Update price and offer information
+            const priceContainer = cartItem.querySelector('.text-right');
+            if (data.item.offerApplied) {
+                priceContainer.innerHTML = `
+                    <div class="font-semibold" id="subtotal-${productId}">
+                        ₹${data.item.subtotal}
+                    </div>
+                    <div class="text-sm">
+                        <span class="text-gray-500 line-through">₹${data.item.originalPrice}</span>
+                        <span class="text-green-500 ml-1">₹${data.item.discountPrice} each</span>
+                    </div>
+                    <div class="text-xs text-red-500">
+                        ${data.item.discountPercentage}% OFF
+                    </div>
+                `;
+            } else {
+                priceContainer.innerHTML = `
+                    <div class="font-semibold" id="subtotal-${productId}">
+                        ₹${data.item.subtotal}
+                    </div>
+                    <div class="text-sm text-gray-500">₹${data.item.originalPrice} each</div>
+                `;
+            }
 
-          // Update all total elements
-          const totalElements = document.querySelectorAll('#total, #total-amount, #subtotal-amount');
-          totalElements.forEach(el => {
-              if (el.id === 'total') {
-                  el.textContent = `Total: ₹${data.total}`;
-              } else {
-                  el.textContent = `₹${data.total}`;
-              }
-          });
+            // Update all total elements
+            const totalElements = document.querySelectorAll('#total, #total-amount, #subtotal-amount');
+            totalElements.forEach(el => {
+                if (el.id === 'total') {
+                    el.textContent = `Total: ₹${data.total}`;
+                } else {
+                    el.textContent = `₹${data.total}`;
+                }
+            });
 
-          // Update items count
-          const itemsCount = document.getElementById('items-count');
-          if (itemsCount) {
-              itemsCount.textContent = `Subtotal (${data.itemCount} items)`;
-          }
+            // Update button states
+            const minusBtn = cartItem.querySelector('.quantity-btn:first-child');
+            const plusBtn = cartItem.querySelector('.quantity-btn:last-child');
+            
+            if (minusBtn) minusBtn.disabled = newQuantity <= 1;
+            if (plusBtn) plusBtn.disabled = newQuantity >= 3;
 
-          // Update button states
-          const minusBtn = cartItem.querySelector('.quantity-btn:first-child');
-          const plusBtn = cartItem.querySelector('.quantity-btn:last-child');
-          
-          if (minusBtn) minusBtn.disabled = newQuantity <= 1;
-          if (plusBtn) plusBtn.disabled = newQuantity >= 3;
-
-          // Success feedback
-          button.classList.add('bg-green-200');
-          setTimeout(() => button.classList.remove('bg-green-200'), 300);
-      } else {
-          throw new Error(data.message);
-      }
-  } catch (error) {
-      // Revert quantity display
-      quantityDisplay.textContent = currentQuantity;
-      
-      // Error feedback
-      button.classList.add('bg-red-200');
-      setTimeout(() => button.classList.remove('bg-red-200'), 300);
-      
-      showAlert('error', error.message || 'Failed to update quantity');
-  } finally {
-      // Re-enable buttons
-      buttons.forEach(btn => btn.disabled = false);
-  }
+        } else {
+            throw new Error(data.message || 'Update failed');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        // Revert quantity display
+        quantityDisplay.textContent = currentQuantity;
+        showAlert('error', error.message || 'Failed to update quantity');
+    } finally {
+        // Re-enable buttons
+        buttons.forEach(btn => btn.disabled = false);
+    }
 }
 
 function showAlert(type, message = '') {
