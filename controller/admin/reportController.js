@@ -7,8 +7,12 @@ const getSalesReport = async (req, res, next) => {
         const { startDate, endDate, period } = req.query;
 
         let query = {
-            'item.order.status': { $ne: 'cancelled' },
-            'payment.paymentStatus': { $ne: 'failed' }
+            'items': {
+                $elemMatch: {
+                    'order.status': { $nin: ['cancelled', 'returned'] }
+                }
+            },
+            'payment.paymentStatus': { $nin: ['failed', 'cancelled'] }
         };
 
         let dateRange = {};
@@ -47,26 +51,43 @@ const getSalesReport = async (req, res, next) => {
             };
         }
 
-        // Fetch orders with date range and populate user data
+        // Fetch orders
         const orders = await Order.find(query)
             .populate('userId', 'firstName lastName email')
             .sort({ createdAt: -1 });
 
-        // Calculate metrics
+        // Calculate metrics with cancelled items excluded
         const metrics = {
             totalOrders: orders.length,
-            totalSales: orders.reduce((sum, order) => sum + order.totalAmount, 0),
-            totalDiscount: orders.reduce((sum, order) => {
-                const couponDiscount = order.coupon?.discount || 0;
-                return sum + couponDiscount;
+            totalSales: orders.reduce((sum, order) => {
+                // Calculate total excluding cancelled items
+                const validItemsTotal = order.items.reduce((itemSum, item) => {
+                    if (item.order.status !== 'cancelled' && item.order.status !== 'returned') {
+                        return itemSum + (item.price * item.quantity);
+                    }
+                    return itemSum;
+                }, 0);
+                return sum + validItemsTotal;
             }, 0),
-            netRevenue: orders.reduce((sum, order) => sum + order.totalAmount, 0)
+            totalDiscount: orders.reduce((sum, order) => {
+                // Only include discounts for non-cancelled items
+                if (order.items.some(item => 
+                    item.order.status !== 'cancelled' && 
+                    item.order.status !== 'returned'
+                )) {
+                    return sum + (order.coupon?.discount || 0);
+                }
+                return sum;
+            }, 0)
         };
 
+        // Calculate net revenue
+        metrics.netRevenue = metrics.totalSales - metrics.totalDiscount;
+        
         // Calculate average order value
         metrics.averageOrderValue = orders.length ? metrics.netRevenue / orders.length : 0;
 
-        // Group orders by date
+        // Group orders by date with cancelled items excluded
         const dailyData = orders.reduce((acc, order) => {
             const date = order.createdAt.toISOString().split('T')[0];
             if (!acc[date]) {
@@ -78,14 +99,23 @@ const getSalesReport = async (req, res, next) => {
                 };
             }
 
-            acc[date].orders++;
-            acc[date].sales += order.totalAmount;
-            acc[date].discount += (order.coupon?.discount || 0);
-            acc[date].netRevenue += order.totalAmount;
+            // Calculate daily totals excluding cancelled items
+            const validItemsTotal = order.items.reduce((sum, item) => {
+                if (item.order.status !== 'cancelled' && item.order.status !== 'returned') {
+                    return sum + (item.price * item.quantity);
+                }
+                return sum;
+            }, 0);
+
+            if (validItemsTotal > 0) {
+                acc[date].orders++;
+                acc[date].sales += validItemsTotal;
+                acc[date].discount += (order.coupon?.discount || 0);
+                acc[date].netRevenue += (validItemsTotal - (order.coupon?.discount || 0));
+            }
 
             return acc;
         }, {});
-        
 
         res.render('admin/salesReport', {
             orders,
