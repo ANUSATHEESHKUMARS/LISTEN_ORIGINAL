@@ -596,17 +596,30 @@
           document.querySelectorAll('.edit-product').forEach(button => {
               button.addEventListener('click', async () => {
                   try {
-                      // Get product ID from data attribute
                       const productId = button.getAttribute('data-id');
                       
-                      // Fetch product data from server
+                      // Show loading state
+                      Swal.fire({
+                          title: 'Loading...',
+                          text: 'Please wait while we fetch product details',
+                          allowOutsideClick: false,
+                          showConfirmButton: false,
+                          didOpen: () => {
+                              Swal.showLoading();
+                          }
+                      });
+
+                      // Fetch product data
                       const response = await fetch(`/admin/product/${productId}`);
+                      
                       if (!response.ok) {
                           throw new Error('Failed to fetch product data');
                       }
                       
                       const product = await response.json();
-                      console.log('Fetched product data:', product); // Debug log
+
+                      // Close loading dialog
+                      Swal.close();
 
                       // Update modal title
                       modalTitle.textContent = 'Edit Product';
@@ -620,8 +633,8 @@
                       document.getElementById('price').value = product.price || '';
                       document.getElementById('stock').value = product.stock || '';
                       document.getElementById('variantDescription').value = product.description || '';
-                      
-                      // Update character count for description
+
+                      // Update character count
                       const variantCharCount = document.getElementById('variantCharCount');
                       if (variantCharCount) {
                           variantCharCount.textContent = (product.description || '').length;
@@ -629,28 +642,16 @@
 
                       // Show existing images
                       const previews = document.querySelectorAll('.image-preview');
-                      const imageInputs = document.querySelectorAll('.product-image');
-                      
-                      // Reset image inputs and make them optional for editing
-                      imageInputs.forEach(input => {
-                          input.removeAttribute('required');
-                          input.value = ''; // Clear any previous file selections
-                      });
-
-                      // Display existing images in previews
                       if (product.imageUrl && Array.isArray(product.imageUrl)) {
                           product.imageUrl.forEach((url, index) => {
                               if (previews[index]) {
-                                  const previewContent = previews[index].querySelector('.preview-content');
-                                  if (previewContent && url) {
-                                      previewContent.innerHTML = `
-                                          <img src="${url}" class="w-full h-full object-cover rounded">
-                                          <div class="mt-2">
-                                              <p class="text-xs text-gray-500">Current image ${index + 1}</p>
-                                              <p class="text-xs text-gray-500">Click to change (optional)</p>
-                                          </div>
-                                      `;
-                                  }
+                                  previews[index].innerHTML = `
+                                      <img src="${url}" class="w-full h-full object-cover rounded">
+                                      <div class="mt-2">
+                                          <p class="text-xs text-gray-500">Current image ${index + 1}</p>
+                                          <p class="text-xs text-gray-500">Click to change (optional)</p>
+                                      </div>
+                                  `;
                               }
                           });
                       }
@@ -659,11 +660,11 @@
                       productModal.classList.remove('hidden');
 
                   } catch (error) {
-                      console.error('Error loading product data:', error);
+                      console.error('Error:', error);
                       Swal.fire({
                           icon: 'error',
                           title: 'Error',
-                          text: 'Error loading product data. Please try again.',
+                          text: 'Failed to load product details',
                           confirmButtonColor: '#10B981'
                       });
                   }
