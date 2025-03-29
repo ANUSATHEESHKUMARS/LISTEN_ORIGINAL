@@ -36,7 +36,14 @@
                                     <span class="text-gray-600">
                                         <%= item.product.productName %> × <%= item.quantity %>
                                     </span>
-                                    <span class="text-gray-800">₹<%= item.price.toFixed(2) %></span>
+                                    <span class="text-gray-800">
+                                        <% if (item.discountedPrice && item.discountedPrice !== item.price) { %>
+                                            <span class="line-through text-gray-400">₹<%= item.price.toFixed(2) %></span>
+                                            <span class="text-green-600 ml-2">₹<%= item.discountedPrice.toFixed(2) %></span>
+                                        <% } else { %>
+                                            ₹<%= item.price.toFixed(2) %>
+                                        <% } %>
+                                    </span>
                                 </div>
                             <% }); %>
                             

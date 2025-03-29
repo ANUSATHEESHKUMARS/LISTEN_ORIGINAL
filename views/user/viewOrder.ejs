@@ -98,9 +98,21 @@
                                         </div>
                                         <div>
                                             <p class="text-sm text-gray-500">Payment Method</p>
-                                            <p class="font-medium"><%= order.payment.method.toUpperCase() %></p>
+                                            <p class="font-medium">
+                                                <% if (order.payment && order.payment.method) { %>
+                                                    <%= order.payment.method.toUpperCase() %>
+                                                <% } else { %>
+                                                    Not Available
+                                                <% } %>
+                                            </p>
                                             <p class="text-sm text-gray-500 mt-2">Payment Status</p>
-                                            <p class="font-medium"><%= order.payment.paymentStatus.charAt(0).toUpperCase() + order.payment.paymentStatus.slice(1) %></p>
+                                            <p class="font-medium">
+                                                <% if (order.payment && order.payment.paymentStatus) { %>
+                                                    <%= order.payment.paymentStatus.charAt(0).toUpperCase() + order.payment.paymentStatus.slice(1) %>
+                                                <% } else { %>
+                                                    Pending
+                                                <% } %>
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

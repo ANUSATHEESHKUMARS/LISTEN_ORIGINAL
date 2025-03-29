@@ -79,12 +79,14 @@ const categoryController = {
     editCategory: async (req, res) => {
         try {
             const { categoryId, categoryName, categoryDescription } = req.body;
+            
+            console.log('Received data:', req.body); // Debug log
 
             // Validate input
             if (!categoryId || !categoryName || !categoryDescription) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Invalid input data'
+                    message: "All fields are required"
                 });
             }
 
@@ -93,24 +95,51 @@ const categoryController = {
             if (!existingCategory) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Category not found'
+                    message: "Category not found"
+                });
+            }
+
+            // Check if name is already taken by another category
+            const duplicateCategory = await Category.findOne({
+                _id: { $ne: categoryId },
+                name: categoryName.trim()
+            });
+
+            if (duplicateCategory) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Category name already exists"
                 });
             }
 
             // Update category
-            existingCategory.name = categoryName.trim();
-            existingCategory.description = categoryDescription.trim();
-            await existingCategory.save();
+            const updatedCategory = await Category.findByIdAndUpdate(
+                categoryId,
+                {
+                    name: categoryName.trim(),
+                    description: categoryDescription.trim()
+                },
+                { new: true, runValidators: true }
+            );
+
+            if (!updatedCategory) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Failed to update category"
+                });
+            }
 
             res.status(200).json({
                 success: true,
-                message: 'Category updated successfully'
+                message: "Category updated successfully",
+                category: updatedCategory
             });
+
         } catch (error) {
-            console.error('Error updating category:', error);
+            console.error('Edit Category Error:', error); // Debug log
             res.status(500).json({
                 success: false,
-                message: 'Error updating category'
+                message: error.message || "Error updating category"
             });
         }
     },

@@ -55,7 +55,7 @@
               </div>
               <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <button
-                  onclick="openEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')"
+                  onclick="handleEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')"
                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors text-sm w-full sm:w-auto"
                 >
                   Edit
@@ -386,7 +386,7 @@
       // Update button onclick handlers to use new modal functions
       window.openAddModal = modals.openAdd;
       window.closeAddModal = modals.closeAdd;
-      window.openEditModal = modals.openEdit;
+      window.handleEditModal = modals.openEdit;
       window.closeEditModal = modals.closeEdit;
 
       function addCategoryOffer(categoryId, categoryName) {
@@ -400,7 +400,7 @@
         document.getElementById('categoryOfferForm').reset();
       }
 
-      document.getElementById('categoryOfferForm').addEvent er('submit', async (e) => {
+      document.getElementById('categoryOfferForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         try {

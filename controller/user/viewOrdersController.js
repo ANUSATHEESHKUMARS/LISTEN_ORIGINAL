@@ -20,13 +20,18 @@ const getOrders = async (req, res) => {
             .limit(limit)
             .populate('items.product');
 
-        // Process orders to handle null products and returns
+        // Ensure payment data exists and is properly formatted
         const processedOrders = orders.map(order => {
             const orderObj = order.toObject();
             
-            // Ensure each item has a return property
+            // Ensure each item has correct pricing
             orderObj.items = orderObj.items.map(item => ({
                 ...item,
+                price: item.price || 0,
+                discountedPrice: item.discountedPrice || item.price || 0,
+                subtotal: item.discountedPrice 
+                    ? item.discountedPrice * item.quantity 
+                    : (item.price * item.quantity) || 0,
                 return: item.return || {
                     isReturnRequested: false,
                     reason: null,
@@ -53,8 +58,16 @@ const getOrders = async (req, res) => {
                 pincode: orderObj.shippingAddress?.pincode || ''
             };
 
-            return orderObj;
+            return {
+                ...orderObj,
+                payment: {
+                    method: orderObj.payment?.method || 'Not Available',
+                    paymentStatus: orderObj.payment?.paymentStatus || 'pending'
+                }
+            };
         });
+
+        console.log('Processed orders:', processedOrders); // Debug log
 
         res.render("user/viewOrder", {
             orders: processedOrders,
@@ -66,10 +79,10 @@ const getOrders = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Get orders error:', error);
+        console.error('Error fetching orders:', error);
         res.status(500).render('error', {
             message: 'Error fetching orders',
-            user: req.session.user
+            error: error.message
         });
     }
 }
