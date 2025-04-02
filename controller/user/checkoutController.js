@@ -256,7 +256,16 @@ const verifyPayment = async (req, res) => {
         const gstAmount = Math.round(subtotal * GST_RATE);
         const totalAmount = subtotal + gstAmount;
 
-        // Create order
+        // Update product stock before creating order
+        for (const item of orderItems) {
+            try {
+                await updateProductStock(item.product, item.quantity);
+            } catch (error) {
+                throw new Error(`Stock update failed: ${error.message}`);
+            }
+        }
+
+        // Create order with discounted prices
         const order = await orderSchema.create({
             userId,
             items: cart.items.map(item => ({
@@ -288,7 +297,7 @@ const verifyPayment = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Payment verified successfully',
+            message: 'Payment verified and stock updated successfully',
             orderId: order._id,
             amount: totalAmount
         });
@@ -364,7 +373,27 @@ const placeOrder = async (req, res) => {
             });
         }
 
-        // Create order with GST details
+        // Validate stock availability before proceeding
+        for (const item of orderItems) {
+            const product = await productSchema.findById(item.product);
+            if (!product || product.stock < item.quantity) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient stock for product: ${product ? product.productName : 'Unknown Product'}`
+                });
+            }
+        }
+
+        // Update stock for all products
+        for (const item of orderItems) {
+            try {
+                await updateProductStock(item.product, item.quantity);
+            } catch (error) {
+                throw new Error(`Stock update failed: ${error.message}`);
+            }
+        }
+
+        // Create order
         const order = await orderSchema.create({
             userId,
             items: orderItems,
@@ -381,31 +410,6 @@ const placeOrder = async (req, res) => {
             }
         });
 
-        // Update product stock
-        for (const item of orderItems) {
-            try {
-                const product = await productSchema.findById(item.product);
-                if (!product) {
-                    console.error(`Product not found: ${item.product}`);
-                    continue;
-                }
-
-                // Check if there's enough stock
-                if (product.stock < item.quantity) {
-                    throw new Error(`Insufficient stock for product: ${product.productName}`);
-                }
-
-                // Update stock
-                product.stock = product.stock - item.quantity;
-                await product.save();
-
-                console.log(`Stock updated for product ${item.product}: ${product.stock}`);
-            } catch (error) {
-                console.error(`Error updating stock for product ${item.product}:`, error);
-                throw error;
-            }
-        }
-
         // Clear cart and coupon
         await cartSchema.findByIdAndUpdate(cart._id, {
             items: [],
@@ -416,7 +420,7 @@ const placeOrder = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Order placed successfully',
+            message: 'Order placed and stock updated successfully',
             orderId: order._id,
             redirectUrl: `/order-success?orderId=${order._id}`
         });
@@ -716,89 +720,32 @@ const getOrderSuccessPage = async (req, res) => {
     }
 };
 
-const cancelOrder = async (req, res) => {
+// Add this helper function at the top of your file
+const updateProductStock = async (productId, quantity) => {
     try {
-        const userId = req.session.user;
-        const { orderId } = req.params;
-
-        // Find the order and populate product details
-        const order = await orderSchema.findOne({
-            _id: orderId,
-            userId
-        });
-
-        if (!order) {
-            return res.status(404).json({
-                success: false,
-                message: 'Order not found'
-            });
+        const product = await productSchema.findById(productId);
+        if (!product) {
+            throw new Error(`Product not found: ${productId}`);
         }
 
-        // Check if order can be cancelled (e.g., not already cancelled or delivered)
-        if (['delivered', 'cancelled'].includes(order.items[0].order.status)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Order cannot be cancelled in current status'
-            });
+        if (product.stock < quantity) {
+            throw new Error(`Insufficient stock for product: ${product.productName}`);
         }
 
-        // Calculate refund amount (including GST)
-        const refundAmount = order.totalAmount; // This includes GST and any discounts
+        // Update stock using $inc operator to ensure atomicity
+        const updatedProduct = await productSchema.findByIdAndUpdate(
+            productId,
+            { $inc: { stock: -quantity } },
+            { new: true, runValidators: true }
+        );
 
-        // Process refund based on payment method
-        if (order.payment.method === 'wallet' || order.payment.method === 'razorpay') {
-            // Find or create wallet
-            let wallet = await Wallet.findOne({ userId });
-            if (!wallet) {
-                wallet = await Wallet.create({ userId, balance: 0 });
-            }
-
-            // Add refund to wallet
-            wallet.balance += refundAmount;
-            wallet.transactions.push({
-                type: 'credit',
-                amount: refundAmount,
-                description: `Refund for order #${order._id} (Including GST)`,
-                orderId: order._id,
-                date: new Date()
-            });
-            await wallet.save();
-        }
-
-        // Update order status
-        for (const item of order.items) {
-            item.order.status = 'cancelled';
-            item.order.statusHistory.push({
-                status: 'cancelled',
-                date: new Date(),
-                comment: 'Order cancelled by customer'
-            });
-
-            // Restore product stock
-            await productSchema.findByIdAndUpdate(
-                item.product,
-                { $inc: { stock: item.quantity } }
-            );
-        }
-
-        await order.save();
-
-        res.json({
-            success: true,
-            message: 'Order cancelled successfully',
-            refundAmount: refundAmount,
-            refundedTo: order.payment.method === 'cod' ? 'No refund needed' : 'Wallet'
-        });
-
+        console.log(`Stock updated for product ${productId}: ${updatedProduct.stock}`);
+        return updatedProduct;
     } catch (error) {
-        console.error('Order cancellation error:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Error cancelling order'
-        });
+        console.error('Error updating stock:', error);
+        throw error;
     }
 };
-
 
 export default {
     getCheckoutPage,

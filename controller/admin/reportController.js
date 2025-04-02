@@ -4,9 +4,9 @@ import PDFDocument from "pdfkit-table"
 
 const getSalesReport = async (req, res, next) => {
     try {
-        const { startDate, endDate, period } = req.query;
-        const page = parseInt(req.query.page) || 1;
-        const limit = 10;
+        const { startDate, endDate, period, page = 1, limit = 10 } = req.query;
+        const currentPage = parseInt(page);
+        const itemsPerPage = parseInt(limit);
 
         let query = {
             'items': {
@@ -53,16 +53,17 @@ const getSalesReport = async (req, res, next) => {
             };
         }
 
-        // Count total documents for pagination
+        // Get total count for pagination
         const totalOrders = await Order.countDocuments(query);
-        const totalPages = Math.ceil(totalOrders / limit);
+        const totalPages = Math.ceil(totalOrders / itemsPerPage);
+        const skip = (currentPage - 1) * itemsPerPage;
 
         // Fetch paginated orders
         const orders = await Order.find(query)
             .populate('userId', 'firstName lastName email')
             .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit);
+            .skip(skip)
+            .limit(itemsPerPage);
 
         // Calculate metrics with cancelled items excluded
         const metrics = {
@@ -131,12 +132,14 @@ const getSalesReport = async (req, res, next) => {
             dailyData,
             dateRange,
             period: period || 'custom',
-            currentPage: page,
-            totalPages,
-            hasPrevPage: page > 1,
-            hasNextPage: page < totalPages,
-            startDate: startDate || '',
-            endDate: endDate || ''
+            pagination: {
+                currentPage,
+                totalPages,
+                totalOrders,
+                itemsPerPage,
+                hasNextPage: currentPage < totalPages,
+                hasPrevPage: currentPage > 1
+            }
         });
     } catch (error) {
         next(error)
