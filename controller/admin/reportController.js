@@ -5,6 +5,8 @@ import PDFDocument from "pdfkit-table"
 const getSalesReport = async (req, res, next) => {
     try {
         const { startDate, endDate, period } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
 
         let query = {
             'items': {
@@ -51,10 +53,16 @@ const getSalesReport = async (req, res, next) => {
             };
         }
 
-        // Fetch orders
+        // Count total documents for pagination
+        const totalOrders = await Order.countDocuments(query);
+        const totalPages = Math.ceil(totalOrders / limit);
+
+        // Fetch paginated orders
         const orders = await Order.find(query)
             .populate('userId', 'firstName lastName email')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
 
         // Calculate metrics with cancelled items excluded
         const metrics = {
@@ -122,7 +130,13 @@ const getSalesReport = async (req, res, next) => {
             metrics,
             dailyData,
             dateRange,
-            period: period || 'custom'
+            period: period || 'custom',
+            currentPage: page,
+            totalPages,
+            hasPrevPage: page > 1,
+            hasNextPage: page < totalPages,
+            startDate: startDate || '',
+            endDate: endDate || ''
         });
     } catch (error) {
         next(error)

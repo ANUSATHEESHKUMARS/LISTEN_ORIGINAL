@@ -86,16 +86,40 @@
                                     <i class="fas fa-repeat w-5"></i>
                                     <span>Usage Limit: <%= coupon.userUsageLimit %> per user</span>
                                 </div>
+
+                                <% 
+                                const now = new Date();
+                                const startDate = new Date(coupon.startDate);
+                                const isScheduled = startDate > now;
+                                const isActive = startDate <= now;
+                                %>
+
+                                <!-- Status Badge -->
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-circle w-5"></i>
+                                    <% if (isScheduled) { %>
+                                        <span class="text-yellow-600">
+                                            Starts on: <%= startDate.toLocaleDateString('en-US', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            }) %>
+                                        </span>
+                                    <% } else if (isActive) { %>
+                                        <span class="text-green-600">Active Now</span>
+                                    <% } %>
+                                </div>
                             </div>
 
-                            <!-- Copy Button -->
+                            <!-- Copy Button - Enable/Disable based on status -->
                             <div class="p-4 md:p-5 bg-gray-50 border-t group-hover:bg-white transition-colors">
                                 <button 
                                     onclick="copyCouponCode('<%= coupon.code %>')"
-                                    class="w-full bg-black text-white py-2.5 px-4 rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                                    class="w-full <%= isActive ? 'bg-black hover:bg-gray-800' : 'bg-gray-400 cursor-not-allowed' %> text-white py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    <%= !isActive ? 'disabled' : '' %>
                                 >
-                                    <i class="fas fa-copy"></i>
-                                    <span>Copy Code</span>
+                                    <i class="fas <%= isActive ? 'fa-copy' : 'fa-clock' %>"></i>
+                                    <span><%= isActive ? 'Copy Code' : 'Coming Soon' %></span>
                                 </button>
                             </div>
                         </div>

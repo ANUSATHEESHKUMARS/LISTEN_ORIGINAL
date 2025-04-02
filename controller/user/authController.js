@@ -566,12 +566,11 @@ const getGoogleCallback = (req, res) => {
 const getLogout = (req, res) => {
     req.session.destroy((err) => {
         if (err) {
-            console.error("Error destroying session:", err);
+            console.error("User logout error:", err);
             return res.status(500).json({ message: "Logout failed" });
         }
-
-        res.clearCookie('connect.sid'); 
-        res.redirect('/user/login');  
+        res.clearCookie('user_sid'); // Clear only user cookie
+        res.redirect('/user/login');
     });
 };
 

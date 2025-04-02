@@ -1,37 +1,45 @@
 import mongoose from "mongoose";
 
-const orderSchema = new mongoose.Schema({
-    userId: {
+const orderItemSchema = new mongoose.Schema({
+    product: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'users',
+        ref: 'Product',
         required: true
     },
-    orderCode: {
-        type: String,
-        unique: true
+    quantity: {
+        type: Number,
+        required: true,
+        min: 1
     },
-    items: [{
-        product: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Product',
-            required: true
+    price: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    subtotal: {
+        type: Number,
+        required: true
+    },
+    order:{
+        status: {
+            type: String,
+            enum: [
+                'pending',
+                'processing',
+                'shipped',
+                'delivered',
+                'cancelled',
+                'returned',
+                'return requested',
+                'return approved',
+                'return rejected',
+                'refund processing',
+                'refunded',
+                'refund processed'
+            ],
+            default: 'pending'
         },
-      
-        quantity: {
-            type: Number,
-            required: true,
-            min: 1
-        },
-        price: {
-            type: Number,
-            required: true
-        },
-     
-        subtotal: {
-            type: Number,
-            required: true
-        },
-        order:{
+        statusHistory: [{
             status: {
                 type: String,
                 enum: [
@@ -48,58 +56,62 @@ const orderSchema = new mongoose.Schema({
                     'refunded',
                     'refund processed'
                 ],
-                default: 'pending'
+                required: true
             },
-            statusHistory: [{
-                status: {
-                    type: String,
-                    enum: [
-                        'pending',
-                        'processing',
-                        'shipped',
-                        'delivered',
-                        'cancelled',
-                        'returned',
-                        'return requested',
-                        'return approved',
-                        'return rejected',
-                        'refund processing',
-                        'refunded',
-                        'refund processed'
-                    ],
-                    required: true
-                },
-                date: {
-                    type: Date,
-                    default: Date.now
-                },
-                comment: String
-            }]
+            date: {
+                type: Date,
+                default: Date.now
+            },
+            comment: String
+        }]
+    },
+    return: {
+        isReturnRequested: {
+            type: Boolean,
+            default: false
         },
-        return: {
-            isReturnRequested: {
-                type: Boolean,
-                default: false
-            },
-            reason: String,
-            requestDate: Date,
-            status: {
-                type: String,
-                enum: ['pending', 'approved', 'rejected'],
-                default: 'pending'
-            },
-            adminComment: String,
-            isReturnAccepted: {
-                type: Boolean,
-                default: false
-            }
+        reason: String,
+        requestDate: Date,
+        status: {
+            type: String,
+            enum: ['pending', 'approved', 'rejected'],
+            default: 'pending'
+        },
+        adminComment: String,
+        isReturnAccepted: {
+            type: Boolean,
+            default: false
         }
-    }],
+    }
+});
+
+const orderSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'users',
+        required: true
+    },
+    orderCode: {
+        type: String,
+        unique: true
+    },
+    items: [orderItemSchema],
+    subtotal: {
+        type: Number,
+        required: true
+    },
+    gstAmount: {
+        type: Number,
+        required: true
+    },
+    gstRate: {
+        type: Number,
+        default: 18
+    },
     totalAmount: {
         type: Number,
         required: true
     },
- 
     shippingAddress: {
         fullName: String,
         mobileNumber: Number,
@@ -120,7 +132,6 @@ const orderSchema = new mongoose.Schema({
             enum: ['processing', 'completed', 'failed', 'refunded', 'cancelled', 'refund processing'],
             default: null
         },
-       
     },
     orderDate: {
         type: Date,

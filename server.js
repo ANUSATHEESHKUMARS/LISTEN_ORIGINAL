@@ -19,63 +19,77 @@ dotenv.config();
 
 const app = express();
 
-connectDB();
-
-const initializeAdmin = async () => {
-  await Admin.createDefaultAdmin();
-};
-initializeAdmin().catch(console.error);
-
-initializeCategories();
-
+// Basic middleware
 app.use(cors());
-
-app.use(
-  helmet({
+app.use(helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
-  })
-);
-
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(errorHandler);
 app.use(cookieParser());
 app.use(nocache());
-
 app.use(morgan("dev"));
 
-app.set("views", "./views");
-app.set("view engine", "ejs");
+// View engine setup
 app.set("views", path.join(process.cwd(), "views"));
+app.set("view engine", "ejs");
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
+// Create separate session middlewares for admin and user
+const userSession = session({
+    name: 'user_sid', // Different cookie name for user
+    secret: process.env.USER_SESSION_SECRET || process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      secure: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    },
-  })
-);
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days for users
+    }
+});
 
+const adminSession = session({
+    name: 'admin_sid', // Different cookie name for admin
+    secret: process.env.ADMIN_SESSION_SECRET || process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 12 * 60 * 60 * 1000 // 12 hours for admin
+    }
+});
+
+// Apply sessions based on route
+app.use('/admin', adminSession);
+app.use(['/user', '/'], userSession);
+
+// Initialize passport after sessions
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Static files
 app.use(express.static(path.join(process.cwd(), "public")));
 
-app.use("/user", userRoutes);
+// Database and initial setup
+connectDB();
+const initializeAdmin = async () => {
+    await Admin.createDefaultAdmin();
+};
+initializeAdmin().catch(console.error);
+initializeCategories();
+
+// Routes with their respective sessions
 app.use("/admin", adminRoutes);
+app.use("/user", userRoutes);
 app.use("/", userRoutes);
 
+// 404 handler
 app.use("*", (req, res) => {
-  res.status(404).render("partials/error");
+    res.status(404).render("partials/error");
 });
 
 app.listen(process.env.PORT, () => {
-  console.log("Server running at port ");
+    console.log(`Server running at port ${process.env.PORT}`);
 });

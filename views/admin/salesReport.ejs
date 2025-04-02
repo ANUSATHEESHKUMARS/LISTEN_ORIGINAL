@@ -187,6 +187,32 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination Section -->
+                <% if (totalPages > 1) { %>
+                    <div class="mt-6 flex justify-center gap-2">
+                        <% if (hasPrevPage) { %>
+                            <a href="?page=<%= currentPage - 1 %><%= period !== 'custom' ? `&period=${period}` : '' %><%= startDate ? `&startDate=${startDate}` : '' %><%= endDate ? `&endDate=${endDate}` : '' %>" 
+                               class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors">
+                                <i class="fas fa-chevron-left mr-1"></i>Previous
+                            </a>
+                        <% } %>
+                        
+                        <% for(let i = 1; i <= totalPages; i++) { %>
+                            <a href="?page=<%= i %><%= period !== 'custom' ? `&period=${period}` : '' %><%= startDate ? `&startDate=${startDate}` : '' %><%= endDate ? `&endDate=${endDate}` : '' %>" 
+                               class="px-3 py-1 rounded transition-colors <%= currentPage === i ? 'bg-black text-white' : 'bg-gray-700 text-white hover:bg-gray-600' %>">
+                                <%= i %>
+                            </a>
+                        <% } %>
+                        
+                        <% if (hasNextPage) { %>
+                            <a href="?page=<%= currentPage + 1 %><%= period !== 'custom' ? `&period=${period}` : '' %><%= startDate ? `&startDate=${startDate}` : '' %><%= endDate ? `&endDate=${endDate}` : '' %>" 
+                               class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors">
+                                Next<i class="fas fa-chevron-right ml-1"></i>
+                            </a>
+                        <% } %>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>

@@ -39,18 +39,30 @@ const initiateRecharge = async (req, res) => {
         const { amount } = req.body;
         const userId = req.session.user;
 
-        if (!amount || amount < 1) {
+        // Validate amount
+        const rechargeAmount = parseFloat(amount);
+        if (isNaN(rechargeAmount) || rechargeAmount < 1) {
             return res.status(400).json({
                 success: false,
-                message: 'Please enter a valid amount'
+                message: 'Please enter a valid amount (minimum ₹1)'
             });
         }
 
+        // Create shorter receipt ID (max 40 chars)
+        const timestamp = Date.now().toString().slice(-8); // Last 8 digits of timestamp
+        const shortUserId = userId.toString().slice(-6); // Last 6 digits of userId
+        const receipt = `w${shortUserId}${timestamp}`; // Format: w{userId}{timestamp}
+
+        // Create Razorpay order
         const options = {
-            amount: Math.round(amount * 100),
+            amount: Math.round(rechargeAmount * 100), // Convert to paise
             currency: "INR",
-            receipt: `wallet_rcpt_${Date.now()}`,
-            payment_capture: 1
+            receipt: receipt, // Shortened receipt
+            payment_capture: 1,
+            notes: {
+                userId: userId,
+                type: 'wallet_recharge'
+            }
         };
 
         const razorpayOrder = await razorpay.orders.create(options);
@@ -60,14 +72,15 @@ const initiateRecharge = async (req, res) => {
             key: process.env.RAZORPAY_KEY_ID,
             amount: options.amount,
             currency: options.currency,
-            order_id: razorpayOrder.id
+            order_id: razorpayOrder.id,
+            receipt: options.receipt
         });
 
     } catch (error) {
         console.error('Recharge initiation error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to initiate recharge'
+            message: 'Failed to initiate recharge. Please try again.'
         });
     }
 };

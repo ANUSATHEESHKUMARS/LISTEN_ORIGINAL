@@ -118,6 +118,8 @@ route.post("/orders/:orderId/items/:productId/return", userMiddlewares.checkSess
 
 route.get('/orders/:orderId/invoice', userMiddlewares.checkSession, viewOrdersController.generateInvoice);
 
+route.post('/orders/:orderId/cancel/:productId', userMiddlewares.checkSession, viewOrdersController.cancelOrder);
+
 
 
 

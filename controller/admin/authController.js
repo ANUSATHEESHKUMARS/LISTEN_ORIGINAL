@@ -51,8 +51,13 @@ const postAdmin = async (req, res) => {
     }
 }
 
-const getLogout = (req, res) => {
-    req.session.destroy(() => {
+export const getLogout = (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error("Admin logout error:", err);
+            return res.status(500).json({ message: "Logout failed" });
+        }
+        res.clearCookie('admin_sid'); // Clear only admin cookie
         res.redirect('/admin/login');
     });
 }

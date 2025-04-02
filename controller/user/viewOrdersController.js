@@ -88,47 +88,99 @@ const getOrders = async (req, res) => {
 }
 
 // Add this function to handle refunds to wallet
-const handleWalletRefund = async (userId, amount, orderId, description) => {
+const handleWalletRefund = async (userId, orderId, productId) => {
     try {
-        let wallet = await Wallet.findOne({ userId });
-        if (!wallet) {
-            wallet = await Wallet.create({ userId, balance: 0 });
+        const order = await orderSchema.findById(orderId)
+            .populate('items.product'); // Make sure to populate product details
+        if (!order) throw new Error('Order not found');
+
+        // Find the specific item to be refunded
+        const orderItem = order.items.find(item => 
+            item.product._id.toString() === productId
+        );
+        if (!orderItem) throw new Error('Order item not found');
+
+        // Calculate base refund amount using the item's original price
+        let refundAmount = orderItem.price * orderItem.quantity;
+
+        // Log initial values for debugging
+        console.log('Initial Calculation:', {
+            itemPrice: orderItem.price,
+            quantity: orderItem.quantity,
+            orderSubtotal: order.subtotal,
+            orderTotal: order.totalAmount,
+            initialRefundAmount: refundAmount
+        });
+
+        // If there's a coupon or discount applied to the order
+        if (order.totalAmount < order.subtotal) {
+            // Calculate the discount percentage
+            const discountPercentage = ((order.subtotal - order.totalAmount) / order.subtotal) * 100;
+            
+            // Apply the same discount percentage to the refund amount
+            const discountAmount = (refundAmount * discountPercentage) / 100;
+            refundAmount = refundAmount - discountAmount;
+
+            console.log('Discount Calculation:', {
+                discountPercentage,
+                discountAmount,
+                finalRefundAmount: refundAmount
+            });
         }
 
-        // Ensure amount is properly rounded
-        const refundAmount = Math.round(amount * 100) / 100;
+        // Round to 2 decimal places
+        refundAmount = Math.round(refundAmount * 100) / 100;
 
-        const refundTransaction = {
+        // Validate final amount
+        if (isNaN(refundAmount) || refundAmount <= 0) {
+            console.error('Invalid refund calculation:', {
+                orderItem,
+                order,
+                calculatedAmount: refundAmount
+            });
+            throw new Error('Invalid refund amount calculated');
+        }
+
+        // Process wallet refund
+        let wallet = await Wallet.findOne({ userId });
+        if (!wallet) {
+            wallet = new Wallet({ userId, balance: 0 });
+        }
+
+        // Add refund to wallet
+        wallet.balance = Number(wallet.balance || 0) + refundAmount;
+        wallet.transactions.push({
             type: 'credit',
             amount: refundAmount,
-            description: description || `Refund for cancelled order #${orderId}`,
+            description: `Refund for cancelled order #${orderId} (Including all discounts)`,
             orderId: orderId,
             date: new Date()
-        };
+        });
 
-        // Update wallet balance with exact amount
-        wallet.balance = Math.round((wallet.balance + refundAmount) * 100) / 100;
-        wallet.transactions.push(refundTransaction);
         await wallet.save();
 
-        return true;
+        return {
+            success: true,
+            refundAmount
+        };
+
     } catch (error) {
         console.error('Wallet refund error:', error);
-        return false;
+        return {
+            success: false,
+            error: error.message
+        };
     }
 };
 
 // Update the cancelOrder function
 const cancelOrder = async (req, res) => {
     try {
-        const { orderId, productId } = req.params;
         const userId = req.session.user;
+        const { orderId, productId } = req.params;
 
-        const order = await orderSchema.findOne({
-            _id: orderId,
-            userId
-        });
-
+        // Find the order and validate ownership
+        const order = await orderSchema.findOne({ _id: orderId, userId });
         if (!order) {
             return res.status(404).json({
                 success: false,
@@ -148,32 +200,29 @@ const cancelOrder = async (req, res) => {
             });
         }
 
-        // Check if item can be cancelled
-        if (!['processing', 'pending'].includes(orderItem.order.status)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Order cannot be cancelled at this stage'
-            });
-        }
+        // Calculate refund amount including GST
+        const itemSubtotal = orderItem.discountedPrice || orderItem.price;
+        const itemGST = itemSubtotal * 0.18; // 18% GST
+        const refundAmount = (itemSubtotal + itemGST) * orderItem.quantity;
 
-        // Calculate refund amount with discount
-        let refundAmount = orderItem.subtotal;
-        
-        if (order.discount && order.subtotal > 0) {
-            // Calculate the discount ratio for this specific item
-            const discountRatio = order.discount / order.subtotal;
-            // Apply the proportional discount to this item's subtotal
-            const itemDiscount = orderItem.subtotal * discountRatio;
-            refundAmount = orderItem.subtotal - itemDiscount;
+        // Process refund based on payment method
+        if (order.payment.method === 'wallet' || order.payment.method === 'razorpay') {
+            // Find or create wallet
+            let wallet = await Wallet.findOne({ userId });
+            if (!wallet) {
+                wallet = new Wallet({ userId, balance: 0 });
+            }
 
-            console.log('Refund Calculation:', {
-                orderSubtotal: order.subtotal,
-                orderDiscount: order.discount,
-                itemSubtotal: orderItem.subtotal,
-                discountRatio: discountRatio,
-                itemDiscount: itemDiscount,
-                finalRefundAmount: refundAmount
+            // Add refund to wallet
+            wallet.balance += refundAmount;
+            wallet.transactions.push({
+                type: 'credit',
+                amount: refundAmount,
+                description: `Refund for cancelled order #${order.orderCode}`,
+                orderId: order._id
             });
+
+            await wallet.save();
         }
 
         // Update order item status
@@ -183,28 +232,6 @@ const cancelOrder = async (req, res) => {
             date: new Date(),
             comment: 'Order cancelled by customer'
         });
-
-        // Process refund based on payment method
-        if (['razorpay', 'wallet'].includes(order.payment.method)) {
-            // Handle refund to wallet with exact amount
-            const refundSuccess = await handleWalletRefund(
-                userId, 
-                Math.round(refundAmount * 100) / 100, // Round to 2 decimal places
-                orderId,
-                `Refund for cancelled order #${order._id} (Including applied discounts)`
-            );
-
-            if (!refundSuccess) {
-                throw new Error('Failed to process refund to wallet');
-            }
-
-            // Add refund status to history with exact amount
-            orderItem.order.statusHistory.push({
-                status: 'refunded',
-                date: new Date(),
-                comment: `Refund of ₹${refundAmount.toFixed(2)} processed to wallet (Including discounts)`
-            });
-        }
 
         // Restore product stock
         await productSchema.findByIdAndUpdate(
@@ -216,11 +243,13 @@ const cancelOrder = async (req, res) => {
 
         res.json({
             success: true,
-            message: `Order cancelled successfully. Refund of ₹${refundAmount.toFixed(2)} will be processed to your wallet.`
+            message: 'Order cancelled successfully',
+            refundAmount,
+            refundedTo: order.payment.method === 'cod' ? 'No refund needed' : 'Wallet'
         });
 
     } catch (error) {
-        console.error('Cancel order error:', error);
+        console.error('Order cancellation error:', error);
         res.status(500).json({
             success: false,
             message: error.message || 'Error cancelling order'
