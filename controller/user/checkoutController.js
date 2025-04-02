@@ -756,8 +756,5 @@ export default {
     getAvailableCoupons,
     getOrderSuccessPage,
     removeCoupon,
-    applyCoupon,
-    cancelOrder
-
-
+    applyCoupon
 };
