@@ -187,6 +187,63 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination -->
+                <div class="mt-6 bg-white rounded-xl p-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <!-- Items per page selector -->
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-gray-600">Show:</span>
+                            <select id="itemsPerPage" onchange="changeItemsPerPage(this.value)"
+                                    class="px-3 py-1 border rounded-lg text-sm">
+                                <option value="10" <%= pagination.itemsPerPage === 10 ? 'selected' : '' %>>10</option>
+                                <option value="25" <%= pagination.itemsPerPage === 25 ? 'selected' : '' %>>25</option>
+                                <option value="50" <%= pagination.itemsPerPage === 50 ? 'selected' : '' %>>50</option>
+                                <option value="100" <%= pagination.itemsPerPage === 100 ? 'selected' : '' %>>100</option>
+                            </select>
+                            <span class="text-sm text-gray-600">entries</span>
+                        </div>
+
+                        <!-- Page information -->
+                        <div class="text-sm text-gray-600">
+                            Showing <%= (pagination.currentPage - 1) * pagination.itemsPerPage + 1 %> 
+                            to <%= Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalOrders) %> 
+                            of <%= pagination.totalOrders %> entries
+                        </div>
+
+                        <!-- Pagination controls -->
+                        <div class="flex items-center gap-2">
+                            <% if (pagination.hasPrevPage) { %>
+                                <button onclick="changePage(<%= pagination.currentPage - 1 %>)"
+                                        class="px-3 py-1 bg-gray-100 text-gray-800 rounded-lg text-sm hover:bg-gray-200 transition-colors">
+                                    Previous
+                                </button>
+                            <% } %>
+
+                            <% 
+                            let startPage = Math.max(1, pagination.currentPage - 2);
+                            let endPage = Math.min(pagination.totalPages, startPage + 4);
+                            if (endPage - startPage < 4) {
+                                startPage = Math.max(1, endPage - 4);
+                            }
+                            %>
+
+                            <% for(let i = startPage; i <= endPage; i++) { %>
+                                <button onclick="changePage(<%= i %>)"
+                                        class="px-3 py-1 rounded-lg text-sm <%= pagination.currentPage === i ? 'bg-black text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200' %> transition-colors">
+                                    <%= i %>
+                                </button>
+                            <% } %>
+
+                            <% if (pagination.hasNextPage) { %>
+                                <button onclick="changePage(<%= pagination.currentPage + 1 %>)"
+                                        class="px-3 py-1 bg-gray-100 text-gray-800 rounded-lg text-sm hover:bg-gray-200 transition-colors">
+                                    Next
+                                </button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -279,7 +336,11 @@
                     return;
                 }
 
-                window.location.href = `/admin/sales-report?startDate=${startDateStr}&endDate=${endDateStr}`;
+                const url = new URL(window.location.href);
+                url.searchParams.set('startDate', startDateStr);
+                url.searchParams.set('endDate', endDateStr);
+                url.searchParams.set('page', 1); // Reset to first page when applying filter
+                window.location.href = url.toString();
 
             } catch (error) {
                 await Swal.fire({
@@ -335,6 +396,20 @@
                     confirmButtonColor: '#000000'
                 });
             }
+        }
+
+        // Pagination Functions
+        function changePage(page) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', page);
+            window.location.href = url.toString();
+        }
+
+        function changeItemsPerPage(limit) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('limit', limit);
+            url.searchParams.set('page', 1); // Reset to first page when changing items per page
+            window.location.href = url.toString();
         }
     </script>
 </body>

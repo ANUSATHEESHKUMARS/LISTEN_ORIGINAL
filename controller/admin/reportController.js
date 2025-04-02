@@ -4,7 +4,9 @@ import PDFDocument from "pdfkit-table"
 
 const getSalesReport = async (req, res, next) => {
     try {
-        const { startDate, endDate, period } = req.query;
+        const { startDate, endDate, period, page = 1, limit = 10 } = req.query;
+        const currentPage = parseInt(page);
+        const itemsPerPage = parseInt(limit);
 
         let query = {
             'items': {
@@ -51,10 +53,17 @@ const getSalesReport = async (req, res, next) => {
             };
         }
 
-        // Fetch orders
+        // Get total count for pagination
+        const totalOrders = await Order.countDocuments(query);
+        const totalPages = Math.ceil(totalOrders / itemsPerPage);
+        const skip = (currentPage - 1) * itemsPerPage;
+
+        // Fetch paginated orders
         const orders = await Order.find(query)
             .populate('userId', 'firstName lastName email')
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(itemsPerPage);
 
         // Calculate metrics with cancelled items excluded
         const metrics = {
@@ -122,7 +131,15 @@ const getSalesReport = async (req, res, next) => {
             metrics,
             dailyData,
             dateRange,
-            period: period || 'custom'
+            period: period || 'custom',
+            pagination: {
+                currentPage,
+                totalPages,
+                totalOrders,
+                itemsPerPage,
+                hasNextPage: currentPage < totalPages,
+                hasPrevPage: currentPage > 1
+            }
         });
     } catch (error) {
         next(error)

@@ -364,6 +364,15 @@ const verifyPayment = async (req, res) => {
             });
         }
 
+        // Update product stock before creating order
+        for (const item of orderItems) {
+            try {
+                await updateProductStock(item.product, item.quantity);
+            } catch (error) {
+                throw new Error(`Stock update failed: ${error.message}`);
+            }
+        }
+
         // Create order with discounted prices
         const order = await orderSchema.create({
             userId,
@@ -392,31 +401,6 @@ const verifyPayment = async (req, res) => {
             }
         });
 
-        // Update product stock
-        for (const item of orderItems) {
-            try {
-                const product = await productSchema.findById(item.product);
-                if (!product) {
-                    console.error(`Product not found: ${item.product}`);
-                    continue;
-                }
-
-                // Check if there's enough stock
-                if (product.stock < item.quantity) {
-                    throw new Error(`Insufficient stock for product: ${product.productName}`);
-                }
-
-                // Update stock
-                product.stock = product.stock - item.quantity;
-                await product.save();
-
-                console.log(`Stock updated for product ${item.product}: ${product.stock}`);
-            } catch (error) {
-                console.error(`Error updating stock for product ${item.product}:`, error);
-                throw error;
-            }
-        }
-
         // Clear cart and coupon
         await cartSchema.findByIdAndUpdate(cart._id, {
             items: [],
@@ -426,7 +410,7 @@ const verifyPayment = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Payment verified successfully',
+            message: 'Payment verified and stock updated successfully',
             orderId: order._id,
             amount: finalAmount
         });
@@ -541,6 +525,26 @@ const placeOrder = async (req, res) => {
             });
         }
 
+        // Validate stock availability before proceeding
+        for (const item of orderItems) {
+            const product = await productSchema.findById(item.product);
+            if (!product || product.stock < item.quantity) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient stock for product: ${product ? product.productName : 'Unknown Product'}`
+                });
+            }
+        }
+
+        // Update stock for all products
+        for (const item of orderItems) {
+            try {
+                await updateProductStock(item.product, item.quantity);
+            } catch (error) {
+                throw new Error(`Stock update failed: ${error.message}`);
+            }
+        }
+
         // Create order
         const order = await orderSchema.create({
             userId,
@@ -564,31 +568,6 @@ const placeOrder = async (req, res) => {
             }
         });
 
-        // Update product stock
-        for (const item of orderItems) {
-            try {
-                const product = await productSchema.findById(item.product);
-                if (!product) {
-                    console.error(`Product not found: ${item.product}`);
-                    continue;
-                }
-
-                // Check if there's enough stock
-                if (product.stock < item.quantity) {
-                    throw new Error(`Insufficient stock for product: ${product.productName}`);
-                }
-
-                // Update stock
-                product.stock = product.stock - item.quantity;
-                await product.save();
-
-                console.log(`Stock updated for product ${item.product}: ${product.stock}`);
-            } catch (error) {
-                console.error(`Error updating stock for product ${item.product}:`, error);
-                throw error;
-            }
-        }
-
         // Clear cart and coupon
         await cartSchema.findByIdAndUpdate(cart._id, {
             items: [],
@@ -599,7 +578,7 @@ const placeOrder = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Order placed successfully',
+            message: 'Order placed and stock updated successfully',
             orderId: order._id,
             redirectUrl: `/order-success?orderId=${order._id}`
         });
@@ -964,6 +943,32 @@ const getOrderSuccessPage = async (req, res) => {
     }
 };
 
+// Add this helper function at the top of your file
+const updateProductStock = async (productId, quantity) => {
+    try {
+        const product = await productSchema.findById(productId);
+        if (!product) {
+            throw new Error(`Product not found: ${productId}`);
+        }
+
+        if (product.stock < quantity) {
+            throw new Error(`Insufficient stock for product: ${product.productName}`);
+        }
+
+        // Update stock using $inc operator to ensure atomicity
+        const updatedProduct = await productSchema.findByIdAndUpdate(
+            productId,
+            { $inc: { stock: -quantity } },
+            { new: true, runValidators: true }
+        );
+
+        console.log(`Stock updated for product ${productId}: ${updatedProduct.stock}`);
+        return updatedProduct;
+    } catch (error) {
+        console.error('Error updating stock:', error);
+        throw error;
+    }
+};
 
 export default {
     getCheckoutPage,
