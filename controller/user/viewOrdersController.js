@@ -178,9 +178,12 @@ const cancelOrder = async (req, res) => {
     try {
         const userId = req.session.user;
         const { orderId, productId } = req.params;
+        const { reason } = req.body;
 
         // Find the order and validate ownership
-        const order = await orderSchema.findOne({ _id: orderId, userId });
+        const order = await orderSchema.findOne({ _id: orderId, userId })
+            .populate('items.product');
+            
         if (!order) {
             return res.status(404).json({
                 success: false,
@@ -190,7 +193,7 @@ const cancelOrder = async (req, res) => {
 
         // Find the specific item in the order
         const orderItem = order.items.find(item => 
-            item.product.toString() === productId
+            item.product._id.toString() === productId
         );
 
         if (!orderItem) {
@@ -201,25 +204,29 @@ const cancelOrder = async (req, res) => {
         }
 
         // Calculate refund amount including GST
-        const itemSubtotal = orderItem.discountedPrice || orderItem.price;
+        const itemPrice = orderItem.discountedPrice || orderItem.price;
+        const itemSubtotal = itemPrice * orderItem.quantity;
         const itemGST = itemSubtotal * 0.18; // 18% GST
-        const refundAmount = (itemSubtotal + itemGST) * orderItem.quantity;
+        const refundAmount = itemSubtotal + itemGST;
 
-        // Process refund based on payment method
-        if (order.payment.method === 'wallet' || order.payment.method === 'razorpay') {
+        // Process refund for online payments
+        if (order.payment.method === 'online' || order.payment.method === 'razorpay') {
             // Find or create wallet
             let wallet = await Wallet.findOne({ userId });
             if (!wallet) {
                 wallet = new Wallet({ userId, balance: 0 });
             }
 
-            // Add refund to wallet
-            wallet.balance += refundAmount;
+            // Add refund to wallet with proper transaction details
+            wallet.balance = Number(wallet.balance) + refundAmount;
             wallet.transactions.push({
                 type: 'credit',
                 amount: refundAmount,
-                description: `Refund for cancelled order #${order.orderCode}`,
-                orderId: order._id
+                description: `Refund for cancelled order #${order.orderCode} - ${orderItem.product.productName}`,
+                orderId: order._id,
+                date: new Date(),
+                previousBalance: Number(wallet.balance) - refundAmount,
+                currentBalance: Number(wallet.balance)
             });
 
             await wallet.save();
@@ -230,7 +237,7 @@ const cancelOrder = async (req, res) => {
         orderItem.order.statusHistory.push({
             status: 'cancelled',
             date: new Date(),
-            comment: 'Order cancelled by customer'
+            comment: reason || 'Order cancelled by customer'
         });
 
         // Restore product stock
@@ -244,7 +251,7 @@ const cancelOrder = async (req, res) => {
         res.json({
             success: true,
             message: 'Order cancelled successfully',
-            refundAmount,
+            refundAmount: refundAmount.toFixed(2),
             refundedTo: order.payment.method === 'cod' ? 'No refund needed' : 'Wallet'
         });
 

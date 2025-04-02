@@ -16,6 +16,7 @@ const createRazorpayOrder = async (req, res) => {
     try {
         const userId = req.session.user;
         const { addressId } = req.body;
+        const GST_RATE = 0.18;
 
         // Get cart with offers
         const cart = await cartSchema.findOne({ userId })
@@ -26,66 +27,34 @@ const createRazorpayOrder = async (req, res) => {
                 }
             });
 
-        // Get active offers and calculate discounted prices
-        const activeOffers = await Offer.find({
-            startDate: { $lte: new Date() },
-            endDate: { $gte: new Date() },
-            status: 'active'
-        }).populate('categoryId productIds');
+        if (!cart || !cart.items.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cart is empty'
+            });
+        }
 
-        // Create offer maps
-        const productOfferMap = new Map();
-        const categoryOfferMap = new Map();
-
-        activeOffers.forEach(offer => {
-            if (offer.productIds?.length > 0) {
-                offer.productIds.forEach(pid => {
-                    const productIdStr = pid.toString();
-                    if (!productOfferMap.has(productIdStr) ||
-                        productOfferMap.get(productIdStr).discount < offer.discount) {
-                        productOfferMap.set(productIdStr, offer);
-                    }
-                });
-            } else if (offer.categoryId) {
-                const categoryIdStr = offer.categoryId._id.toString();
-                if (!categoryOfferMap.has(categoryIdStr) ||
-                    categoryOfferMap.get(categoryIdStr).discount < offer.discount) {
-                    categoryOfferMap.set(categoryIdStr, offer);
-                }
-            }
-        });
-
-        // Calculate total with offers
-        let amount = cart.items.reduce((total, item) => {
-            const product = item.productId;
-            const productOffer = productOfferMap.get(product._id.toString());
-            const categoryOffer = product.categoriesId ?
-                categoryOfferMap.get(product.categoriesId._id.toString()) : null;
-
-            let bestDiscount = 0;
-            if (productOffer) bestDiscount = productOffer.discount;
-            if (categoryOffer && categoryOffer.discount > bestDiscount) {
-                bestDiscount = categoryOffer.discount;
-            }
-
-            const discountedPrice = bestDiscount > 0 
-                ? Math.round(item.price * (1 - bestDiscount / 100))
-                : item.price;
-
-            return total + (item.quantity * discountedPrice);
+        // Calculate base subtotal
+        let subtotal = cart.items.reduce((total, item) => {
+            return total + (item.quantity * item.price);
         }, 0);
 
         // Apply coupon discount if available
+        let couponDiscount = 0;
         if (req.session.coupon) {
-            amount = amount - req.session.coupon.discount;
+            couponDiscount = Number(req.session.coupon.discount) || 0;
+            subtotal = Math.max(0, subtotal - couponDiscount);
         }
+
+        // Calculate GST and final amount
+        const gstAmount = Math.round(subtotal * GST_RATE);
+        const totalAmount = subtotal + gstAmount; // Final amount including GST
 
         // Create Razorpay order
         const options = {
-            amount: Math.round(amount * 100), // amount in paise
+            amount: Math.round(totalAmount * 100), // Convert to paise
             currency: "INR",
-            receipt: `order_rcpt_${Date.now()}`,
-            payment_capture: 1
+            receipt: `order_rcpt_${Date.now()}`
         };
 
         const razorpayOrder = await razorpay.orders.create(options);
@@ -96,13 +65,11 @@ const createRazorpayOrder = async (req, res) => {
             amount: options.amount,
             currency: options.currency,
             order_id: razorpayOrder.id,
+            subtotal,
+            gstAmount,
+            totalAmount,
             name: "LISTEN",
-            description: "Order Payment",
-            prefill: {
-                name: req.session.user.firstName + ' ' + req.session.user.lastName,
-                email: req.session.user.email,
-                contact: req.session.user.phone || ''
-            }
+            description: `Total Amount: ₹${totalAmount} (Including GST)`
         });
 
     } catch (error) {
@@ -113,6 +80,7 @@ const createRazorpayOrder = async (req, res) => {
         });
     }
 };
+
 const getCheckoutPage = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -249,15 +217,11 @@ const getCheckoutPage = async (req, res) => {
         res.status(500).render('error');
     }
 };
+
 const verifyPayment = async (req, res) => {
     try {
         const userId = req.session.user;
-        const {
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
-            addressId
-        } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, addressId } = req.body;
 
         // Verify signature
         const sign = razorpay_order_id + "|" + razorpay_payment_id;
@@ -273,37 +237,26 @@ const verifyPayment = async (req, res) => {
             });
         }
 
-        // Get cart details
-        const cart = await cartSchema.findOne({ userId })
-            .populate('items.productId');
-
+        // Get cart and calculate amounts
+        const cart = await cartSchema.findOne({ userId }).populate('items.productId');
         if (!cart) {
-            return res.status(400).json({
-                success: false,
-                message: 'Cart not found'
-            });
+            return res.status(400).json({ success: false, message: 'Cart not found' });
         }
 
-        // Get address
-        const address = await addressSchema.findById(addressId);
-        if (!address) {
-            return res.status(400).json({
-                success: false,
-                message: 'Address not found'
-            });
-        }
-
-        // Calculate amounts
         const GST_RATE = 0.18;
-        const subtotal = cart.items.reduce((total, item) => {
-            return total + (item.price * item.quantity);
+        let subtotal = cart.items.reduce((total, item) => {
+            return total + (item.quantity * item.price);
         }, 0);
 
-        const couponDiscount = req.session.coupon ? req.session.coupon.discount : 0;
-        const gstAmount = Math.round(subtotal * GST_RATE);
-        const totalAmount = subtotal + gstAmount - couponDiscount;
+        // Apply coupon discount
+        const couponDiscount = req.session.coupon ? Number(req.session.coupon.discount) : 0;
+        subtotal = Math.max(0, subtotal - couponDiscount);
 
-        // Create new order
+        // Calculate GST and final amount
+        const gstAmount = Math.round(subtotal * GST_RATE);
+        const totalAmount = subtotal + gstAmount;
+
+        // Create order
         const order = await orderSchema.create({
             userId,
             items: cart.items.map(item => ({
@@ -312,14 +265,14 @@ const verifyPayment = async (req, res) => {
                 price: item.price,
                 subtotal: item.quantity * item.price
             })),
-            subtotal: subtotal,
-            gstAmount: gstAmount,
-            gstRate: 18,
+            subtotal: subtotal + couponDiscount, // Original subtotal before coupon
+            gstAmount,
+            gstRate: GST_RATE * 100,
             discount: couponDiscount,
-            totalAmount: totalAmount,
-            shippingAddress: address,
+            totalAmount,
+            shippingAddress: addressId,
             payment: {
-                method: 'razorpay',
+                method: 'online',
                 paymentStatus: 'completed',
                 razorpayTransaction: {
                     orderId: razorpay_order_id,
@@ -329,30 +282,26 @@ const verifyPayment = async (req, res) => {
             }
         });
 
-        // Clear cart
-        await cartSchema.findOneAndUpdate(
-            { userId },
-            { $set: { items: [] } }
-        );
-
-        // Clear session data
+        // Clear cart and coupon
+        await cartSchema.findOneAndUpdate({ userId }, { $set: { items: [] } });
         delete req.session.coupon;
 
-        // Send success response
-        return res.status(200).json({
+        res.status(200).json({
             success: true,
             message: 'Payment verified successfully',
-            orderId: order._id
+            orderId: order._id,
+            amount: totalAmount
         });
 
     } catch (error) {
         console.error('Payment verification error:', error);
-        return res.status(500).json({
+        res.status(500).json({
             success: false,
-            message: error.message || 'Payment verification failed'
+            message: 'Payment verification failed'
         });
     }
 };
+
 // Function to place the order
 const placeOrder = async (req, res) => {
     try {
@@ -480,6 +429,7 @@ const placeOrder = async (req, res) => {
         });
     }
 };
+
 const walletPayment = async (req, res) => {
     try {
         const userId = req.session.user;
@@ -559,18 +509,12 @@ const walletPayment = async (req, res) => {
         });
     }
 };
+
 const getAvailableCoupons = async (req, res) => {
     try {
         const userId = req.session.user;
 
-        // Get active coupons within valid date range
-        const coupons = await Coupon.find({
-            isActive: true,
-            startDate: { $lte: new Date() },
-            expiryDate: { $gte: new Date() }
-        });
-
-        // Get user's cart total
+        // Get cart total first
         const cart = await cartSchema.findOne({ userId })
             .populate('items.productId');
 
@@ -581,14 +525,22 @@ const getAvailableCoupons = async (req, res) => {
             });
         }
 
-        const cartTotal = cart.items.reduce(
-            (sum, item) => sum + (item.quantity * item.price), 
-            0
-        );
+        // Calculate cart total
+        const cartTotal = cart.items.reduce((sum, item) => {
+            const itemPrice = item.price;
+            return sum + (itemPrice * item.quantity);
+        }, 0);
 
-        // Process coupons with validation info
+        // Get active coupons
+        const coupons = await Coupon.find({
+            isActive: true,
+            startDate: { $lte: new Date() },
+            expiryDate: { $gte: new Date() }
+        });
+
+        // Process coupons with validation
         const processedCoupons = await Promise.all(coupons.map(async (coupon) => {
-            // Check user's usage count for this coupon
+            // Check user's usage count
             const userUsageCount = await Coupon.countDocuments({
                 code: coupon.code,
                 'usedBy.userId': userId
@@ -601,15 +553,7 @@ const getAvailableCoupons = async (req, res) => {
                 userUsageCount < coupon.userUsageLimit;
 
             return {
-                code: coupon.code,
-                description: coupon.description,
-                discountPercentage: coupon.discountPercentage,
-                minimumPurchase: coupon.minimumPurchase,
-                maximumDiscount: coupon.maximumDiscount,
-                expiryDate: coupon.expiryDate,
-                totalCoupon: coupon.totalCoupon,
-                usedCouponCount: coupon.usedCouponCount,
-                userUsageLimit: coupon.userUsageLimit,
+                ...coupon.toObject(),
                 isApplicable
             };
         }));
@@ -627,10 +571,18 @@ const getAvailableCoupons = async (req, res) => {
         });
     }
 };
-const applyCoupon = async (req, res, next) => {
+
+const applyCoupon = async (req, res) => {
     try {
         const { code } = req.body;
         const userId = req.session.user;
+
+        if (!code) {
+            return res.status(400).json({
+                success: false,
+                message: 'Coupon code is required'
+            });
+        }
 
         // Find the coupon
         const coupon = await Coupon.findOne({
@@ -647,40 +599,49 @@ const applyCoupon = async (req, res, next) => {
             });
         }
 
-        // Check total coupon usage limit
-        if (coupon.totalCoupon !== null && coupon.usedCouponCount >= coupon.totalCoupon) {
+        // Get cart total
+        const cart = await cartSchema.findOne({ userId })
+            .populate('items.productId');
+
+        if (!cart) {
             return res.status(400).json({
                 success: false,
-                message: 'Coupon limit has been exceeded. This coupon is no longer available.'
+                message: 'Cart not found'
             });
         }
 
-        // Check individual user usage limit
-        const userUsageCount = coupon.usedBy.filter(
-            usage => usage.userId.toString() === userId.toString()
-        ).length;
+        // Calculate cart total
+        const cartTotal = cart.items.reduce((sum, item) => {
+            const itemPrice = item.price;
+            return sum + (itemPrice * item.quantity);
+        }, 0);
+
+        // Validate minimum purchase
+        if (cartTotal < coupon.minimumPurchase) {
+            return res.status(400).json({
+                success: false,
+                message: `Minimum purchase of ₹${coupon.minimumPurchase} required`
+            });
+        }
+
+        // Check coupon usage limit
+        if (coupon.totalCoupon && coupon.usedCouponCount >= coupon.totalCoupon) {
+            return res.status(400).json({
+                success: false,
+                message: 'Coupon limit has been exceeded'
+            });
+        }
+
+        // Check user usage limit
+        const userUsageCount = await Coupon.countDocuments({
+            code: code.toUpperCase(),
+            'usedBy.userId': userId
+        });
 
         if (userUsageCount >= coupon.userUsageLimit) {
             return res.status(400).json({
                 success: false,
                 message: `You have exceeded the usage limit (${coupon.userUsageLimit}) for this coupon`
-            });
-        }
-
-        // Get cart total
-        const cart = await cartSchema.findOne({ userId })
-            .populate('items.productId');
-
-        const cartTotal = cart.items.reduce(
-            (sum, item) => sum + (item.quantity * item.price),
-            0
-        );
-
-        // Check minimum purchase required
-        if (cartTotal < coupon.minimumPurchase) {
-            return res.status(400).json({
-                success: false,
-                message: `Minimum purchase of ₹${coupon.minimumPurchase} required`
             });
         }
 
@@ -690,34 +651,45 @@ const applyCoupon = async (req, res, next) => {
             discount = Math.min(discount, coupon.maximumDiscount);
         }
 
-        // Store discount details in session
+        // Store in session
         req.session.coupon = {
             code: coupon.code,
             discount: discount,
-            discountedTotal: cartTotal - discount
+            discountPercentage: coupon.discountPercentage,
+            maximumDiscount: coupon.maximumDiscount
         };
 
         res.json({
             success: true,
-            discount,
-            couponCode: coupon.code,
+            discount: discount,
             message: 'Coupon applied successfully'
         });
 
     } catch (error) {
-        next(error);
+        console.error('Apply coupon error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to apply coupon'
+        });
     }
 };
-const removeCoupon = async (req, res, next) => {
+
+const removeCoupon = async (req, res) => {
     try {
+        delete req.session.coupon;
         res.json({
             success: true,
             message: 'Coupon removed successfully'
         });
     } catch (error) {
-        next(error)
+        console.error('Remove coupon error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to remove coupon'
+        });
     }
-}
+};
+
 const getOrderSuccessPage = async (req, res) => {
     try {
         const { orderId } = req.query;
@@ -743,6 +715,7 @@ const getOrderSuccessPage = async (req, res) => {
         res.redirect('/orders');
     }
 };
+
 const cancelOrder = async (req, res) => {
     try {
         const userId = req.session.user;
