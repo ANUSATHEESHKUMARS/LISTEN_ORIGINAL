@@ -104,21 +104,21 @@ route.get("/checkout", userMiddlewares.checkSession, checkoutController.getCheck
 
 route.post("/checkout/place-order", userMiddlewares.checkSession, checkoutController.placeOrder)
 
-route.get("/checkout/available-coupons", userMiddlewares.checkSession, checkoutController.getAvailableCoupons)
 
-route.post("/checkout/apply-coupon", userMiddlewares.checkSession, checkoutController.applyCoupon)
+route.post('/checkout/apply-coupon', userMiddlewares.checkSession, checkoutController.applyCoupon);
 
-route.post("/checkout/remove-coupon", userMiddlewares.checkSession, checkoutController.removeCoupon)
+route.post('/checkout/remove-coupon', userMiddlewares.checkSession, checkoutController.removeCoupon);
 
-route.get("/orders", userMiddlewares.checkSession, viewOrdersController.getOrders)
+route.get('/checkout/available-coupons', userMiddlewares.checkSession,checkoutController.getAvailableCoupons);
 
-route.post("/orders/:orderId/items/:productId/cancel", userMiddlewares.checkSession, viewOrdersController.cancelOrder)
+
+route.get('/orders', userMiddlewares.checkSession, viewOrdersController.getOrders);
 
 route.post("/orders/:orderId/items/:productId/return", userMiddlewares.checkSession, viewOrdersController.requestReturnItem)
 
 route.get('/orders/:orderId/invoice', userMiddlewares.checkSession, viewOrdersController.generateInvoice);
 
-route.post('/orders/:orderId/cancel/:productId', userMiddlewares.checkSession, viewOrdersController.cancelOrder);
+route.post('/orders/:orderId/items/:productId/cancel', userMiddlewares.checkSession, viewOrdersController.cancelOrderItem);
 
 
 
@@ -139,12 +139,6 @@ route.post('/checkout/create-razorpay-order', userMiddlewares.checkSession, chec
 
 route.post('/checkout/verify-payment', userMiddlewares.checkSession, checkoutController.verifyPayment);
 
-
-
-route.get("/wallet",userMiddlewares.checkSession,walletController.getWallet)
-
-route.post("/checkout/wallet-payment",userMiddlewares.checkSession,checkoutController.walletPayment)
-
 route.get("/coupons",userMiddlewares.checkSession ,couponController.getCoupons)
 
 route.get('/order-success', checkoutController.getOrderSuccessPage);
@@ -153,7 +147,10 @@ route.get('/product/:id', productController.getProductDetails);
 
 route.get('/contact',authController.getContact)
 
-route.post('/wallet/recharge', walletController.initiateRecharge);
-route.post('/wallet/verify-recharge', walletController.verifyRecharge);
+route.get('/wallet', userMiddlewares.checkSession, walletController.getWallet);
+
+route.post('/wallet/add-funds', userMiddlewares.checkSession, walletController.addFunds);
+
+route.post('/checkout/wallet-payment', userMiddlewares.checkSession, checkoutController.walletPayment);
 
 export default route;

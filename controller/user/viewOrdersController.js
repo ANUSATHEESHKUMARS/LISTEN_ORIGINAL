@@ -3,418 +3,598 @@ import userSchema from "../../models/userModels.js";
 import productSchema from "../../models/productModel.js";
 import Wallet from "../../models/walletModels.js";
 import PDFDocument from "pdfkit"
+import razorpay from "../../utils/razorpay.js";
+import crypto from "crypto";
 
-const getOrders = async (req, res) => {
-    try {
-        const user = await userSchema.findById(req.session.user);
-        const userId = req.session.user;
-        const page = parseInt(req.query.page) || 1;
-        const limit = 5;
 
-        const totalOrders = await orderSchema.countDocuments({ userId })
-        const totalPages = Math.ceil(totalOrders / limit);
-
-        const orders = await orderSchema.find({ userId })
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit)
-            .populate('items.product');
-
-        // Ensure payment data exists and is properly formatted
-        const processedOrders = orders.map(order => {
-            const orderObj = order.toObject();
+const userOrderController = {
+    getOrders: async (req, res) => {
+        try {
+            const user = await userSchema.findById(req.session.user);
+            const userId = req.session.user;
+            const page = parseInt(req.query.page) || 1;
+            const limit = 5;
             
-            // Ensure each item has correct pricing
-            orderObj.items = orderObj.items.map(item => ({
-                ...item,
-                price: item.price || 0,
-                discountedPrice: item.discountedPrice || item.price || 0,
-                subtotal: item.discountedPrice 
-                    ? item.discountedPrice * item.quantity 
-                    : (item.price * item.quantity) || 0,
-                return: item.return || {
-                    isReturnRequested: false,
-                    reason: null,
-                    requestDate: null,
-                    status: null,
-                    adminComment: null,
-                    isReturnAccepted: false
-                },
-                product: item.product || {
-                    productName: 'Product Unavailable',
-                    imageUrl: ['/images/placeholder.jpg'],
-                    price: item.price || 0
-                }
-            }));
-
-            // Ensure shipping address has all required fields
-            orderObj.shippingAddress = {
-                fullName: orderObj.shippingAddress?.fullName || 'Name not available',
-                mobileNumber: orderObj.shippingAddress?.mobileNumber || 'Not available',
-                addressLine1: orderObj.shippingAddress?.addressLine1 || '',
-                addressLine2: orderObj.shippingAddress?.addressLine2 || '',
-                city: orderObj.shippingAddress?.city || '',
-                state: orderObj.shippingAddress?.state || '',
-                pincode: orderObj.shippingAddress?.pincode || ''
-            };
-
-            return {
-                ...orderObj,
-                payment: {
-                    method: orderObj.payment?.method || 'Not Available',
-                    paymentStatus: orderObj.payment?.paymentStatus || 'pending'
-                }
-            };
-        });
-
-        console.log('Processed orders:', processedOrders); // Debug log
-
-        res.render("user/viewOrder", {
-            orders: processedOrders,
-            currentPage: page,
-            totalPages,
-            hasNextPage: page < totalPages,
-            hasPreviousPage: page > 1,
-            user
-        });
-
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).render('error', {
-            message: 'Error fetching orders',
-            error: error.message
-        });
-    }
-}
-
-// Add this function to handle refunds to wallet
-const handleWalletRefund = async (userId, orderId, productId) => {
-    try {
-        const order = await orderSchema.findById(orderId)
-            .populate('items.product'); // Make sure to populate product details
-        if (!order) throw new Error('Order not found');
-
-        // Find the specific item to be refunded
-        const orderItem = order.items.find(item => 
-            item.product._id.toString() === productId
-        );
-        if (!orderItem) throw new Error('Order item not found');
-
-        // Calculate base refund amount using the item's original price
-        let refundAmount = orderItem.price * orderItem.quantity;
-
-        // Log initial values for debugging
-        console.log('Initial Calculation:', {
-            itemPrice: orderItem.price,
-            quantity: orderItem.quantity,
-            orderSubtotal: order.subtotal,
-            orderTotal: order.totalAmount,
-            initialRefundAmount: refundAmount
-        });
-
-        // If there's a coupon or discount applied to the order
-        if (order.totalAmount < order.subtotal) {
-            // Calculate the discount percentage
-            const discountPercentage = ((order.subtotal - order.totalAmount) / order.subtotal) * 100;
+            const totalOrders = await orderSchema.countDocuments({ userId });
+            const totalPages = Math.ceil(totalOrders / limit);
             
-            // Apply the same discount percentage to the refund amount
-            const discountAmount = (refundAmount * discountPercentage) / 100;
-            refundAmount = refundAmount - discountAmount;
+            const orders = await orderSchema.find({ userId })
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .populate('items.product');
 
-            console.log('Discount Calculation:', {
-                discountPercentage,
-                discountAmount,
-                finalRefundAmount: refundAmount
+            res.render('user/viewOrder', { 
+                orders,
+                currentPage: page,
+                totalPages,
+                hasNextPage: page < totalPages,
+                hasPrevPage: page > 1,
+                user
             });
+        } catch (error) {
+            console.error('Get orders error:', error);
+            res.status(500).render('error', { message: 'Error fetching orders' });
         }
+    },
 
-        // Round to 2 decimal places
-        refundAmount = Math.round(refundAmount * 100) / 100;
+    generateInvoice: async (req, res) => {
+        try {
+            const { orderId } = req.params;
+            const userId = req.session.user;
 
-        // Validate final amount
-        if (isNaN(refundAmount) || refundAmount <= 0) {
-            console.error('Invalid refund calculation:', {
-                orderItem,
-                order,
-                calculatedAmount: refundAmount
-            });
-            throw new Error('Invalid refund amount calculated');
-        }
+            const order = await orderSchema.findOne({ _id: orderId, userId })
+                .populate('userId')
+                .populate('items.product');
 
-        // Process wallet refund
-        let wallet = await Wallet.findOne({ userId });
-        if (!wallet) {
-            wallet = new Wallet({ userId, balance: 0 });
-        }
-
-        // Add refund to wallet
-        wallet.balance = Number(wallet.balance || 0) + refundAmount;
-        wallet.transactions.push({
-            type: 'credit',
-            amount: refundAmount,
-            description: `Refund for cancelled order #${orderId} (Including all discounts)`,
-            orderId: orderId,
-            date: new Date()
-        });
-
-        await wallet.save();
-
-        return {
-            success: true,
-            refundAmount
-        };
-
-    } catch (error) {
-        console.error('Wallet refund error:', error);
-        return {
-            success: false,
-            error: error.message
-        };
-    }
-};
-
-// Update the cancelOrder function
-const cancelOrder = async (req, res) => {
-    try {
-        const userId = req.session.user;
-        const { orderId, productId } = req.params;
-        const { reason } = req.body;
-
-        // Find the order and validate ownership
-        const order = await orderSchema.findOne({ _id: orderId, userId })
-            .populate('items.product');
-            
-        if (!order) {
-            return res.status(404).json({
-                success: false,
-                message: 'Order not found'
-            });
-        }
-
-        // Find the specific item in the order
-        const orderItem = order.items.find(item => 
-            item.product._id.toString() === productId
-        );
-
-        if (!orderItem) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found in order'
-            });
-        }
-
-        // Calculate refund amount including GST
-        const itemPrice = orderItem.discountedPrice || orderItem.price;
-        const itemSubtotal = itemPrice * orderItem.quantity;
-        const itemGST = itemSubtotal * 0.18; // 18% GST
-        const refundAmount = itemSubtotal + itemGST;
-
-        // Process refund for online payments
-        if (order.payment.method === 'online' || order.payment.method === 'razorpay') {
-            // Find or create wallet
-            let wallet = await Wallet.findOne({ userId });
-            if (!wallet) {
-                wallet = new Wallet({ userId, balance: 0 });
+            if (!order) {
+                return res.status(404).json({ message: 'Order not found' });
             }
 
-            // Add refund to wallet with proper transaction details
-            wallet.balance = Number(wallet.balance) + refundAmount;
-            wallet.transactions.push({
-                type: 'credit',
-                amount: refundAmount,
-                description: `Refund for cancelled order #${order.orderCode} - ${orderItem.product.productName}`,
-                orderId: order._id,
-                date: new Date(),
-                previousBalance: Number(wallet.balance) - refundAmount,
-                currentBalance: Number(wallet.balance)
+
+            // Create PDF document
+            const doc = new PDFDocument({ margin: 50 });
+
+            // Set response headers
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderCode}.pdf`);
+            doc.pipe(res);
+
+            // Generate separate invoice for each item
+            order.items.forEach((item, index) => {
+                if (index > 0) {
+                    doc.addPage();
+                }
+
+                // Calculate base prices and taxes
+            
+
+                // Pre-tax calculations
+                const preTaxPrice = item.price / (1 + TAX_RATE);
+                const preTaxTotal = preTaxPrice * item.quantity;
+                
+                // Tax calculations
+                const cgstAmount = preTaxTotal * CGST_RATE;
+                const sgstAmount = preTaxTotal * SGST_RATE;
+                const totalTax = cgstAmount + sgstAmount;
+
+                // Discount calculations (if applicable)
+                const originalTotal = preTaxTotal + totalTax;
+                const finalAmount = item.subtotal; // This is already the discounted total
+                const totalDiscount = originalTotal - finalAmount;
+
+                // Add header with company logo and tax invoice text
+                doc.fontSize(20)
+                   .text('TAX INVOICE', { align: 'center' })
+                   .moveDown();
+
+                // Add company details (left side)
+                doc.fontSize(10)
+                   .text('Sold By:', 50)
+                   .font('Helvetica-Bold')
+                   .text('ONYX FASHION STORE')
+                   .font('Helvetica')
+                   .text('123 Fashion Street')
+                   .text('Kerala, India - 682001')
+                   .text('Phone: +91 9876543210')
+                   .text('Email: support@onyx.com')
+                   .text('GSTIN: 32ABCDE1234F1Z5');
+
+                // Add Invoice Details (right side)
+                doc.fontSize(10)
+                   .text(`Invoice Number: ${order.orderCode}-${index + 1}`, 300, doc.y - 90)
+                   .text(`Order Date: ${new Date(order.orderDate).toLocaleDateString('en-IN')}`, 300)
+                   .text(`Invoice Date: ${new Date().toLocaleDateString('en-IN')}`, 300);
+
+                // Add Billing Details
+                doc.moveDown()
+                   .text('Billing Address:')
+                   .font('Helvetica-Bold')
+                   .text(`${order.shippingAddress.fullName}`)
+                   .font('Helvetica')
+                   .text(order.shippingAddress.addressLine1)
+                   .text(order.shippingAddress.addressLine2 || '')
+                   .text(`${order.shippingAddress.city}, ${order.shippingAddress.state}`)
+                   .text(`PIN: ${order.shippingAddress.pincode}`)
+                   .text(`Phone: ${order.shippingAddress.mobileNumber}`)
+                   .moveDown();
+
+                // Product Details Table
+                doc.font('Helvetica-Bold');
+                const tableTop = doc.y + 20;
+
+                // Table Headers
+                doc.text('Product Details', 50, tableTop)
+                    .text('HSN', 200, tableTop)
+                    .text('Qty', 250, tableTop)
+                    .text('Pre-tax Rate', 300, tableTop)
+                    .text('Taxable Amount', 400, tableTop)
+                    .text('Total', 500, tableTop);
+
+                // Underline
+                doc.moveTo(50, tableTop + 15)
+                    .lineTo(550, tableTop + 15)
+                    .stroke();
+
+                // Product Details
+                doc.font('Helvetica')
+                    .text(item.product.productName, 50, tableTop + 30)
+                    .text('6203', 200, tableTop + 30)
+                    .text(item.quantity.toString(), 250, tableTop + 30)
+                    .text(`₹${preTaxPrice.toFixed(2)}`, 300, tableTop + 30)
+                    .text(`₹${preTaxTotal.toFixed(2)}`, 400, tableTop + 30)
+                    .text(`₹${originalTotal.toFixed(2)}`, 500, tableTop + 30);
+
+                // Price Breakdown
+                const summaryTop = tableTop + 80;
+                doc.moveTo(50, summaryTop).lineTo(550, summaryTop).stroke()
+                    .font('Helvetica-Bold')
+                    .text('Price Breakdown', 50, summaryTop + 20)
+                    .font('Helvetica');
+
+                // Detailed Summary
+                let currentY = summaryTop + 40;
+                
+                // Pre-tax amount
+                doc.text('Pre-tax Amount:', 350, currentY)
+                    .text(`₹${preTaxTotal.toFixed(2)}`, 500, currentY);
+                currentY += 20;
+
+                // Tax details
+                doc.text('CGST @ 9%:', 350, currentY)
+                    .text(`₹${cgstAmount.toFixed(2)}`, 500, currentY);
+                currentY += 20;
+
+                doc.text('SGST @ 9%:', 350, currentY)
+                    .text(`₹${sgstAmount.toFixed(2)}`, 500, currentY);
+                currentY += 20;
+
+                // Subtotal after tax
+                doc.text('Total (Inc. Tax):', 350, currentY)
+                    .text(`₹${originalTotal.toFixed(2)}`, 500, currentY);
+                currentY += 20;
+
+                // Discount (if applicable)
+                if (totalDiscount > 0) {
+                    doc.text('Discount Applied:', 350, currentY)
+                        .text(`-₹${totalDiscount.toFixed(2)}`, 500, currentY);
+                    currentY += 20;
+                }
+
+                // Final amount
+                doc.moveTo(350, currentY).lineTo(550, currentY).stroke();
+                currentY += 10;
+                doc.font('Helvetica-Bold')
+                    .text('Final Amount:', 350, currentY)
+                    .text(`₹${finalAmount.toFixed(2)}`, 500, currentY);
+
+                // Amount in words
+                currentY += 40;
+                doc.font('Helvetica')
+                    .text('Amount in Words:', 50, currentY)
+                    .text(`${numberToWords(Math.round(finalAmount))} Rupees Only`, 150, currentY);
+
+                // Add Footer (within the page)
+                const footerTop = doc.page.height - 120;
+                
+                // Footer Border Top
+                doc.moveTo(50, footerTop).lineTo(550, footerTop).stroke();
+
+                // Footer Content
+                doc.fontSize(8)
+                   .font('Helvetica')
+                   .text('Terms & Conditions:', 50, footerTop + 10)
+                   .text('1. This is a computer generated invoice.', 50, footerTop + 25)
+                   .text('2. All disputes are subject to Kerala jurisdiction.', 50, footerTop + 35)
+                   .text('3. E. & O. E.', 50, footerTop + 45);
+
+                // Company Details in Footer
+                doc.fontSize(8)
+                   .text('ONYX FASHION STORE', 350, footerTop + 10)
+                   .text('123 Fashion Street, Kerala - 682001', 350, footerTop + 25)
+                   .text('Email: support@onyx.com | Phone: +91 9876543210', 350, footerTop + 35)
+                   .text('GSTIN: 32ABCDE1234F1Z5', 350, footerTop + 45);
+
+                // Footer Border Bottom
+                doc.moveTo(50, footerTop + 70).lineTo(550, footerTop + 70).stroke();
+
             });
 
-            await wallet.save();
-        }
+            // Finalize PDF
+            doc.end();
 
-        // Update order item status
-        orderItem.order.status = 'cancelled';
-        orderItem.order.statusHistory.push({
-            status: 'cancelled',
-            date: new Date(),
-            comment: reason || 'Order cancelled by customer'
-        });
-
-        // Restore product stock
-        await productSchema.findByIdAndUpdate(
-            productId,
-            { $inc: { stock: orderItem.quantity } }
-        );
-
-        await order.save();
-
-        res.json({
-            success: true,
-            message: 'Order cancelled successfully',
-            refundAmount: refundAmount.toFixed(2),
-            refundedTo: order.payment.method === 'cod' ? 'No refund needed' : 'Wallet'
-        });
-
-    } catch (error) {
-        console.error('Order cancellation error:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Error cancelling order'
-        });
-    }
-};
-
-// Update the requestReturnItem function to handle refunds similarly
-const requestReturnItem = async (req, res) => {
-    try {
-        const { orderId, productId } = req.params;
-        const { reason } = req.body;
-        const userId = req.session.user;
-
-        const order = await orderSchema.findOne({
-            _id: orderId,
-            userId
-        });
-
-        if (!order) {
-            return res.status(404).json({
-                success: false,
-                message: 'Order not found'
+        } catch (error) {
+            console.error('Generate invoice error:', error);
+            res.status(500).json({ 
+                message: 'Error generating invoice',
+                error: error.message 
             });
         }
+    },
 
-        const orderItem = order.items.find(item => 
-            item.product.toString() === productId
-        );
+    retryPayment: async (req, res) => {
+        try {
+            const { orderId } = req.params;
+            const userId = req.session.user;
 
-        if (!orderItem) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found in order'
+            // Find order and populate product details
+            const order = await orderSchema.findOne({ _id: orderId, userId })
+                .populate('items.product');
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found'
+                });
+            }
+
+            // Check stock availability for all items
+            const stockCheck = await Promise.all(order.items.map(async (item) => {
+                const product = await productSchema.findById(item.product._id);
+                if (!product || product.stock < item.quantity) {
+                    return {
+                        productName: item.product.productName,
+                        available: false,
+                        requiredQuantity: item.quantity,
+                        currentStock: product ? product.stock : 0
+                    };
+                }
+                return { available: true };
+            }));
+
+            // Check if any product is out of stock
+            const outOfStockItems = stockCheck.filter(item => !item.available);
+            if (outOfStockItems.length > 0) {
+                const errorMessages = outOfStockItems.map(item => 
+                    `${item.productName} - Required: ${item.requiredQuantity}, Available: ${item.currentStock}`
+                );
+                
+                return res.status(400).json({
+                    success: false,
+                    message: 'Some items are out of stock',
+                    details: errorMessages.join('\n')
+                });
+            }
+
+            // If all items are in stock, proceed with payment
+            const options = {
+                amount: order.totalAmount * 100,
+                currency: "INR",
+                receipt: orderId,
+            };
+
+            const razorpayOrder = await razorpay.orders.create(options);
+
+            // Get user details for prefill
+            const user = await userSchema.findById(userId);
+
+            res.json({
+                success: true,
+                key: process.env.RAZORPAY_KEY_ID,
+                order: razorpayOrder,
+                orderDetails: {
+                    name: user.name,
+                    email: user.email,
+                    contact: user.mobile
+                }
             });
-        }
 
-        // Update return status
-        orderItem.return = {
-            isReturnRequested: true,
-            reason: reason,
-            requestDate: new Date(),
-            status: 'pending',
-            adminComment: null,
-            isReturnAccepted: false
-        };
-
-        // Add to status history
-        orderItem.order.statusHistory.push({
-            status: 'return requested',
-            date: new Date(),
-            comment: `Return requested: ${reason}`
-        });
-
-        await order.save();
-
-        res.json({
-            success: true,
-            message: 'Return request submitted successfully'
-        });
-
-    } catch (error) {
-        console.error('Return request error:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Error processing return request'
-        });
-    }
-};
-
-const generateInvoice = async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const userId = req.session.user;
-
-        // Find the order and populate necessary fields
-        const order = await orderSchema.findOne({ _id: orderId, userId })
-            .populate('userId')
-            .populate('items.product');
-
-        if (!order) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Order not found' 
-            });
-        }
-
-        // Create PDF document
-        const doc = new PDFDocument({ margin: 50 });
-
-        // Set response headers
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=invoice-${order._id}.pdf`);
-
-        // Pipe the PDF directly to the response
-        doc.pipe(res);
-
-        // Add content to PDF
-        doc.fontSize(20)
-            .text('INVOICE', { align: 'center' })
-            .moveDown();
-
-        // Add company details
-        doc.fontSize(12)
-            .text('LISTEN HEADPHONES', { align: 'left' })
-            .text('123 Street, City')
-            .text('Phone: +1234567890')
-            .text('Email: example@listen.com')
-            .moveDown();
-
-        // Add customer details
-        doc.text(`Order ID: ${order._id}`)
-            .text(`Date: ${order.createdAt.toLocaleDateString()}`)
-            .text(`Customer Name: ${order.shippingAddress.fullName}`)
-            .text(`Address: ${order.shippingAddress.addressLine1}`)
-            .text(`${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.pincode}`)
-            .moveDown();
-
-        // Add items table
-        doc.text('Items:', { underline: true }).moveDown();
-        
-        order.items.forEach(item => {
-            doc.text(`${item.product.productName}`)
-               .text(`Quantity: ${item.quantity}`)
-               .text(`Price: ₹${item.price}`)
-               .text(`Subtotal: ₹${item.subtotal}`)
-               .moveDown();
-        });
-
-        // Add total
-        doc.moveDown()
-           .text(`Subtotal: ₹${order.subtotal}`, { align: 'right' });
-
-        if (order.discount > 0) {
-            doc.text(`Discount: -₹${order.discount}`, { align: 'right' });
-        }
-
-        doc.text(`Total Amount: ₹${order.totalAmount}`, { align: 'right' })
-           .moveDown();
-
-        // Finalize the PDF
-        doc.end();
-
-    } catch (error) {
-        console.error('Generate invoice error:', error);
-        if (!res.headersSent) {
+        } catch (error) {
+            console.error('Retry payment error:', error);
             res.status(500).json({
                 success: false,
-                message: 'Error generating invoice'
+                message: error.message || 'Failed to initiate payment'
+            });
+        }
+    },
+
+    verifyRetryPayment: async (req, res) => {
+        try {
+            const { 
+                razorpay_order_id, 
+                razorpay_payment_id, 
+                razorpay_signature, 
+                orderId 
+            } = req.body;
+
+            const order = await orderSchema.findById(orderId).populate('items.product');
+            if (!order) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Order not found' 
+                });
+            }
+
+            // Verify Razorpay signature
+            const sign = razorpay_order_id + "|" + razorpay_payment_id;
+            const expectedSign = crypto
+                .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+                .update(sign.toString())
+                .digest("hex");
+
+            if (razorpay_signature !== expectedSign) {
+                // Update order status to failed if signature verification fails
+                await orderSchema.findByIdAndUpdate(orderId, {
+                    'payment.paymentStatus': 'failed',
+                    $push: {
+                        'items.$[].order.statusHistory': {
+                            status: 'pending',
+                            date: new Date(),
+                            comment: 'Payment verification failed'
+                        }
+                    }
+                });
+
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid payment signature'
+                });
+            }
+
+            // Update product stock for each item in the order
+            for (const item of order.items) {
+                await productSchema.findByIdAndUpdate(
+                    item.product._id,
+                    { $inc: { stock: -item.quantity } }
+                );
+            }
+
+            // Update order with successful payment
+            await orderSchema.findByIdAndUpdate(orderId, {
+                'payment.paymentStatus': 'completed',
+                'payment.razorpayTransaction': {
+                    razorpayOrderId: razorpay_order_id,
+                    razorpayPaymentId: razorpay_payment_id,
+                    razorpaySignature: razorpay_signature
+                },
+                'items.$[].order.status': 'processing',
+                $push: {
+                    'items.$[].order.statusHistory': {
+                        status: 'processing',
+                        date: new Date(),
+                        comment: 'Payment successful, order processing'
+                    }
+                }
+            });
+
+            res.json({
+                success: true,
+                message: 'Payment verified successfully'
+            });
+
+        } catch (error) {
+            console.error('Verify retry payment error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to verify payment'
+            });
+        }
+    },
+
+    cancelOrderItem: async (req, res) => {
+        try {
+            const { orderId, productId } = req.params;
+            const { reason } = req.body;
+            const userId = req.session.user;
+
+            const order = await orderSchema.findOne({ _id: orderId, userId })
+                .populate('items.product');
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found'
+                });
+            }
+
+            // Find the specific item
+            const itemIndex = order.items.findIndex(item => 
+                item.product._id.toString() === productId
+            );
+
+            if (itemIndex === -1) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Item not found in order'
+                });
+            }
+
+            const item = order.items[itemIndex];
+
+            // Check if item can be cancelled
+            if (!['pending', 'processing'].includes(item.order.status)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'This item cannot be cancelled at this stage'
+                });
+            }
+
+            // Update product stock
+            await productSchema.findByIdAndUpdate(
+                productId,
+                { $inc: { stock: item.quantity } }
+            );
+
+            // Update item status
+            item.order.status = 'cancelled';
+            item.order.statusHistory.push({
+                status: 'cancelled',
+                date: new Date(),
+                comment: `Item cancelled by user: ${reason}`
+            });
+
+            // Process refund if payment was made
+            if (['wallet', 'online', 'razorpay'].includes(order.payment.method) && 
+                order.payment.paymentStatus === 'completed') {
+                
+                let wallet = await Wallet.findOne({ userId });
+                if (!wallet) {
+                    wallet = await Wallet.create({ userId, balance: 0 });
+                }
+
+                // Calculate refund amount for this item
+                const refundAmount = item.subtotal;
+
+                wallet.balance += refundAmount;
+                wallet.transactions.push({
+                    type: 'credit',
+                    amount: refundAmount,
+                    description: `Refund for cancelled item in order #${order.orderCode}`,
+                    orderId: order._id,
+                    date: new Date()
+                });
+
+                await wallet.save();
+            }
+
+            await order.save();
+
+            res.json({
+                success: true,
+                message: 'Item cancelled successfully'
+            });
+
+        } catch (error) {
+            console.error('Cancel item error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Error cancelling item'
+            });
+        }
+    },
+
+    requestReturnItem: async (req, res) => {
+        try {
+            const { orderId, productId } = req.params;
+            const { reason } = req.body;
+            const userId = req.session.user;
+
+            const order = await orderSchema.findOne({ _id: orderId, userId })
+                .populate('items.product');
+
+            if (!order) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Order not found'
+                });
+            }
+
+            // Find the specific item
+            const itemIndex = order.items.findIndex(item => 
+                item.product._id.toString() === productId
+            );
+
+            if (itemIndex === -1) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Item not found in order'
+                });
+            }
+
+            const item = order.items[itemIndex];
+
+            // Check if item is delivered
+            if (item.order.status !== 'delivered') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Only delivered items can be returned'
+                });
+            }
+
+            // Check if return is already requested
+            if (item.return.isReturnRequested) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Return already requested for this item'
+                });
+            }
+
+            // Check return window (7 days)
+            const deliveryDate = item.order.statusHistory
+                .find(h => h.status === 'delivered')?.date;
+
+            if (!deliveryDate) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Delivery date not found'
+                });
+            }
+
+            const daysSinceDelivery = Math.floor(
+                (Date.now() - new Date(deliveryDate)) / (1000 * 60 * 60 * 24)
+            );
+
+            if (daysSinceDelivery > 7) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Return window has expired (7 days from delivery)'
+                });
+            }
+
+            // Update return status for the item
+            item.return = {
+                isReturnRequested: true,
+                reason: reason,
+                requestDate: new Date(),
+                status: 'pending',
+                adminComment: null,
+                isReturnAccepted: false
+            };
+
+            // Update item status and add to history
+            item.order.status = 'refund processing';
+            item.order.statusHistory.push({
+                status: 'refund processing',
+                date: new Date(),
+                comment: `Return requested: ${reason}`
+            });
+
+            // Update payment status if payment was made
+            if (['wallet', 'online', 'razorpay'].includes(order.payment.method) && 
+                order.payment.paymentStatus === 'completed') {
+                order.payment.paymentStatus = 'refund processing';
+            }
+
+            await order.save();
+
+            res.json({
+                success: true,
+                message: 'Return request submitted successfully'
+            });
+
+        } catch (error) {
+            console.error('Return request error:', error);
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Failed to submit return request'
             });
         }
     }
 };
 
 
-export default {
-    getOrders,
-    cancelOrder,
-    requestReturnItem,
-    generateInvoice
+function numberToWords(Number){
+return Number.toString();
 }
+
+export default userOrderController;
